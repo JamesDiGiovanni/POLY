@@ -87,12 +87,19 @@ def discover(con, api: PolymarketAPI, cfg) -> list[str]:
 
     am = disc["active_in_markets"]
     if am["enabled"]:
-        since = dt.datetime.fromtimestamp(cfg.selection_start_ts, dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        try:
-            markets = api.top_closed_markets(int(am["top_markets"]), since)
-        except Exception as e:
-            log.warning("top markets failed: %s", e)
-            markets = []
+        iso = lambda ts: dt.datetime.fromtimestamp(ts, dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        # Only markets that ended before the cutoff, so nothing after it influences who is picked.
+        markets, page = [], 100
+        for offset in range(0, int(am["top_markets"]), page):
+            try:
+                got = api.top_closed_markets(min(page, int(am["top_markets"]) - offset), iso(cfg.selection_start_ts),
+                                             iso(cfg.cutoff_ts), offset)
+            except Exception as e:
+                log.warning("top markets failed: %s", e)
+                break
+            markets += got
+            if len(got) < page:
+                break
         for m in markets:
             cid = m.get("conditionId")
             if not cid:

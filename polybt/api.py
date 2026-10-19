@@ -113,10 +113,12 @@ class PolymarketAPI:
                     found[m["conditionId"]] = m
         return list(found.values())
 
-    def top_closed_markets(self, limit: int, end_date_min: str) -> list[dict]:
+    def top_closed_markets(self, limit: int, end_date_min: str, end_date_max: str | None = None,
+                           offset: int = 0) -> list[dict]:
         body = self.client.get_json(GAMMA_API, "/markets",
                                     {"closed": "true", "order": "volumeNum", "ascending": "false",
-                                     "end_date_min": end_date_min, "limit": limit},
+                                     "end_date_min": end_date_min, "end_date_max": end_date_max,
+                                     "limit": limit, "offset": offset},
                                     ttl=self.mutable_ttl)
         return _as_list(body)
 

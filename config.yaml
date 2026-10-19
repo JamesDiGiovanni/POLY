@@ -41,8 +41,12 @@ http:
 discovery:
   seed_wallets: []             # always included, lowercase 0x addresses
   max_candidates: 400          # cheap: most are bots screened out with one request each
+  # LOOKAHEAD WARNING: every Polymarket leaderboard, all-time included, ranks wallets partly on profit
+  # made after the cutoff, i.e. inside the test period. A run that discovered wallets on monthly boards
+  # showed 5 of 6 "GO" wallets earning most of their profit in exactly that month. Off by default;
+  # discovery uses wallets active in markets that closed before the cutoff instead.
   leaderboard:
-    enabled: true
+    enabled: false
     path: /v1/leaderboard
     page_size: 50
     pages: 4
@@ -54,7 +58,7 @@ discovery:
       - {category: CRYPTO, timePeriod: ALL, orderBy: PNL}
   active_in_markets:
     enabled: true
-    top_markets: 40            # highest-volume recently closed markets
+    top_markets: 300           # highest-volume markets that closed in the selection window
     trades_per_market: 1000
     wallets_per_market: 15
 
@@ -163,3 +167,5 @@ report:
     month_days: 30
     min_wallets: 3
     sizing: flat
+    # Fills in one market share one outcome. 100 fills in 5 markets is 5 bets, so also require breadth.
+    min_markets: 30

@@ -79,6 +79,18 @@ def test_bootstrap_is_deterministic_and_brackets_roi():
     assert bootstrap_roi_ci(lots([1]), 100, 0.9, 7) == (None, None)
 
 
+def test_bootstrap_resamples_markets_not_fills():
+    # 300 fills in 3 markets: one big loser, two winners. Per-fill resampling would give a narrow
+    # interval; per-market resampling must admit the losing outcome.
+    fills = []
+    for m, p in (("a", 6.0), ("b", 6.0), ("c", -9.0)):
+        fills += [LotRow(T0, T0, 0.5, 10.0, p, m) for _ in range(100)]
+    lo, hi = bootstrap_roi_ci(fills, 2000, 0.9, 7)
+    naive = bootstrap_roi_ci([LotRow(l.ts, l.close_ts, l.entry, l.stake, l.pnl) for l in fills], 2000, 0.9, 7)
+    assert lo < 0 < hi
+    assert naive[0] > 0  # what the old per-fill bootstrap would have claimed
+
+
 def test_monthly_positive():
     end = T0 + 90 * DAY
     ls = [LotRow(0, T0 + 5 * DAY, .5, 10, -1), LotRow(0, T0 + 70 * DAY, .5, 10, 2)]

@@ -133,7 +133,8 @@ CREATE TABLE IF NOT EXISTS sim_results (
     ci_low DOUBLE,
     ci_high DOUBLE,
     drawdown DOUBLE,
-    sizing VARCHAR
+    sizing VARCHAR,
+    markets INTEGER
 );
 
 -- Paper / live trading. One session = one continuous run of the shared engine.
@@ -203,6 +204,7 @@ MIGRATIONS = [
     "ALTER TABLE sim_trades ADD COLUMN IF NOT EXISTS exec_ts BIGINT",
     "ALTER TABLE sim_results ADD COLUMN IF NOT EXISTS sizing VARCHAR",
     "ALTER TABLE wallet_ingest_state ADD COLUMN IF NOT EXISTS capped BOOLEAN",
+    "ALTER TABLE sim_results ADD COLUMN IF NOT EXISTS markets INTEGER",
 ]
 
 

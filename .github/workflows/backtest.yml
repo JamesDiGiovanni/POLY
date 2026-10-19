@@ -69,12 +69,8 @@ jobs:
           seeds = [w.strip().lower() for w in os.environ["SEED_WALLETS"].split(",") if w.strip()]
           cfg = {"discovery": {"max_candidates": int(os.environ["MAX_CANDIDATES"]), "seed_wallets": seeds}}
           if os.environ["PROFILE"] == "sensitivity":
-              # Recently active wallets across categories, and looser thresholds where many real
-              # traders failed by a narrow margin in the spec run.
-              cats = ["OVERALL", "POLITICS", "SPORTS", "CRYPTO", "ECONOMICS", "CULTURE"]
-              cfg["discovery"]["leaderboard"] = {"pages": 2, "queries":
-                  [{"category": c, "timePeriod": t, "orderBy": "PNL"} for c in cats for t in ("WEEK", "MONTH")]
-                  + [{"category": "OVERALL", "timePeriod": "MONTH", "orderBy": "VOL"}]}
+              # Looser thresholds where many real traders failed by a narrow margin in the spec run.
+              # Discovery stays lookahead-free (no leaderboards), see config.yaml.
               cfg["filters"] = {"max_top3_profit_share": 0.60, "min_edge_pts": 0.0, "min_median_trade_usd": 5}
           yaml.safe_dump(cfg, open("ci.yaml", "w"))
           print(yaml.safe_dump(cfg))

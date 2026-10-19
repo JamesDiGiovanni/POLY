@@ -22,7 +22,7 @@ re-run alone without repeating the earlier ones:
 
 | Step | Command | Does |
 | --- | --- | --- |
-| Ingest | `python -m polybt ingest` | Discover candidates (leaderboards + most active wallets in top markets + `seed_wallets`), pull their activity and market metadata |
+| Ingest | `python -m polybt ingest` | Discover candidates (most active wallets in top markets that closed before the cutoff, plus `seed_wallets`), pull their activity and market metadata |
 | Filter | `python -m polybt filter` | Score every candidate on pre-cutoff data; log a rejection reason for each failure |
 | Prices | `python -m polybt prices` | Pull 1-minute price history around every test-period trade of wallets that passed |
 | Simulate | `python -m polybt simulate` | Copy each test-period trade at every delay |
@@ -65,7 +65,12 @@ and latest fills next to its profile URL, to compare against polymarket.com by h
   parameters.
 - **Wallet ROI** uses the same lot engine on the wallet's real fills and real cost (`usdcSize`, which includes
   fees), on the same period, so it sits directly beside copy ROI. Edge decay = copy ROI ÷ wallet ROI.
-- **Confidence.** 90% percentile bootstrap over lots (2,000 resamples, fixed seed).
+- **Confidence.** 90% percentile bootstrap (2,000 resamples, fixed seed) that resamples whole **markets**,
+  not fills: a wallet's 100 fills in one market are one bet. The go rule also needs 30+ distinct markets.
+- **No lookahead in discovery.** Candidates come only from markets that closed before the cutoff.
+  Polymarket's leaderboards (even all-time) rank wallets partly on test-period profit, so they're off by
+  default (`discovery.leaderboard.enabled`). A run that used monthly boards produced 6 "GO" wallets, 5 of
+  which earned most of their profit in exactly the month they were picked on.
 - **Go/no-go.** At least 3 wallets with copy ROI > 0 at 60 s, the interval's lower bound above 0,
   ≥ 100 copyable trades, and positive P&L in ≥ 2 of the last three 30-day periods.
 

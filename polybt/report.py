@@ -27,6 +27,7 @@ class LotRow:
     entry: float
     stake: float
     pnl: float
+    market: str = ""    # condition_id: fills in one market are one bet, not independent trades
 
 
 def roi(lots: list[LotRow]) -> float | None:
@@ -45,12 +46,23 @@ def max_drawdown(lots: list[LotRow]) -> float:
 
 
 def bootstrap_roi_ci(lots: list[LotRow], samples: int, level: float, seed: int) -> tuple[float | None, float | None]:
-    if len(lots) < 2:
+    """Percentile bootstrap of ROI, resampling whole markets.
+
+    A wallet often fills dozens of times in one market; those fills share one outcome, so resampling
+    them individually overstates confidence enormously (the first real run showed 377 fills in 5
+    markets giving a +-4% interval). Lots without a market each count as their own cluster.
+    """
+    clusters: dict[str, list[float]] = {}
+    for i, l in enumerate(lots):
+        c = clusters.setdefault(l.market or f"_{i}", [0.0, 0.0])
+        c[0] += l.pnl
+        c[1] += l.stake
+    if len(clusters) < 2:
         return None, None
     rng = np.random.default_rng(seed)
-    pnl = np.array([l.pnl for l in lots])
-    stake = np.array([l.stake for l in lots])
-    idx = rng.integers(0, len(lots), size=(samples, len(lots)))
+    pnl = np.array([c[0] for c in clusters.values()])
+    stake = np.array([c[1] for c in clusters.values()])
+    idx = rng.integers(0, len(pnl), size=(samples, len(pnl)))
     rois = pnl[idx].sum(axis=1) / stake[idx].sum(axis=1)
     a = (1 - level) / 2
     return float(np.quantile(rois, a)), float(np.quantile(rois, 1 - a))
@@ -72,13 +84,13 @@ def _load(con):
     lots: dict[tuple, list[tuple[str, LotRow]]] = defaultdict(list)
     skips: dict[tuple, list[tuple[str, str]]] = defaultdict(list)
     opens: Counter = Counter()
-    for w, mode, d, sizing, cat, status, reason, ts, close_ts, entry, stake, pnl in con.execute("""
+    for w, mode, d, sizing, cat, status, reason, ts, close_ts, entry, stake, pnl, market in con.execute("""
         SELECT wallet, mode, delay_s, coalesce(sizing, 'flat'), category, status, skipped_reason, ts, close_ts,
-               copy_price, stake, pnl
+               copy_price, stake, pnl, condition_id
         FROM sim_trades WHERE mode IN ('copy', 'wallet')
     """).fetchall():
         if status == "closed":
-            lots[(w, mode, d, sizing)].append((cat, LotRow(ts, close_ts, entry, stake, pnl)))
+            lots[(w, mode, d, sizing)].append((cat, LotRow(ts, close_ts, entry, stake, pnl, market)))
         elif status == "skipped":
             skips[(w, d, sizing)].append((cat, reason))
         else:
@@ -118,6 +130,7 @@ def compute(con, cfg) -> tuple[list[dict], list[dict]]:
                                  if ww == w and m == "copy" and dd == d and sz == sizing and (cat == "all" or c == cat))
                     results.append({
                         "wallet": w, "delay_s": d, "category": cat, "sizing": sizing, "trades": len(mine),
+                        "markets": len({l.market for l in mine}),
                         "skipped": len(sk), "skipped_reasons": json.dumps(dict(Counter(sk))), "open_positions": n_open,
                         "staked": sum(l.stake for l in mine), "pnl": sum(l.pnl for l in mine),
                         "copy_roi": copy_roi, "wallet_roi": own_roi,
@@ -135,6 +148,7 @@ def compute(con, cfg) -> tuple[list[dict], list[dict]]:
             "roi_positive": bool(head and head["copy_roi"] is not None and head["copy_roi"] > 0),
             "ci_above_zero": bool(head and head["ci_low"] is not None and head["ci_low"] > 0),
             "enough_trades": bool(head and head["trades"] >= int(gng["min_copyable_trades"])),
+            "enough_markets": bool(head and head["markets"] >= int(gng.get("min_markets", 0))),
             "months_positive": sum(bool(m) for m in months) >= int(gng["months_positive"]),
         }
         summaries.append({"wallet": w, "go": all(checks.values()), "checks": checks, "months": months,
@@ -144,7 +158,7 @@ def compute(con, cfg) -> tuple[list[dict], list[dict]]:
     con.execute("DELETE FROM sim_results")
     cols = ["wallet", "delay_s", "category", "trades", "skipped", "skipped_reasons", "open_positions", "staked",
             "pnl", "copy_roi", "wallet_roi", "edge_decay", "win_rate", "avg_entry", "ci_low", "ci_high", "drawdown",
-            "sizing"]
+            "sizing", "markets"]
     insert_many(con, "sim_results", [tuple(r[c] for c in cols) for r in results], "INSERT")
     return results, summaries
 
@@ -301,7 +315,7 @@ def render_html(cfg, results: list[dict], summaries: list[dict], scores: list[tu
         k = by.get((w, "all", key_delay)) or {}
         wr, ae = k.get("win_rate"), k.get("avg_entry")
         cells.append(f"<td>{'–' if wr is None else f'{wr:.0%} / {ae * 100:.0f}¢'}</td>")
-        cells.append(f"<td>{k.get('trades', 0)}</td><td>{k.get('skipped', 0)}</td>")
+        cells.append(f"<td>{k.get('trades', 0)} <span class=ci>({k.get('markets', 0)})</span></td><td>{k.get('skipped', 0)}</td>")
         cells.append(f"<td>${k.get('drawdown', 0):.0f}</td>")
         if prop:
             pr = prop.get((w, key_delay))
@@ -363,7 +377,8 @@ def render_html(cfg, results: list[dict], summaries: list[dict], scores: list[tu
 spread {sim['spread_penalty'] * 100:.0f}¢ ({sim['spread_penalty_low_volume'] * 100:.0f}¢ under ${sim['low_volume_threshold_usd']:,.0f} volume) ·
 skip above {sim['max_copy_price'] * 100:.0f}¢ · {html.escape(fees)}</p>
 <div class="verdict">{verdict}<br><span class="sub">Go criteria: copy ROI &gt; 0 at {_delay_label(key_delay)} with
-the {cfg['report']['ci_level']:.0%} interval above 0, ≥ {gng['min_copyable_trades']} copyable trades, positive in ≥
+the {cfg['report']['ci_level']:.0%} interval (resampled by market) above 0, ≥ {gng['min_copyable_trades']} copyable trades in
+≥ {gng.get('min_markets', 0)} distinct markets, positive in ≥
 {gng['months_positive']} of the last {gng['months_window']} {gng['month_days']}-day periods.</span></div>
 
 <h2>Ranked wallets</h2>
@@ -371,8 +386,8 @@ the {cfg['report']['ci_level']:.0%} interval above 0, ≥ {gng['min_copyable_tra
 bootstrap interval. Wallet ROI is the wallet's own result on the same test period. Win rate / avg entry, trades,
 skips and drawdown are at {_delay_label(key_delay)}. Sized: copy ROI when stakes mirror the wallet's
 relative bet size ($stake × their buy ÷ their median buy, capped at {cfg['simulate'].get('max_stake_multiple', 5)}×). Months: oldest → newest, + positive, − negative, – no closed trades.</p>
-<div class="scroll"><table><thead><tr><th>Wallet</th><th>Wallet ROI</th>{head}<th>Win / entry</th><th>Trades</th>
-<th>Skipped</th><th>Max DD</th>{f"<th>Sized @{_delay_label(key_delay)}</th>" if prop else ""}<th>Months</th><th>Go</th></tr></thead><tbody>{"".join(rows) or '<tr><td colspan=20>No simulated wallets.</td></tr>'}</tbody></table></div>
+<div class="scroll"><table><thead><tr><th>Wallet</th><th>Wallet ROI</th>{head}<th>Win / entry</th>
+<th>Trades (markets)</th><th>Skipped</th><th>Max DD</th>{f"<th>Sized @{_delay_label(key_delay)}</th>" if prop else ""}<th>Months</th><th>Go</th></tr></thead><tbody>{"".join(rows) or '<tr><td colspan=20>No simulated wallets.</td></tr>'}</tbody></table></div>
 
 <h2>By category</h2>
 <p class="sub">Copy ROI per delay (trades in brackets). Expect the worst decay in short-term crypto, where many top wallets are bots.</p>
@@ -476,12 +491,15 @@ def markdown_summary(con, cfg) -> str:
              f"**Filter funnel:** {sum(1 for ok, _ in scores if ok)} of {len(scores)} candidates passed. "
              "Failures: " + ", ".join(f"{k} {v}" for k, v in reasons.most_common()), ""]
     if summaries:
-        lines += ["| wallet | wallet ROI | " + " | ".join(f"copy @{d}s" for d in delays) + " | trades | go |",
-                  "|---|---|" + "---|" * len(delays) + "---|---|"]
+        lines += ["| wallet | wallet ROI | " + " | ".join(f"copy @{d}s" for d in delays)
+                  + f" | 90% CI @{gng['delay_s']}s | trades (markets) | go |",
+                  "|---|---|" + "---|" * len(delays) + "---|---|---|"]
         key = int(gng["delay_s"])
         for s in sorted(summaries, key=lambda s: -((by.get((s["wallet"], key)) or {}).get("copy_roi") or -9)):
             w = s["wallet"]
             cells = [pct((by.get((w, d)) or {}).get("copy_roi")) for d in delays]
+            k = by.get((w, key)) or {}
             lines.append(f"| `{w[:8]}…{w[-4:]}` | {pct(s['wallet_roi'])} | " + " | ".join(cells)
-                         + f" | {(by.get((w, key)) or {}).get('trades', 0)} | {'GO' if s['go'] else 'no'} |")
+                         + f" | {pct(k.get('ci_low'))} … {pct(k.get('ci_high'))} | {k.get('trades', 0)} ({k.get('markets', 0)})"
+                         + f" | {'GO' if s['go'] else 'no'} |")
     return "\n".join(lines)

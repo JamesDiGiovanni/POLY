@@ -69,7 +69,7 @@ def test_full_pipeline(tmp_path):
     now = int(time.time())
     cfg = load(overrides={"db_path": str(tmp_path / "t.duckdb"), "output_dir": str(tmp_path / "out"),
                           "discovery": {"active_in_markets": {"enabled": False},
-                                        "leaderboard": {"queries": [{"category": "OVERALL"}], "pages": 1}}})
+                                        "leaderboard": {"enabled": True, "queries": [{"category": "OVERALL"}], "pages": 1}}})
     con = db.connect(cfg["db_path"])
     api = FakeAPI(now)
 

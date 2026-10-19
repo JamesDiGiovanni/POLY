@@ -106,7 +106,7 @@ def history(tmp_path_factory):
     tmp = tmp_path_factory.mktemp("live")
     cfg = load(overrides={"db_path": str(tmp / "t.duckdb"), "output_dir": str(tmp / "out"),
                           "discovery": {"active_in_markets": {"enabled": False},
-                                        "leaderboard": {"queries": [{"category": "OVERALL"}], "pages": 1}}})
+                                        "leaderboard": {"enabled": True, "queries": [{"category": "OVERALL"}], "pages": 1}}})
     con = db.connect(cfg["db_path"])
     api = FakeAPI(int(time.time()))
     wallets = ingest.run(con, api, cfg)
