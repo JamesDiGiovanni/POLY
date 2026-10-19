@@ -17,6 +17,11 @@ on:
       seed_wallets:
         description: "Extra wallets to include, comma-separated (optional)"
         default: ""
+      profile:
+        description: "spec: the spec's filters. sensitivity: broader discovery, looser filters"
+        type: choice
+        options: [spec, sensitivity]
+        default: spec
 
 permissions:
   contents: write
@@ -57,11 +62,20 @@ jobs:
         env:
           MAX_CANDIDATES: ${{ inputs.max_candidates }}
           SEED_WALLETS: ${{ inputs.seed_wallets }}
+          PROFILE: ${{ inputs.profile }}
         run: |
           python - <<'EOF'
           import os, yaml
           seeds = [w.strip().lower() for w in os.environ["SEED_WALLETS"].split(",") if w.strip()]
           cfg = {"discovery": {"max_candidates": int(os.environ["MAX_CANDIDATES"]), "seed_wallets": seeds}}
+          if os.environ["PROFILE"] == "sensitivity":
+              # Recently active wallets across categories, and looser thresholds where many real
+              # traders failed by a narrow margin in the spec run.
+              cats = ["OVERALL", "POLITICS", "SPORTS", "CRYPTO", "ECONOMICS", "CULTURE"]
+              cfg["discovery"]["leaderboard"] = {"pages": 2, "queries":
+                  [{"category": c, "timePeriod": t, "orderBy": "PNL"} for c in cats for t in ("WEEK", "MONTH")]
+                  + [{"category": "OVERALL", "timePeriod": "MONTH", "orderBy": "VOL"}]}
+              cfg["filters"] = {"max_top3_profit_share": 0.60, "min_edge_pts": 0.0, "min_median_trade_usd": 5}
           yaml.safe_dump(cfg, open("ci.yaml", "w"))
           print(yaml.safe_dump(cfg))
           EOF
@@ -149,9 +163,10 @@ jobs:
           cp probe.log run.log /tmp/results/ 2>/dev/null || true
           find /tmp/results -name '*.csv' -size +40M -exec gzip -f {} \;
           cd /tmp/results
-          git init -q -b backtest-results
+          BRANCH=backtest-results$([ "${{ inputs.profile }}" = sensitivity ] && echo -sensitivity)
+          git init -q -b "$BRANCH"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -q -m "Backtest results from run ${{ github.run_id }}" || exit 0
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" backtest-results
+          git commit -q -m "Backtest results (${{ inputs.profile }}) from run ${{ github.run_id }}" || exit 0
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "$BRANCH"
