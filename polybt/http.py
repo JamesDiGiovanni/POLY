@@ -85,9 +85,11 @@ class HttpClient:
         tmp.write_text(json.dumps({"url": url, "fetched_at": time.time(), "body": body}))
         os.replace(tmp, p)
 
-    def get_json(self, base: str, path: str, params: dict | None = None, ttl: float | None = None):
+    def get_json(self, base: str, path: str, params: dict | None = None, ttl: float | None = None,
+                 cache: bool = True):
+        """cache=False neither reads nor writes the cache (live polling)."""
         url = build_url(base, path, params)
-        cached = self._read_cache(url, ttl)
+        cached = self._read_cache(url, ttl) if cache else None
         if cached is not None:
             self.stats["hits"] += 1
             return cached["body"]
@@ -115,6 +117,7 @@ class HttpClient:
             if resp.status_code >= 400:
                 raise HttpError(resp.status_code, url, resp.text)
             body = resp.json()
-            self._write_cache(url, body)
+            if cache:
+                self._write_cache(url, body)
             return body
         raise AssertionError("unreachable")

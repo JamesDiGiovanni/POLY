@@ -8,18 +8,22 @@ output_dir: output
 split:
   # Wallets are selected on trades before the cutoff and tested only on trades after it.
   cutoff_date: null            # YYYY-MM-DD; null = today minus cutoff_days_ago
-  cutoff_days_ago: 60
+  # 90 days so the go rule's "positive in 2 of the last 3 30-day periods" has three test periods to look at.
+  cutoff_days_ago: 90
   selection_lookback_days: 365 # how much history before the cutoff to ingest and score
 
 http:
   timeout_s: 30
   max_retries: 5
   backoff_s: 2.0
-  # Requests per second per host. Polymarket's published limits are generous; stay well under.
+  # Requests per second per host. Polymarket's published limits (docs.polymarket.com/api-reference/rate-limits,
+  # sliding 10 s windows, throttled by Cloudflare rather than rejected): Data API 1,000/10 s general and
+  # 200/10 s on /trades; CLOB 9,000/10 s general, 1,000/10 s on /prices-history, 1,500/10 s on /book.
+  # These defaults sit at well under half of the tightest relevant limit.
   requests_per_second:
-    data-api.polymarket.com: 4
-    clob.polymarket.com: 4
-    gamma-api.polymarket.com: 4
+    data-api.polymarket.com: 8
+    clob.polymarket.com: 40
+    gamma-api.polymarket.com: 10
   # Responses that can still change (latest activity page, open markets, leaderboards)
   # are reused for this long. Immutable responses (closed price windows) are cached forever.
   mutable_ttl_s: 21600
@@ -75,18 +79,66 @@ price_history:
   chunk_hours: 24              # one CLOB request covers this window
   pad_s: 3600                  # history pulled on each side of every trade
 
+# Taker fees (see polybt/fees.py). Each market's own parameters are fetched from the CLOB
+# (GET /clob-markets/{condition_id} -> fd.r / fd.e) and take precedence; this table is the fallback.
+fees:
+  fetch_market_info: true
+  # v2: fee = shares * rate * p * (1 - p)                     (current docs, July 2026 onwards)
+  # v1: fee = shares * p * rate * (p * (1 - p)) ** exponent    (earlier docs)
+  # `python -m polybt fees` checks which one matches the wallets' real fills.
+  formula: v2
+  exponent: 1
+  # Fee Structure V2 (effective March 30 2026; sports 0.03 -> 0.05 and crypto 0.072 -> 0.07 in July 2026).
+  # Some sports markets listed before July still carry 0.03 - the per-market fetch handles that.
+  category_rates:
+    crypto: 0.07
+    sports: 0.05
+    economics: 0.05
+    culture: 0.05
+    weather: 0.05
+    politics: 0.04
+    finance: 0.04
+    tech: 0.04
+    mentions: 0.04
+    geopolitics: 0.0
+    default: 0.05
+  # Fallback classification when a market has no fee details: Gamma's category/tags first, then these.
+  category_patterns:
+    crypto: ["\\b(bitcoin|btc|ethereum|eth|solana|sol|xrp|doge|crypto)\\b", "up or down", "updown"]
+    sports: ["\\b(nfl|nba|mlb|nhl|ufc|fifa|premier league|champions league|vs\\.?|match|game \\d)\\b"]
+    politics: ["\\b(election|president|senate|congress|governor|mayor|trump|biden|party|nominee)\\b"]
+    geopolitics: ["\\b(war|ceasefire|invade|invasion|nato|sanction|missile|military)\\b"]
+    economics: ["\\b(fed|interest rate|inflation|cpi|gdp|recession|unemployment|jobs report)\\b"]
+    weather: ["\\b(temperature|hurricane|rain|snow|weather)\\b"]
+
 simulate:
   delays_s: [10, 60, 300, 900]
   stake_usd: 10
+  # flat: $stake per copy. proportional: $stake x (their buy / their median buy), capped at max_stake_multiple.
+  sizing: [flat, proportional]
+  max_stake_multiple: 5
   spread_penalty: 0.01
   spread_penalty_low_volume: 0.02
   low_volume_threshold_usd: 50000
   max_copy_price: 0.97
-  # Taker fee as a fraction of notional, per category. CHECK Polymarket's current schedule
-  # before trusting results, especially for short-term crypto.
-  fees:
-    short_term_crypto: 0.0
-    other: 0.0
+  min_order_usd: 1.0          # Polymarket's minimum marketable order; smaller exits ride to resolution
+
+# Risk limits. Part of the shared engine, so they bind the backtest, paper and live identically.
+risk:
+  max_signal_age_s: 1800      # never act on a wallet fill older than this (e.g. after a restart)
+  max_open_usd: null          # total cost basis allowed in open copies
+  max_market_usd: null        # per market
+
+# Paper / live trading (python -m polybt paper | live).
+live:
+  session: paper-1
+  wallets: []                 # default: wallets marked GO in the last report
+  poll_interval_s: 5          # per-cycle activity poll across all wallets
+  resolution_check_s: 300
+  sizing: flat
+  # Live trading also needs POLYBT_PRIVATE_KEY (and POLYBT_FUNDER for a proxy wallet) in the environment,
+  # `pip install py-clob-client-v2`, and the --confirm-live flag. Paper needs none of that.
+  signature_type: 1
 
 report:
   bootstrap_samples: 2000
@@ -99,3 +151,4 @@ report:
     months_positive: 2
     month_days: 30
     min_wallets: 3
+    sizing: flat

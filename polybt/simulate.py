@@ -1,80 +1,35 @@
-"""Copy simulation: replay a wallet's fills as delayed copies at worse prices, after fees.
+"""Backtest: replay a wallet's fills through the shared CopyEngine with a historical-price executor.
 
-The engine works on plain objects so it can be unit-tested without a database;
-`run` at the bottom loads from and writes to DuckDB.
+The engine (polybt.engine) decides what to trade; BacktestExecutor decides the fill from price
+history and the spread model. Paper and live trading drive the same engine with other executors.
 """
 from __future__ import annotations
 
-import bisect
 import logging
+import statistics
 from dataclasses import dataclass, field
 
 from .db import insert_many
+from .engine import (CopyEngine, Execution, Fill, Lot, Market, MirrorExecutor, OrderRequest, Policy,
+                     PriceSeries, Skip)
+from .fees import FeeParams
 
 log = logging.getLogger(__name__)
 
-EPS = 1e-9
-
-
-@dataclass
-class Fill:
-    ts: int
-    token_id: str
-    condition_id: str
-    side: str           # BUY | SELL
-    price: float
-    size: float         # shares
-    usdc_size: float    # what the wallet actually paid / received, fees included
-    tx_hash: str = ""
-
-
-@dataclass
-class Market:
-    condition_id: str
-    category: str
-    volume: float | None
-    resolved: bool
-    end_time: int | None
-    payouts: dict[str, float] = field(default_factory=dict)  # token_id -> payout per share
-
-    def resolved_by(self, ts: int) -> bool:
-        return self.resolved and self.end_time is not None and self.end_time <= ts
-
-
-@dataclass
-class PriceSeries:
-    ts: list[int]
-    price: list[float]
-
-    def at(self, fill_ts: int, wallet_price: float, target_ts: int) -> float | None:
-        """Market price at target_ts for a fill at fill_ts.
-
-        Uses the latest observation after the fill and at or before target_ts. With none
-        (delays under the 1-minute resolution), interpolates linearly from the wallet's own
-        fill to the next observation. With no later observation at all, falls back to the
-        wallet's price. None only if the series is empty.
-        """
-        if not self.ts:
-            return None
-        i = bisect.bisect_right(self.ts, target_ts) - 1
-        if i >= 0 and self.ts[i] > fill_ts:
-            return self.price[i]
-        j = bisect.bisect_right(self.ts, fill_ts)
-        if j < len(self.ts):
-            t1, p1 = self.ts[j], self.price[j]
-            w = (target_ts - fill_ts) / (t1 - fill_ts)
-            return wallet_price + w * (p1 - wallet_price)
-        return wallet_price
+__all__ = ["Fill", "Market", "PriceSeries", "SimParams", "Lot", "Skip", "BacktestExecutor", "simulate",
+           "copy_buy_price", "copy_sell_price", "run"]
 
 
 @dataclass
 class SimParams:
+    """The spread model, plus the policy knobs the hand-built tests set directly."""
     stake_usd: float = 10.0
     spread_penalty: float = 0.01
     spread_penalty_low_volume: float = 0.02
     low_volume_threshold_usd: float = 50_000
     max_copy_price: float = 0.97
-    fees: dict[str, float] = field(default_factory=dict)
+    min_order_usd: float = 0.0
+    policy: Policy | None = field(default=None, repr=False)
 
     @classmethod
     def from_cfg(cls, cfg: dict) -> "SimParams":
@@ -83,15 +38,16 @@ class SimParams:
                    spread_penalty_low_volume=float(s["spread_penalty_low_volume"]),
                    low_volume_threshold_usd=float(s["low_volume_threshold_usd"]),
                    max_copy_price=float(s["max_copy_price"]),
-                   fees={k: float(v) for k, v in (s.get("fees") or {}).items()})
+                   min_order_usd=float(s.get("min_order_usd", 1.0)))
 
     def spread(self, market: Market) -> float:
         if market.volume is not None and market.volume < self.low_volume_threshold_usd:
             return self.spread_penalty_low_volume
         return self.spread_penalty
 
-    def fee_rate(self, market: Market) -> float:
-        return self.fees.get(market.category, 0.0)
+    def to_policy(self) -> Policy:
+        return self.policy or Policy(stake_usd=self.stake_usd, max_copy_price=self.max_copy_price,
+                                     min_order_usd=self.min_order_usd)
 
 
 def copy_buy_price(wallet_price: float, market_price: float, spread: float) -> float:
@@ -99,174 +55,89 @@ def copy_buy_price(wallet_price: float, market_price: float, spread: float) -> f
     return max(wallet_price, market_price) + spread
 
 
-def copy_sell_price(wallet_price: float, market_price: float, spread: float) -> float:
-    return max(0.0, min(wallet_price, market_price) - spread)
+def copy_sell_price(wallet_price: float | None, market_price: float, spread: float) -> float:
+    ref = market_price if wallet_price is None else min(wallet_price, market_price)
+    return max(0.0, ref - spread)
 
 
-@dataclass
-class Lot:
-    """One copied buy. P&L from later exits is allocated to it pro rata."""
-    tx_hash: str
-    token_id: str
-    condition_id: str
-    category: str
-    ts: int
-    wallet_price: float
-    market_price: float | None
-    entry_price: float
-    shares: float
-    stake: float        # cash out at entry, fees included
-    fees: float
-    open_shares: float = 0.0
-    proceeds: float = 0.0
-    close_ts: int | None = None
+class BacktestExecutor:
+    """Fills at the historical market price `delay_s` after the wallet, with the modelled spread."""
 
-    @property
-    def closed(self) -> bool:
-        return self.open_shares <= EPS * max(1.0, self.shares)
+    def __init__(self, prices: dict[str, PriceSeries], params: SimParams, delay_s: int):
+        self.prices = prices
+        self.params = params
+        self.delay_s = delay_s
 
-    @property
-    def pnl(self) -> float:
-        return self.proceeds - self.stake
+    def exec_ts(self, fill: Fill) -> int:
+        return fill.ts + self.delay_s
 
+    def _market_price(self, req: OrderRequest) -> float | None:
+        series = self.prices.get(req.token_id)
+        return series.at(req.fill.ts, req.wallet_price, req.exec_ts) if series else None
 
-@dataclass
-class Skip:
-    tx_hash: str
-    token_id: str
-    condition_id: str
-    category: str
-    side: str
-    ts: int
-    wallet_price: float
-    reason: str
+    def buy(self, req: OrderRequest) -> Execution | str:
+        mp = self._market_price(req)
+        if mp is None:
+            return "no_price_history"
+        cp = copy_buy_price(req.wallet_price, mp, self.params.spread(req.market))
+        if cp > req.limit_price:
+            return "price_above_max"
+        shares, fee = req.market.fees.buy(req.usd / cp, cp)
+        return Execution(req.exec_ts, cp, shares, req.usd, fee, ref_price=mp)
+
+    def sell(self, req: OrderRequest) -> Execution | str:
+        mp = self._market_price(req)
+        if mp is None:
+            if req.wallet_price is None:
+                return "no_price_history"
+            mp = req.wallet_price
+        price = copy_sell_price(req.wallet_price, mp, self.params.spread(req.market))
+        if price <= 0:
+            return Execution(req.exec_ts, 0.0, req.shares, 0.0, 0.0, ref_price=mp)
+        usdc, fee = req.market.fees.sell(req.shares, price)
+        return Execution(req.exec_ts, price, req.shares, usdc, fee, ref_price=mp)
 
 
 def simulate(fills: list[Fill], markets: dict[str, Market], prices: dict[str, PriceSeries],
              params: SimParams, delay_s: int, start_ts: int, end_ts: int | None = None,
              mode: str = "copy") -> tuple[list[Lot], list[Skip]]:
-    """Replay fills.
+    """Replay fills through the engine.
 
-    mode='copy': each BUY at or after start_ts is copied with a flat stake at the delayed,
-    penalised price; SELLs close the same fraction of the copy position at the same delay;
-    anything still held is settled at resolution.
-    mode='wallet': the wallet's own fills at their real cost (delay and penalties ignored),
-    used for wallet ROI on the same lot basis.
-
-    Fills before start_ts only build up the wallet's position so later sell fractions are right.
-    Exits after end_ts are ignored (and resolutions after end_ts too), which keeps the
-    selection window free of lookahead.
+    mode='copy': delayed copies via BacktestExecutor. mode='wallet': the wallet's own fills at
+    their real cost (MirrorExecutor), for wallet ROI on the same lot basis.
     """
-    lots: list[Lot] = []
-    skips: list[Skip] = []
-    open_lots: dict[str, list[Lot]] = {}
-    wallet_shares: dict[str, float] = {}
-
+    if mode == "wallet":
+        engine = CopyEngine(markets, MirrorExecutor(), Policy.mirror(), start_ts, end_ts)
+    else:
+        engine = CopyEngine(markets, BacktestExecutor(prices, params, delay_s), params.to_policy(), start_ts, end_ts)
     for f in sorted(fills, key=lambda f: (f.ts, f.side != "BUY")):
-        if end_ts is not None and f.ts >= end_ts:
-            break
-        held = wallet_shares.get(f.token_id, 0.0)
-        if f.side == "BUY":
-            wallet_shares[f.token_id] = held + f.size
-            if f.ts < start_ts:
-                continue
-            m = markets.get(f.condition_id)
-            cat = m.category if m else "unknown"
-
-            def skip(reason):
-                skips.append(Skip(f.tx_hash, f.token_id, f.condition_id, cat, "BUY", f.ts, f.price, reason))
-
-            if m is None:
-                skip("no_market_data")
-                continue
-            if mode == "wallet":
-                if f.size <= 0:
-                    continue
-                lot = Lot(f.tx_hash, f.token_id, f.condition_id, cat, f.ts, f.price, None, f.price,
-                          f.size, f.usdc_size, 0.0, open_shares=f.size)
-            else:
-                entry_ts = f.ts + delay_s
-                if m.resolved_by(entry_ts):
-                    skip("resolved_before_entry")
-                    continue
-                series = prices.get(f.token_id)
-                mp = series.at(f.ts, f.price, entry_ts) if series else None
-                if mp is None:
-                    skip("no_price_history")
-                    continue
-                cp = copy_buy_price(f.price, mp, params.spread(m))
-                if cp > params.max_copy_price:
-                    skip("price_above_max")
-                    continue
-                fee = params.stake_usd * params.fee_rate(m)
-                shares = params.stake_usd / cp
-                lot = Lot(f.tx_hash, f.token_id, f.condition_id, cat, f.ts, f.price, mp, cp,
-                          shares, params.stake_usd + fee, fee, open_shares=shares)
-            lots.append(lot)
-            open_lots.setdefault(f.token_id, []).append(lot)
-
-        elif f.side == "SELL":
-            wallet_shares[f.token_id] = max(0.0, held - f.size)
-            mine = [lot for lot in open_lots.get(f.token_id, []) if not lot.closed]
-            if not mine or held <= EPS:
-                continue
-            frac = min(1.0, f.size / held)
-            m = markets.get(f.condition_id)
-            if mode == "wallet":
-                # Proceeds for the shares we know about; any excess came from before the window.
-                per_share = f.usdc_size / f.size if f.size > 0 else 0.0
-                exit_ts, price, fee_rate = f.ts, per_share, 0.0
-            else:
-                exit_ts = f.ts + delay_s
-                if m is None or m.resolved_by(exit_ts):
-                    continue  # too late to sell; the copy rides to resolution
-                series = prices.get(f.token_id)
-                mp = series.at(f.ts, f.price, exit_ts) if series else None
-                if mp is None:
-                    mp = f.price
-                price = copy_sell_price(f.price, mp, params.spread(m))
-                fee_rate = params.fee_rate(m)
-            if end_ts is not None and exit_ts >= end_ts:
-                continue
-            for lot in mine:
-                sh = lot.open_shares * frac
-                gross = sh * price
-                fee = gross * fee_rate
-                lot.proceeds += gross - fee
-                lot.fees += fee
-                lot.open_shares -= sh
-                if lot.closed:
-                    lot.open_shares = 0.0
-                    lot.close_ts = exit_ts
-
-    for lot in lots:
-        if lot.closed:
-            continue
-        m = markets.get(lot.condition_id)
-        if m and m.resolved and m.end_time is not None and (end_ts is None or m.end_time < end_ts):
-            lot.proceeds += lot.open_shares * m.payouts.get(lot.token_id, 0.0)
-            lot.open_shares = 0.0
-            lot.close_ts = max(m.end_time, lot.ts)
-    return lots, skips
+        engine.on_fill(f)
+    engine.settle()
+    return engine.lots, engine.skips
 
 
 # ---- database glue -------------------------------------------------------
 
-def load_markets(con) -> dict[str, Market]:
+def load_markets(con, formula: str = "v2") -> dict[str, Market]:
     out = {}
-    for cid, cat, vol, resolved, end_time, tokens, payouts in con.execute(
-            "SELECT condition_id, category, volume, resolved, end_time, token_ids, payouts FROM markets").fetchall():
-        out[cid] = Market(cid, cat, vol, bool(resolved), end_time,
-                          dict(zip(tokens or [], payouts or [])))
+    for cid, cat, vol, resolved, end_time, tokens, payouts, rate, exponent in con.execute("""
+            SELECT condition_id, category, volume, resolved, end_time, token_ids, payouts, fee_rate, fee_exponent
+            FROM markets""").fetchall():
+        fees = FeeParams(rate=rate or 0.0, exponent=exponent or 1.0, formula=formula)
+        out[cid] = Market(cid, cat, vol, bool(resolved), end_time, dict(zip(tokens or [], payouts or [])),
+                          fees, list(tokens or []))
     return out
 
 
-def load_fills(con, wallet: str) -> list[Fill]:
+def load_fills(con, wallet: str, since_ts: int | None = None) -> list[Fill]:
     rows = con.execute("""
-        SELECT timestamp, token_id, condition_id, side, price, size, coalesce(usdc_size, price * size), tx_hash
-        FROM wallet_trades WHERE wallet = ? AND type = 'TRADE' AND side IN ('BUY', 'SELL')
+        SELECT timestamp, token_id, condition_id, CASE WHEN type = 'MERGE' THEN 'MERGE' ELSE side END,
+               price, size, coalesce(usdc_size, price * size), tx_hash
+        FROM wallet_trades
+        WHERE wallet = ? AND timestamp >= ?
+          AND ((type = 'TRADE' AND side IN ('BUY', 'SELL')) OR type = 'MERGE')
         ORDER BY timestamp
-    """, [wallet]).fetchall()
+    """, [wallet, since_ts or 0]).fetchall()
     return [Fill(*r) for r in rows]
 
 
@@ -287,15 +158,24 @@ def load_prices(con, token_ids) -> dict[str, PriceSeries]:
     return out
 
 
-def _rows(wallet, mode, delay_s, lots, skips):
+def size_reference(con, wallet: str, start_ts: int, cutoff_ts: int) -> float | None:
+    """The wallet's median buy in the selection window: the unit for proportional sizing."""
+    sizes = [r[0] for r in con.execute("""
+        SELECT usdc_size FROM wallet_trades WHERE wallet = ? AND type = 'TRADE' AND side = 'BUY'
+          AND timestamp >= ? AND timestamp < ? AND usdc_size > 0""", [wallet, start_ts, cutoff_ts]).fetchall()]
+    return statistics.median(sizes) if sizes else None
+
+
+def lot_rows(wallet, mode, delay_s, sizing, lots, skips):
+    """sim_trades rows (column order matches the table)."""
     for lot in lots:
         yield (wallet, mode, delay_s, lot.tx_hash, lot.token_id, lot.condition_id, lot.category, "BUY",
                lot.ts, lot.wallet_price, lot.market_price, lot.entry_price, lot.shares, lot.stake,
                lot.fees, lot.proceeds, lot.pnl if lot.closed else None, lot.close_ts,
-               "closed" if lot.closed else "open", None)
+               "closed" if lot.closed else "open", None, sizing, lot.exec_ts)
     for s in skips:
         yield (wallet, mode, delay_s, s.tx_hash, s.token_id, s.condition_id, s.category, s.side, s.ts,
-               s.wallet_price, None, None, None, None, None, None, None, None, "skipped", s.reason)
+               s.wallet_price, None, None, None, None, None, None, None, None, "skipped", s.reason, sizing, None)
 
 
 def run(con, cfg, wallets: list[str] | None = None) -> int:
@@ -307,19 +187,26 @@ def run(con, cfg, wallets: list[str] | None = None) -> int:
         log.warning("no wallets to simulate (none passed the filters?)")
         return 0
     params = SimParams.from_cfg(cfg)
-    markets = load_markets(con)
+    markets = load_markets(con, cfg["fees"]["formula"])
     cutoff = cfg.cutoff_ts
+    sizings = cfg["simulate"].get("sizing") or ["flat"]
     n = 0
     for w in wallets:
         fills = load_fills(con, w)
-        prices = load_prices(con, {f.token_id for f in fills if f.ts >= cutoff})
-        con.execute("DELETE FROM sim_trades WHERE wallet = ?", [w])
+        prices = load_prices(con, {f.token_id for f in fills if f.ts >= cutoff}
+                             | {t for f in fills if f.side == "MERGE" and f.condition_id in markets
+                                for t in markets[f.condition_id].token_ids})
+        ref = size_reference(con, w, cfg.selection_start_ts, cutoff)
+        con.execute("DELETE FROM sim_trades WHERE wallet = ? AND mode IN ('copy', 'wallet')", [w])
         rows = []
         lots, skips = simulate(fills, markets, prices, params, 0, cutoff, mode="wallet")
-        rows.extend(_rows(w, "wallet", 0, lots, skips))
-        for d in cfg["simulate"]["delays_s"]:
-            lots, skips = simulate(fills, markets, prices, params, int(d), cutoff)
-            rows.extend(_rows(w, "copy", int(d), lots, skips))
+        rows.extend(lot_rows(w, "wallet", 0, "mirror", lots, skips))
+        for sizing in sizings:
+            params.policy = Policy.from_cfg(cfg, sizing, ref)
+            for d in cfg["simulate"]["delays_s"]:
+                lots, skips = simulate(fills, markets, prices, params, int(d), cutoff)
+                rows.extend(lot_rows(w, "copy", int(d), sizing, lots, skips))
+        params.policy = None
         insert_many(con, "sim_trades", rows, "INSERT")
         n += len(rows)
         log.info("simulated %s: %d rows", w, len(rows))

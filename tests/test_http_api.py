@@ -65,7 +65,7 @@ class FakeClient:
     def __init__(self, rows, cap):
         self.rows, self.cap, self.calls = rows, cap, []
 
-    def get_json(self, base, path, params=None, ttl=None):
+    def get_json(self, base, path, params=None, ttl=None, cache=True):
         self.calls.append(dict(params))
         if params["offset"] >= self.cap:
             raise HttpError(400, path)
@@ -90,3 +90,23 @@ def test_parse_market_resolved_and_open():
     m = parse_market({"conditionId": "c", "clobTokenIds": '["1","2"]', "outcomePrices": '["0.4","0.6"]',
                       "closed": False, "endDate": "2025-01-02T00:00:00Z"})
     assert not m["resolved"] and m["payouts"] == []
+
+
+def test_market_fees_prefer_clob_details_then_category():
+    from polybt.ingest import fee_category, market_fees
+    cfg = load()
+
+    class Api:
+        def __init__(self, info):
+            self.info = info
+
+        def clob_market_info(self, cid):
+            return self.info
+
+    m = {"condition_id": "c", "question": "Bitcoin above 100k on Friday?", "slug": "", "gamma_category": "",
+         "tags": []}
+    assert market_fees(Api({"fd": {"r": 0.03, "e": 1, "to": True}}), m, cfg) == (0.03, 1.0, "market", "crypto")
+    assert market_fees(Api({"tick": 0.01}), m, cfg) == (0.0, 1.0, "market", "crypto")   # listed, no fee
+    assert market_fees(Api(None), m, cfg) == (0.07, 1.0, "category", "crypto")         # fallback table
+    assert fee_category({"question": "x", "slug": "", "gamma_category": "", "tags": ["geopolitics"]}, cfg) == "geopolitics"
+    assert fee_category({"question": "Who wins?", "slug": "", "gamma_category": "", "tags": []}, cfg) == "default"

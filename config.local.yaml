@@ -1,0 +1,4 @@
+# Local overrides, merged over config.yaml. Put your wallet shortlist and session name here.
+live:
+  session: paper-1
+  wallets: []

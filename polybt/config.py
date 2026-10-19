@@ -9,6 +9,7 @@ from typing import Any
 import yaml
 
 DEFAULT_PATH = Path(__file__).resolve().parent.parent / "config.yaml"
+LOCAL_PATH = DEFAULT_PATH.with_name("config.local.yaml")  # optional local overrides (wallet shortlist, session)
 
 
 def _merge(base: dict, override: dict) -> dict:
@@ -41,6 +42,9 @@ class Config(dict):
 def load(path: str | Path | None = None, overrides: dict[str, Any] | None = None) -> Config:
     with open(DEFAULT_PATH) as f:
         cfg = yaml.safe_load(f)
+    if LOCAL_PATH.exists() and not overrides:  # tests pass overrides and must not see local settings
+        with open(LOCAL_PATH) as f:
+            cfg = _merge(cfg, yaml.safe_load(f) or {})
     if path and Path(path).resolve() != DEFAULT_PATH:
         with open(path) as f:
             cfg = _merge(cfg, yaml.safe_load(f) or {})

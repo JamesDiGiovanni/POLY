@@ -1,0 +1,25 @@
+# Backtest once, then paper trade continuously:
+#   docker compose run --rm backtest
+#   docker compose up -d paper
+#   docker compose logs -f paper
+#   docker compose run --rm backtest session      # paper results vs the backtest
+services:
+  backtest:
+    build: .
+    command: ["run"]
+    volumes: [./data:/app/data, ./output:/app/output, ./config.local.yaml:/app/config.local.yaml]
+
+  paper:
+    build: .
+    command: ["paper"]
+    restart: unless-stopped        # the journal makes restarts safe: nothing is re-sent
+    volumes: [./data:/app/data, ./output:/app/output, ./config.local.yaml:/app/config.local.yaml]
+
+  # Production: identical engine and runner, real orders. Only start it on purpose.
+  live:
+    build: {context: ., args: {LIVE: "1"}}
+    profiles: ["live"]
+    command: ["live", "--confirm-live", "--session", "live-1"]
+    restart: unless-stopped
+    env_file: [.env]               # POLYBT_PRIVATE_KEY, POLYBT_FUNDER
+    volumes: [./data:/app/data, ./output:/app/output, ./config.local.yaml:/app/config.local.yaml]

@@ -35,7 +35,16 @@ class FakeAPI:
                     rows.append({"type": "TRADE", "side": "BUY", "asset": f"{cid}y", "conditionId": cid,
                                  "price": price, "size": 50 / price, "usdcSize": 50, "timestamp": ts,
                                  "transactionHash": f"{wallet}-{i}"})
-            self.rows[wallet] = rows
+                    if i % 5 == 0:  # every fifth position: sell 60% an hour later, then the rest later still
+                        exit_p = price + (0.08 if win else -0.08)
+                        self.prices[f"{cid}y"] += [(ts + 3630, exit_p), (ts + 3700, exit_p - 0.01),
+                                                   (ts + 7230, exit_p), (ts + 7300, exit_p)]
+                        for k2, (dt_, frac) in enumerate(((3600, 0.6), (7200, 0.4))):
+                            sh = 50 / price * frac
+                            rows.append({"type": "TRADE", "side": "SELL", "asset": f"{cid}y", "conditionId": cid,
+                                         "price": exit_p, "size": sh, "usdcSize": sh * exit_p,
+                                         "timestamp": ts + dt_, "transactionHash": f"{wallet}-{i}-s{k2}"})
+            self.rows[wallet] = sorted(rows, key=lambda r: r["timestamp"])
 
     def leaderboard(self, path, query, limit, offset):
         return [{"proxyWallet": w} for w in self.rows][offset:offset + limit]
@@ -87,7 +96,7 @@ def test_full_pipeline(tmp_path):
     out = report.run(con, cfg)
     assert out["wallets"] == 1
     rows = con.execute("""SELECT delay_s, copy_roi, wallet_roi FROM sim_results
-                          WHERE category = 'all' ORDER BY delay_s""").fetchall()
+                          WHERE category = 'all' AND sizing = 'flat' ORDER BY delay_s""").fetchall()
     assert [r[0] for r in rows] == [10, 60, 300, 900]
     rois = [r[1] for r in rows]
     assert rois == sorted(rois, reverse=True)  # later copies, worse prices

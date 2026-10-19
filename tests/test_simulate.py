@@ -1,5 +1,6 @@
 import pytest
 
+from polybt.fees import FeeParams
 from polybt.simulate import (Fill, Market, PriceSeries, SimParams, copy_buy_price, copy_sell_price, simulate)
 
 T0 = 1_700_000_000
@@ -98,14 +99,29 @@ def test_partial_then_full_exit_copies_fraction_at_delay():
     assert lot.close_ts == T0 + 2060
 
 
-def test_fees_charged_on_entry_and_exit():
+def test_fees_taken_in_shares_on_buy_and_usdc_on_sell():
     prices = {YES: PriceSeries([T0 + 60, T0 + 1060], [0.50, 0.70])}
-    params = SimParams(fees={"other": 0.02})
-    lots, _ = simulate([buy(T0, 0.50), sell(T0 + 1000, 0.70)], market(), prices, params, 60, T0)
+    m = market(fees=FeeParams(rate=0.07))
+    lots, _ = simulate([buy(T0, 0.50), sell(T0 + 1000, 0.70)], m, prices, SimParams(), 60, T0)
     (lot,) = lots
-    gross = 10 / 0.51 * 0.69
-    assert lot.stake == pytest.approx(10.2)
-    assert lot.proceeds == pytest.approx(gross * 0.98)
+    gross = 10 / 0.51
+    buy_fee = round(gross * 0.07 * 0.51 * 0.49, 4)
+    assert lot.stake == 10
+    assert lot.shares == pytest.approx(gross - buy_fee / 0.51)
+    sell_fee = round(lot.shares * 0.07 * 0.69 * 0.31, 4)
+    assert lot.proceeds == pytest.approx(lot.shares * 0.69 - sell_fee)
+    assert lot.fees == pytest.approx(buy_fee + sell_fee)
+
+
+def test_fee_formulas_and_rounding():
+    v2, v1 = FeeParams(0.07), FeeParams(0.072, exponent=1, formula="v1")
+    assert v2.fee_usdc(100, 0.5) == pytest.approx(1.75)        # $1.75 per 100 shares at 50c
+    assert v1.fee_usdc(200, 0.5) == pytest.approx(1.80)        # 1.80% of a $100 fill at 50c
+    assert FeeParams(0.25, 2, formula="v1").fee_usdc(200, 0.5) == pytest.approx(1.5625)  # old 15m crypto
+    assert v2.fee_usdc(0.001, 0.5) == 0.0                       # under 0.0001 USDC rounds to free
+    assert FeeParams(0.0).fee_usdc(100, 0.5) == 0.0
+    shares, fee = v2.sell(100, 0.5)
+    assert (shares, fee) == (pytest.approx(48.25), 1.75)
 
 
 def test_skip_reasons():
@@ -158,3 +174,44 @@ def test_end_ts_excludes_later_exits_and_resolutions():
     fills = [buy(T0, 0.5)]
     lots, _ = simulate(fills, market(), {}, SimParams(), 0, T0, end_ts=T0 + 1000, mode="wallet")
     assert not lots[0].closed  # resolves after end_ts: no lookahead
+
+
+def test_merge_exits_copies_at_market():
+    from polybt.engine import CopyEngine, Policy
+    from polybt.simulate import BacktestExecutor
+    m = market()
+    m[CID].token_ids = [YES, NO]
+    prices = {YES: PriceSeries([T0 + 60, T0 + 1060], [0.50, 0.70])}
+    fills = [buy(T0, 0.50), buy(T0 + 1, 0.50, token=NO),
+             Fill(T0 + 1000, "", CID, "MERGE", 0.0, 100, 100, "m1")]
+    eng = CopyEngine(m, BacktestExecutor(prices, SimParams(), 60), Policy(), T0)
+    for f in fills:
+        eng.on_fill(f)
+    yes_lot = eng.lots[0]
+    assert yes_lot.closed and yes_lot.proceeds == pytest.approx(yes_lot.shares * 0.69)  # market 0.70 - spread
+    no_skip = [s for s in eng.skips if s.token_id == NO]
+    assert no_skip and no_skip[0].reason == "no_price_history"  # NO side had no prices: rides to resolution
+
+
+def test_proportional_sizing_and_risk_limits():
+    from polybt.engine import CopyEngine, Policy
+    from polybt.simulate import BacktestExecutor
+    prices = {YES: PriceSeries([T0 + 60], [0.50])}
+    pol = Policy(sizing="proportional", size_ref_usd=50, max_stake_multiple=3, max_open_usd=40)
+    eng = CopyEngine(market(), BacktestExecutor(prices, SimParams(), 60), pol, T0)
+    for i, usd in enumerate((25, 100, 500, 10)):
+        eng.on_fill(Fill(T0 + i, YES, CID, "BUY", 0.5, usd / 0.5, usd, f"b{i}"))
+    assert [l.stake for l in eng.lots] == [5, 20, 2]           # 0.5x, 2x, (3x capped at $30: over limit), 0.2x
+    assert [s.reason for s in eng.skips] == ["risk_max_open"]
+
+
+def test_stale_signal_and_min_order():
+    from polybt.engine import CopyEngine, Policy
+    from polybt.simulate import BacktestExecutor
+    prices = {YES: PriceSeries([T0 + 60], [0.50])}
+    eng = CopyEngine(market(), BacktestExecutor(prices, SimParams(), 900), Policy(max_signal_age_s=600), T0)
+    eng.on_fill(buy(T0, 0.5))
+    assert eng.skips[0].reason == "stale_signal"
+    eng = CopyEngine(market(), BacktestExecutor(prices, SimParams(), 60), Policy(stake_usd=0.5), T0)
+    eng.on_fill(buy(T0, 0.5))
+    assert eng.skips[0].reason == "below_min_order"

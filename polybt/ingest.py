@@ -7,10 +7,43 @@ import re
 import time
 from collections import Counter
 
+from . import fees as fees_mod
 from .api import PolymarketAPI, parse_market
 from .db import insert_many
 
 log = logging.getLogger(__name__)
+
+
+def fee_category(m: dict, cfg: dict) -> str:
+    """Polymarket fee category for the config fallback: Gamma's category/tags, then keyword patterns."""
+    known = cfg["fees"]["category_rates"]
+    for label in [m.get("gamma_category", "")] + list(m.get("tags", [])):
+        for cat in known:
+            if cat != "default" and label and (label == cat or label.startswith(cat)):
+                return cat
+    text = f"{m.get('question', '')} {m.get('slug', '')}".lower()
+    for cat, patterns in (cfg["fees"].get("category_patterns") or {}).items():
+        if any(re.search(p, text, re.IGNORECASE) for p in patterns):
+            return cat
+    return "default"
+
+
+def market_fees(api: PolymarketAPI | None, m: dict, cfg: dict) -> tuple[float, float, str, str]:
+    """(rate, exponent, source, fee_category). The market's own CLOB fee details win."""
+    cat = fee_category(m, cfg)
+    if api is not None and cfg["fees"].get("fetch_market_info", True):
+        try:
+            info = api.clob_market_info(m["condition_id"])
+        except Exception as e:
+            log.debug("market info for %s failed: %s", m["condition_id"], e)
+            info = None
+        if info is not None:
+            fp = fees_mod.from_market_info(info, cfg["fees"]["formula"])
+            if fp is not None:
+                return fp.rate, fp.exponent, "market", cat
+            return 0.0, 1.0, "market", cat  # the CLOB knows the market and lists no fee
+    fb = fees_mod.category_fallback(cfg, cat)
+    return fb.rate, fb.exponent, "category", cat
 
 
 def categorize(question: str, slug: str, cfg: dict) -> str:
@@ -160,17 +193,19 @@ def ingest_markets(con, api: PolymarketAPI, cfg, batch: int = 20) -> int:
     """, [stale]).fetchall()]
     rows = []
     for i in range(0, len(ids), batch):
-        rows.extend(market_row(parse_market(raw), cfg) for raw in api.markets_by_condition(ids[i:i + batch]))
+        rows.extend(market_row(parse_market(raw), cfg, api) for raw in api.markets_by_condition(ids[i:i + batch]))
     insert_many(con, "markets", rows, "INSERT OR REPLACE")
     n = len(rows)
     log.info("markets: %d requested, %d stored", len(ids), n)
     return n
 
 
-def market_row(m: dict, cfg) -> tuple:
+def market_row(m: dict, cfg, api: PolymarketAPI | None = None) -> tuple:
+    """markets row (column order matches the table)."""
+    rate, exponent, source, cat = market_fees(api, m, cfg)
     return (m["condition_id"], m["question"], m["slug"], m["token_ids"], m["outcomes"], m["payouts"],
             categorize(m["question"], m["slug"], cfg), m["volume"], m["end_time"], m["closed"],
-            m["resolved"], m["resolved_outcome"], int(time.time()))
+            m["resolved"], m["resolved_outcome"], int(time.time()), rate, exponent, source, cat)
 
 
 # ---- price history -------------------------------------------------------
@@ -183,11 +218,15 @@ def needed_price_chunks(con, cfg, wallets: list[str], since_ts: int) -> list[tup
     max_delay = max(int(d) for d in cfg["simulate"]["delays_s"])
     if not wallets:
         return []
+    in_wallets = ",".join("?" * len(wallets))
     rows = con.execute(f"""
         SELECT DISTINCT token_id, timestamp FROM wallet_trades
-        WHERE type = 'TRADE' AND token_id <> '' AND timestamp >= ?
-          AND wallet IN ({",".join("?" * len(wallets))})
-    """, [since_ts, *wallets]).fetchall()
+        WHERE type = 'TRADE' AND token_id <> '' AND timestamp >= ? AND wallet IN ({in_wallets})
+        UNION
+        -- a merge exits every outcome of its market
+        SELECT DISTINCT unnest(m.token_ids), t.timestamp FROM wallet_trades t JOIN markets m USING (condition_id)
+        WHERE t.type = 'MERGE' AND t.timestamp >= ? AND t.wallet IN ({in_wallets})
+    """, [since_ts, *wallets, since_ts, *wallets]).fetchall()
     want: set[tuple[str, int]] = set()
     for token, ts in rows:
         lo, hi = ts - pad, ts + max_delay + pad

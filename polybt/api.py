@@ -60,7 +60,7 @@ class PolymarketAPI:
                                      "takerOnly": "false"}, ttl=self.mutable_ttl)
         return _as_list(body)
 
-    def activity(self, user: str, start: int, end: int | None = None) -> Iterator[dict]:
+    def activity(self, user: str, start: int, end: int | None = None, live: bool = False) -> Iterator[dict]:
         """All activity rows for a wallet with start <= timestamp (<= end), oldest first.
 
         Pages by offset until the API's offset cap, then restarts the window at the last
@@ -73,7 +73,7 @@ class PolymarketAPI:
             # A page that lies wholly in the past can't change; anything else may.
             ttl = None if end is not None and end < time.time() - 86400 else self.mutable_ttl
             try:
-                rows = _as_list(self.client.get_json(DATA_API, "/activity", params, ttl=ttl))
+                rows = _as_list(self.client.get_json(DATA_API, "/activity", params, ttl=ttl, cache=not live))
             except HttpError as e:
                 if e.status != 400 or offset == 0:
                     raise
@@ -92,7 +92,7 @@ class PolymarketAPI:
 
     # ---- Gamma ----------------------------------------------------------
 
-    def markets_by_condition(self, condition_ids: list[str]) -> list[dict]:
+    def markets_by_condition(self, condition_ids: list[str], live: bool = False) -> list[dict]:
         if not condition_ids:
             return []
         found: dict[str, dict] = {}
@@ -102,7 +102,7 @@ class PolymarketAPI:
                 break
             body = self.client.get_json(GAMMA_API, "/markets",
                                         {"condition_ids": missing, "closed": closed,
-                                         "limit": len(missing)}, ttl=self.mutable_ttl)
+                                         "limit": len(missing)}, ttl=self.mutable_ttl, cache=not live)
             for m in _as_list(body):
                 if m.get("conditionId"):
                     found[m["conditionId"]] = m
@@ -116,6 +116,27 @@ class PolymarketAPI:
         return _as_list(body)
 
     # ---- CLOB -----------------------------------------------------------
+
+    def clob_market_info(self, condition_id: str) -> dict | None:
+        """CLOB market info, including fee details `fd: {r, e, to}`. None if the CLOB doesn't know it."""
+        try:
+            body = self.client.get_json(CLOB_API, f"/clob-markets/{condition_id}", ttl=self.mutable_ttl)
+        except HttpError as e:
+            if e.status in (400, 404):
+                return None
+            raise
+        return body if isinstance(body, dict) else None
+
+    def book(self, token_id: str) -> dict:
+        """Live order book: {"bids": [(price, size)...] best first, "asks": [...] best first}."""
+        body = self.client.get_json(CLOB_API, "/book", {"token_id": token_id}, cache=False)
+
+        def side(rows, best_high):
+            levels = [(float(r["price"]), float(r["size"])) for r in rows or [] if float(r.get("size", 0)) > 0]
+            return sorted(levels, key=lambda lv: -lv[0] if best_high else lv[0])
+
+        return {"bids": side(body.get("bids"), True), "asks": side(body.get("asks"), False),
+                "timestamp": body.get("timestamp")}
 
     def prices_history(self, token_id: str, start_ts: int, end_ts: int, fidelity: int) -> list[tuple[int, float]]:
         ttl = None if end_ts < time.time() - 3600 else self.mutable_ttl
@@ -161,8 +182,13 @@ def parse_market(m: dict) -> dict:
         volume = float(volume) if volume is not None else None
     except (TypeError, ValueError):
         volume = None
+    tags = [str(t.get("slug") or t.get("label") or "").lower()
+            for ev in (m.get("events") or []) if isinstance(ev, dict) for t in (ev.get("tags") or []) if isinstance(t, dict)]
+    tags += [str(t.get("slug") or t.get("label") or "").lower() for t in (m.get("tags") or []) if isinstance(t, dict)]
     return {
         "condition_id": m["conditionId"],
+        "gamma_category": str(m.get("category") or "").lower(),
+        "tags": [t for t in tags if t],
         "question": m.get("question") or "",
         "slug": m.get("slug") or "",
         "token_ids": tokens,

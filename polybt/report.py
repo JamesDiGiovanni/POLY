@@ -67,20 +67,22 @@ def monthly_positive(lots: list[LotRow], end_ts: int, months: int, month_days: i
 
 
 def _load(con):
-    """lots[(wallet, mode, delay)] -> rows; skips[(wallet, delay)] -> [(category, reason)]; open counts."""
+    """lots[(wallet, mode, delay, sizing)] -> [(category, LotRow)]; skips[(wallet, delay, sizing)] ->
+    [(category, reason)]; open position counts."""
     lots: dict[tuple, list[tuple[str, LotRow]]] = defaultdict(list)
     skips: dict[tuple, list[tuple[str, str]]] = defaultdict(list)
     opens: Counter = Counter()
-    for w, mode, d, cat, status, reason, ts, close_ts, entry, stake, pnl in con.execute("""
-        SELECT wallet, mode, delay_s, category, status, skipped_reason, ts, close_ts, copy_price, stake, pnl
-        FROM sim_trades
+    for w, mode, d, sizing, cat, status, reason, ts, close_ts, entry, stake, pnl in con.execute("""
+        SELECT wallet, mode, delay_s, coalesce(sizing, 'flat'), category, status, skipped_reason, ts, close_ts,
+               copy_price, stake, pnl
+        FROM sim_trades WHERE mode IN ('copy', 'wallet')
     """).fetchall():
         if status == "closed":
-            lots[(w, mode, d)].append((cat, LotRow(ts, close_ts, entry, stake, pnl)))
+            lots[(w, mode, d, sizing)].append((cat, LotRow(ts, close_ts, entry, stake, pnl)))
         elif status == "skipped":
-            skips[(w, d)].append((cat, reason))
+            skips[(w, d, sizing)].append((cat, reason))
         else:
-            opens[(w, mode, d, cat)] += 1
+            opens[(w, mode, d, sizing, cat)] += 1
     return lots, skips, opens
 
 
@@ -93,40 +95,42 @@ def compute(con, cfg) -> tuple[list[dict], list[dict]]:
     rc = cfg["report"]
     gng = rc["go_no_go"]
     delays = [int(d) for d in cfg["simulate"]["delays_s"]]
+    sizings = cfg["simulate"].get("sizing") or ["flat"]
+    key_sizing = gng.get("sizing", "flat")
     lots, skips, opens = _load(con)
     wallets = sorted({k[0] for k in lots} | {k[0] for k in skips})
     end_ts = int(time.time())
 
     results, summaries = [], []
     for w in wallets:
-        wallet_lots = lots.get((w, "wallet", 0), [])
-        for cat in CATEGORIES:
-            own = _pick(wallet_lots, cat)
-            own_roi = roi(own)
-            for d in delays:
-                mine = _pick(lots.get((w, "copy", d), []), cat)
-                sk = [r for c, r in skips.get((w, d), []) if cat == "all" or c == cat]
-                if not mine and not sk:
-                    continue
-                copy_roi = roi(mine)
-                lo, hi = bootstrap_roi_ci(mine, int(rc["bootstrap_samples"]), float(rc["ci_level"]), int(rc["seed"]))
-                n_open = sum(v for (ww, m, dd, c), v in opens.items()
-                             if ww == w and m == "copy" and dd == d and (cat == "all" or c == cat))
-                results.append({
-                    "wallet": w, "delay_s": d, "category": cat, "trades": len(mine), "skipped": len(sk),
-                    "skipped_reasons": json.dumps(dict(Counter(sk))), "open_positions": n_open,
-                    "staked": sum(l.stake for l in mine), "pnl": sum(l.pnl for l in mine),
-                    "copy_roi": copy_roi, "wallet_roi": own_roi,
-                    "edge_decay": copy_roi / own_roi if copy_roi is not None and own_roi and own_roi > 0 else None,
-                    "win_rate": sum(l.pnl > 0 for l in mine) / len(mine) if mine else None,
-                    "avg_entry": sum(l.entry for l in mine) / len(mine) if mine else None,
-                    "ci_low": lo, "ci_high": hi, "drawdown": max_drawdown(mine),
-                })
+        wallet_lots = lots.get((w, "wallet", 0, "mirror"), [])
+        for sizing in sizings:
+            for cat in CATEGORIES:
+                own_roi = roi(_pick(wallet_lots, cat))
+                for d in delays:
+                    mine = _pick(lots.get((w, "copy", d, sizing), []), cat)
+                    sk = [r for c, r in skips.get((w, d, sizing), []) if cat == "all" or c == cat]
+                    if not mine and not sk:
+                        continue
+                    copy_roi = roi(mine)
+                    lo, hi = bootstrap_roi_ci(mine, int(rc["bootstrap_samples"]), float(rc["ci_level"]), int(rc["seed"]))
+                    n_open = sum(v for (ww, m, dd, sz, c), v in opens.items()
+                                 if ww == w and m == "copy" and dd == d and sz == sizing and (cat == "all" or c == cat))
+                    results.append({
+                        "wallet": w, "delay_s": d, "category": cat, "sizing": sizing, "trades": len(mine),
+                        "skipped": len(sk), "skipped_reasons": json.dumps(dict(Counter(sk))), "open_positions": n_open,
+                        "staked": sum(l.stake for l in mine), "pnl": sum(l.pnl for l in mine),
+                        "copy_roi": copy_roi, "wallet_roi": own_roi,
+                        "edge_decay": copy_roi / own_roi if copy_roi is not None and own_roi and own_roi > 0 else None,
+                        "win_rate": sum(l.pnl > 0 for l in mine) / len(mine) if mine else None,
+                        "avg_entry": sum(l.entry for l in mine) / len(mine) if mine else None,
+                        "ci_low": lo, "ci_high": hi, "drawdown": max_drawdown(mine),
+                    })
 
-        key = _pick(lots.get((w, "copy", int(gng["delay_s"])), []), "all")
+        key = _pick(lots.get((w, "copy", int(gng["delay_s"]), key_sizing), []), "all")
         months = monthly_positive(key, end_ts, int(gng["months_window"]), int(gng["month_days"]))
         head = next((r for r in results if r["wallet"] == w and r["category"] == "all"
-                     and r["delay_s"] == int(gng["delay_s"])), None)
+                     and r["delay_s"] == int(gng["delay_s"]) and r["sizing"] == key_sizing), None)
         checks = {
             "roi_positive": bool(head and head["copy_roi"] is not None and head["copy_roi"] > 0),
             "ci_above_zero": bool(head and head["ci_low"] is not None and head["ci_low"] > 0),
@@ -139,7 +143,8 @@ def compute(con, cfg) -> tuple[list[dict], list[dict]]:
 
     con.execute("DELETE FROM sim_results")
     cols = ["wallet", "delay_s", "category", "trades", "skipped", "skipped_reasons", "open_positions", "staked",
-            "pnl", "copy_roi", "wallet_roi", "edge_decay", "win_rate", "avg_entry", "ci_low", "ci_high", "drawdown"]
+            "pnl", "copy_roi", "wallet_roi", "edge_decay", "win_rate", "avg_entry", "ci_low", "ci_high", "drawdown",
+            "sizing"]
     insert_many(con, "sim_results", [tuple(r[c] for c in cols) for r in results], "INSERT")
     return results, summaries
 
@@ -149,7 +154,7 @@ def compute(con, cfg) -> tuple[list[dict], list[dict]]:
 def write_csvs(con, out: Path) -> None:
     out.mkdir(parents=True, exist_ok=True)
     for name, sql in {
-        "results.csv": "SELECT * FROM sim_results ORDER BY wallet, category, delay_s",
+        "results.csv": "SELECT * FROM sim_results ORDER BY wallet, sizing, category, delay_s",
         "trades.csv": "SELECT * FROM sim_trades ORDER BY wallet, mode, delay_s, ts",
         "wallet_scores.csv": "SELECT * FROM wallet_scores ORDER BY passed DESC, wallet",
     }.items():
@@ -265,7 +270,9 @@ def render_html(cfg, results: list[dict], summaries: list[dict], scores: list[tu
     delays = [int(d) for d in cfg["simulate"]["delays_s"]]
     gng = cfg["report"]["go_no_go"]
     key_delay = int(gng["delay_s"])
-    by = {(r["wallet"], r["category"], r["delay_s"]): r for r in results}
+    key_sizing = gng.get("sizing", "flat")
+    by = {(r["wallet"], r["category"], r["delay_s"]): r for r in results if r["sizing"] == key_sizing}
+    prop = {(r["wallet"], r["delay_s"]): r for r in results if r["sizing"] == "proportional" and r["category"] == "all"}
     summ = {s["wallet"]: s for s in summaries}
 
     def sort_key(s):
@@ -296,6 +303,9 @@ def render_html(cfg, results: list[dict], summaries: list[dict], scores: list[tu
         cells.append(f"<td>{'–' if wr is None else f'{wr:.0%} / {ae * 100:.0f}¢'}</td>")
         cells.append(f"<td>{k.get('trades', 0)}</td><td>{k.get('skipped', 0)}</td>")
         cells.append(f"<td>${k.get('drawdown', 0):.0f}</td>")
+        if prop:
+            pr = prop.get((w, key_delay))
+            cells.append(f"<td{cls(pr['copy_roi'] if pr else None)}>{_pct(pr['copy_roi']) if pr else '–'}</td>")
         months = "".join("–" if m is None else ("+" if m else "−") for m in s["months"])
         cells.append(f"<td><code>{months}</code></td>")
         failed = [c for c, ok in s["checks"].items() if not ok]
@@ -341,7 +351,7 @@ def render_html(cfg, results: list[dict], summaries: list[dict], scores: list[tu
 
     head = "".join(f"<th>Copy ROI @{_delay_label(d)}</th>" for d in delays)
     cat_head = "".join(f"<th>@{_delay_label(d)}</th>" for d in delays)
-    fees = ", ".join(f"{k} {v:.2%}" for k, v in cfg["simulate"]["fees"].items())
+    fees = f"taker fees per market ({cfg['fees']['formula']} formula)"
     sim = cfg["simulate"]
     verdict = (f'<b class="{"go" if passed else "nogo"}">{"GO to paper trading" if passed else "NO-GO"}</b> — '
                f'{n_go} wallet{"s" if n_go != 1 else ""} met every go criterion; {gng["min_wallets"]} needed.')
@@ -351,7 +361,7 @@ def render_html(cfg, results: list[dict], summaries: list[dict], scores: list[tu
 <h1>Polymarket copy-trade backtest</h1>
 <p class="sub">Generated {generated} · selection before {cutoff}, tested after · ${sim['stake_usd']:.0f} flat per copy ·
 spread {sim['spread_penalty'] * 100:.0f}¢ ({sim['spread_penalty_low_volume'] * 100:.0f}¢ under ${sim['low_volume_threshold_usd']:,.0f} volume) ·
-skip above {sim['max_copy_price'] * 100:.0f}¢ · fees {html.escape(fees)}</p>
+skip above {sim['max_copy_price'] * 100:.0f}¢ · {html.escape(fees)}</p>
 <div class="verdict">{verdict}<br><span class="sub">Go criteria: copy ROI &gt; 0 at {_delay_label(key_delay)} with
 the {cfg['report']['ci_level']:.0%} interval above 0, ≥ {gng['min_copyable_trades']} copyable trades, positive in ≥
 {gng['months_positive']} of the last {gng['months_window']} {gng['month_days']}-day periods.</span></div>
@@ -359,9 +369,10 @@ the {cfg['report']['ci_level']:.0%} interval above 0, ≥ {gng['min_copyable_tra
 <h2>Ranked wallets</h2>
 <p class="sub">Ranked by copy ROI at {_delay_label(key_delay)}. Small grey figures are the {cfg['report']['ci_level']:.0%}
 bootstrap interval. Wallet ROI is the wallet's own result on the same test period. Win rate / avg entry, trades,
-skips and drawdown are at {_delay_label(key_delay)}. Months: oldest → newest, + positive, − negative, – no closed trades.</p>
+skips and drawdown are at {_delay_label(key_delay)}. Sized: copy ROI when stakes mirror the wallet's
+relative bet size ($stake × their buy ÷ their median buy, capped at {cfg['simulate'].get('max_stake_multiple', 5)}×). Months: oldest → newest, + positive, − negative, – no closed trades.</p>
 <div class="scroll"><table><thead><tr><th>Wallet</th><th>Wallet ROI</th>{head}<th>Win / entry</th><th>Trades</th>
-<th>Skipped</th><th>Max DD</th><th>Months</th><th>Go</th></tr></thead><tbody>{"".join(rows) or '<tr><td colspan=20>No simulated wallets.</td></tr>'}</tbody></table></div>
+<th>Skipped</th><th>Max DD</th>{f"<th>Sized @{_delay_label(key_delay)}</th>" if prop else ""}<th>Months</th><th>Go</th></tr></thead><tbody>{"".join(rows) or '<tr><td colspan=20>No simulated wallets.</td></tr>'}</tbody></table></div>
 
 <h2>By category</h2>
 <p class="sub">Copy ROI per delay (trades in brackets). Expect the worst decay in short-term crypto, where many top wallets are bots.</p>
@@ -390,3 +401,60 @@ def run(con, cfg) -> dict:
     log.info("report written to %s (%d wallets, %d go)", out / "report.html", len(summaries), n_go)
     return {"wallets": len(summaries), "go": n_go,
             "verdict": n_go >= int(cfg["report"]["go_no_go"]["min_wallets"])}
+
+
+# ---- paper / live sessions -----------------------------------------------
+
+def session_summary(con, cfg, session: str) -> list[dict]:
+    """Per wallet: what the session did, and how it compares with the backtest's assumptions."""
+    delays = [int(d) for d in cfg["simulate"]["delays_s"]]
+    bt = {(w, d): r for w, d, r in con.execute("""
+        SELECT wallet, delay_s, copy_roi FROM sim_results
+        WHERE category = 'all' AND coalesce(sizing, 'flat') = 'flat'""").fetchall()}
+    out = []
+    wallets = [r[0] for r in con.execute(
+        "SELECT DISTINCT wallet FROM live_orders WHERE session = ? ORDER BY wallet", [session]).fetchall()]
+    for w in wallets:
+        orders = con.execute("""
+            SELECT side, status, reason, exec_ts - signal_ts, price, model_price
+            FROM live_orders WHERE session = ? AND wallet = ?""", [session, w]).fetchall()
+        lots = con.execute("""
+            SELECT status, stake, pnl, open_shares / nullif(shares, 0) * stake
+            FROM live_lots WHERE session = ? AND wallet = ?""", [session, w]).fetchall()
+        buys = [o for o in orders if o[0] == "BUY" and o[1] == "filled"]
+        lat = sorted(o[3] for o in buys if o[3] is not None)
+        slip = [o[4] - o[5] for o in buys if o[4] is not None and o[5] is not None]
+        closed = [l for l in lots if l[0] == "closed"]
+        staked = sum(l[1] for l in closed)
+        median_lat = lat[len(lat) // 2] if lat else None
+        nearest = min(delays, key=lambda d: abs(d - median_lat)) if median_lat is not None else None
+        out.append({
+            "wallet": w, "filled": len([o for o in orders if o[1] == "filled"]),
+            "skipped": json.dumps(dict(Counter(o[2] for o in orders if o[1] == "skipped"))),
+            "closed": len(closed), "staked": staked, "pnl": sum(l[2] for l in closed),
+            "roi": sum(l[2] for l in closed) / staked if staked else None,
+            "open": len(lots) - len(closed), "open_exposure": sum(l[3] or 0 for l in lots if l[0] == "open"),
+            "median_latency_s": median_lat,
+            "avg_slippage_vs_model_c": sum(slip) / len(slip) * 100 if slip else None,
+            "backtest_delay_s": nearest, "backtest_roi": bt.get((w, nearest)) if nearest is not None else None,
+        })
+    return out
+
+
+def write_session(con, cfg, session: str) -> list[dict]:
+    rows = session_summary(con, cfg, session)
+    out = Path(cfg["output_dir"])
+    out.mkdir(parents=True, exist_ok=True)
+    if rows:
+        with open(out / f"session_{session}.csv", "w", newline="") as f:
+            wr = csv.DictWriter(f, fieldnames=list(rows[0]))
+            wr.writeheader()
+            wr.writerows(rows)
+    for name, sql in {f"session_{session}_orders.csv": "SELECT * FROM live_orders WHERE session = ? ORDER BY signal_ts",
+                      f"session_{session}_lots.csv": "SELECT * FROM live_lots WHERE session = ? ORDER BY ts"}.items():
+        cur = con.execute(sql, [session])
+        with open(out / name, "w", newline="") as f:
+            wr = csv.writer(f)
+            wr.writerow([d[0] for d in cur.description])
+            wr.writerows(cur.fetchall())
+    return rows
