@@ -24,6 +24,7 @@ from typing import Callable
 
 from . import ingest
 from .api import parse_market
+from .http import HttpError
 from .db import insert_many
 from .engine import CopyEngine, Execution, Fill, Market, OrderRequest, Policy
 from .simulate import SimParams, copy_buy_price, copy_sell_price, load_fills, load_markets, size_reference
@@ -56,6 +57,10 @@ def walk_book(levels: list[tuple[float, float]], *, usd: float | None = None, sh
     return None
 
 
+class BookUnavailable(Exception):
+    pass
+
+
 class PaperExecutor:
     """Fills against the live order book at the moment of execution. Sends nothing."""
 
@@ -68,14 +73,23 @@ class PaperExecutor:
         return int(self.clock())
 
     def _book(self, token_id):
-        book = self.api.book(token_id)
+        """(book, best bid, best ask, mid). Raises BookUnavailable if there is no book to trade against."""
+        try:
+            book = self.api.book(token_id)
+        except HttpError as e:
+            raise BookUnavailable("no_orderbook" if e.status == 404 else f"book_http_{e.status}") from e
+        except Exception as e:
+            raise BookUnavailable("book_unreachable") from e
         bid = book["bids"][0][0] if book["bids"] else None
         ask = book["asks"][0][0] if book["asks"] else None
         mid = (bid + ask) / 2 if bid is not None and ask is not None else (bid if ask is None else ask)
         return book, bid, ask, mid
 
     def buy(self, req: OrderRequest) -> Execution | str:
-        book, bid, ask, mid = self._book(req.token_id)
+        try:
+            book, bid, ask, mid = self._book(req.token_id)
+        except BookUnavailable as e:
+            return str(e)
         taken = walk_book(book["asks"], usd=req.usd, limit=req.limit_price, buying=True)
         if taken is None:
             return "price_above_max" if ask is not None and ask > req.limit_price else "insufficient_liquidity"
@@ -90,7 +104,10 @@ class PaperExecutor:
                          meta={"best_bid": bid, "best_ask": ask, "levels": len(taken), "model_price": model})
 
     def sell(self, req: OrderRequest) -> Execution | str:
-        book, bid, ask, mid = self._book(req.token_id)
+        try:
+            book, bid, ask, mid = self._book(req.token_id)
+        except BookUnavailable as e:
+            return str(e)
         taken = walk_book(book["bids"], shares=req.shares, limit=req.limit_price, buying=False)
         if taken is None:
             return "insufficient_liquidity"

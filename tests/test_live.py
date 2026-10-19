@@ -245,3 +245,15 @@ def test_paper_session_end_to_end_with_restart(tmp_path):
     assert lot2.closed and lot2.proceeds == pytest.approx(lot2.shares * 0.48 - round(lot2.shares * 0.07 * 0.48 * 0.52, 4))
     r2.snapshot()
     assert con.execute("SELECT status FROM live_lots WHERE session = 'paper-test'").fetchone()[0] == "closed"
+
+
+def test_missing_order_book_is_a_skip_not_a_crash():
+    from polybt.http import HttpError
+
+    class NoBook:
+        def book(self, token_id):
+            raise HttpError(404, "/book", "No orderbook exists")
+
+    eng = CopyEngine(_market(), PaperExecutor(NoBook(), SimParams(), lambda: T0), Policy(), T0)
+    eng.on_fill(Fill(T0, "y", "c", "BUY", 0.5, 10, 5, "t1"))
+    assert eng.skips[0].reason == "no_orderbook" and not eng.lots

@@ -66,11 +66,28 @@ def run(api, cfg) -> list[tuple[str, bool, str]]:
         hist = _as_list(pts, "history")
         return bool(hist), f"{len(hist)} points around the trade; first: {hist[:2]}"
 
-    def book():
-        token = json.loads(state["market"]["clobTokenIds"])[0] if isinstance(state["market"]["clobTokenIds"], str) \
-            else state["market"]["clobTokenIds"][0]
+    def active_market():
+        rows = api.client.get_json(GAMMA_API, "/markets", {"closed": "false", "active": "true", "order": "volume24hr",
+                                                           "ascending": "false", "limit": 5}, cache=False)
+        rows = [r for r in _as_list(rows) if r.get("enableOrderBook", True)]
+        state["active"] = rows[0] if rows else None
+        return bool(rows), "; ".join(str(r.get("question"))[:60] for r in rows)
+
+    def active_fees():
+        found = []
+        for r in _as_list(api.client.get_json(GAMMA_API, "/markets", {"closed": "false", "active": "true",
+                                                                      "order": "volume24hr", "ascending": "false",
+                                                                      "limit": 20}, cache=False)):
+            info = api.client.get_json(CLOB_API, f"/clob-markets/{r['conditionId']}", cache=False)
+            found.append(f"{str(r.get('question'))[:50]!r}: fd={info.get('fd')} keys={sorted(info)}")
+        with_fd = sum("fd={'" in f for f in found)
+        return with_fd > 0, f"{with_fd}/{len(found)} active markets carry fd\n" + "\n".join(found)
+
+    def active_book():
+        tokens = state["active"]["clobTokenIds"]
+        token = (json.loads(tokens) if isinstance(tokens, str) else tokens)[0]
         b = api.book(token)
-        return True, f"bids {len(b['bids'])} asks {len(b['asks'])} best {b['bids'][:1]} / {b['asks'][:1]}"
+        return bool(b["bids"] or b["asks"]), f"bids {len(b['bids'])} asks {len(b['asks'])} best {b['bids'][:2]} / {b['asks'][:2]}"
 
     def top_markets():
         rows = api.top_closed_markets(3, time.strftime("%Y-%m-%dT00:00:00Z", time.gmtime(time.time() - 30 * 86400)))
@@ -79,8 +96,10 @@ def run(api, cfg) -> list[tuple[str, bool, str]]:
     if check("data-api leaderboard", leaderboard):
         if check("data-api activity", activity):
             if check("gamma markets by condition", gamma):
-                check("clob market info (fees)", clob_info)
-                check("clob book", book)
+                check("clob market info (fees), traded market", clob_info)
             check("clob prices-history", prices)
     check("gamma top closed markets", top_markets)
+    if check("gamma active markets", active_market):
+        check("clob book, active market", active_book)
+    check("clob fee details on active markets", active_fees)
     return results
