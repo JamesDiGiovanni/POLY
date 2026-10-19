@@ -29,6 +29,9 @@ jobs:
   backtest:
     runs-on: ubuntu-latest
     timeout-minutes: 330
+    defaults:
+      run:
+        shell: bash   # -eo pipefail, so `| tee` doesn't hide a failing command
     steps:
       - uses: actions/checkout@v4
 
@@ -63,30 +66,48 @@ jobs:
           print(yaml.safe_dump(cfg))
           EOF
 
-      # A failed check is reported in probe.log but doesn't stop the run (tee keeps the step green):
-      # discovery has several sources and one bad endpoint shouldn't block the rest.
+      # A failed check is reported in probe.log but doesn't stop the run: discovery has several
+      # sources and one bad endpoint shouldn't block the rest.
       - name: Probe the APIs
-        run: python -m polybt --config ci.yaml probe 2>&1 | tee probe.log
+        run: python -m polybt --config ci.yaml probe 2>&1 | tee probe.log || true
+
+      # Job logs can't be read until a run ends, so push the log's tail to the backtest-progress
+      # branch every 5 minutes while the long steps run.
+      - name: Start progress heartbeat
+        if: inputs.steps == 'full'
+        env:
+          TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          touch run.log
+          nohup bash -c '
+            mkdir -p /tmp/hb && cd /tmp/hb && git init -q -b backtest-progress
+            while true; do
+              sleep 300
+              { date -u; echo; tail -n 60 "$GITHUB_WORKSPACE/run.log"; } > progress.txt
+              git add -A && git -c user.name=github-actions -c user.email=actions@github.com commit -qm progress
+              git push -qf "https://x-access-token:$TOKEN@github.com/$REPO.git" backtest-progress
+            done' > /dev/null 2>&1 &
 
       - name: Ingest
         if: inputs.steps == 'full'
-        run: python -m polybt --config ci.yaml ingest
+        run: python -m polybt --config ci.yaml ingest 2>&1 | tee -a run.log
 
       - name: Filter
         if: inputs.steps == 'full'
-        run: python -m polybt --config ci.yaml filter
+        run: python -m polybt --config ci.yaml filter 2>&1 | tee -a run.log
 
       - name: Prices
         if: inputs.steps == 'full'
-        run: python -m polybt --config ci.yaml prices
+        run: python -m polybt --config ci.yaml prices 2>&1 | tee -a run.log
 
       - name: Simulate
         if: inputs.steps == 'full'
-        run: python -m polybt --config ci.yaml simulate
+        run: python -m polybt --config ci.yaml simulate 2>&1 | tee -a run.log
 
       - name: Report
         if: inputs.steps == 'full'
-        run: python -m polybt --config ci.yaml report
+        run: python -m polybt --config ci.yaml report 2>&1 | tee -a run.log
 
       - name: Checks (fees, sample wallet)
         if: inputs.steps == 'full'
@@ -125,7 +146,7 @@ jobs:
         if: always()
         run: |
           mkdir -p /tmp/results && cp -r output/. /tmp/results/ 2>/dev/null || true
-          cp probe.log /tmp/results/ 2>/dev/null || true
+          cp probe.log run.log /tmp/results/ 2>/dev/null || true
           find /tmp/results -name '*.csv' -size +40M -exec gzip -f {} \;
           cd /tmp/results
           git init -q -b backtest-results
