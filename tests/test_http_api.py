@@ -106,7 +106,7 @@ def test_market_fees_prefer_clob_details_then_category():
     m = {"condition_id": "c", "question": "Bitcoin above 100k on Friday?", "slug": "", "gamma_category": "",
          "tags": []}
     assert market_fees(Api({"fd": {"r": 0.03, "e": 1, "to": True}}), m, cfg) == (0.03, 1.0, "market", "crypto")
-    assert market_fees(Api({"t": []}), m, cfg) == (0.07, 1.0, "category", "crypto")     # no fd: conservative
+    assert market_fees(Api({"t": []}), m, cfg) == (0.0, 1.0, "market", "crypto")        # no fd: fee-free
     assert market_fees(Api(None), m, cfg) == (0.07, 1.0, "category", "crypto")         # fallback table
     assert fee_category({"question": "x", "slug": "", "gamma_category": "", "tags": ["geopolitics"]}, cfg) == "geopolitics"
     assert fee_category({"question": "Who wins?", "slug": "", "gamma_category": "", "tags": []}, cfg) == "default"

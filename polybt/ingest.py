@@ -37,11 +37,13 @@ def market_fees(api: PolymarketAPI | None, m: dict, cfg: dict) -> tuple[float, f
         except Exception as e:
             log.debug("market info for %s failed: %s", m["condition_id"], e)
             info = None
-        fp = fees_mod.from_market_info(info, cfg["fees"]["formula"])
-        if fp is not None:
-            return fp.rate, fp.exponent, "market", cat
-        # No fee details (older markets omit `fd`): charge the category rate rather than assume zero,
-        # so a missing field can only make results more conservative.
+        if info is not None:
+            fp = fees_mod.from_market_info(info, cfg["fees"]["formula"])
+            if fp is not None:
+                return fp.rate, fp.exponent, "market", cat
+            # Checked against the live API (Oct 2026): active fee-free markets (geopolitics) and markets
+            # from before the fee rollout come back without `fd`. No fd means no fee.
+            return 0.0, 1.0, "market", cat
     fb = fees_mod.category_fallback(cfg, cat)
     return fb.rate, fb.exponent, "category", cat
 
