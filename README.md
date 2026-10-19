@@ -155,7 +155,7 @@ jurisdictions, including the US on the international exchange.
 - [x] **Taker fees** → per-market CLOB fee details, category fallback, formula check (see [Fees](#fees))
 - [x] **Rate limits** → from Polymarket's docs: Data API 1,000 req/10 s (200 on `/trades`), CLOB 9,000/10 s
   (1,000 on `/prices-history`, 1,500 on `/book`), over sliding windows and throttled rather than rejected.
-  Defaults sit well under half of these (`http.requests_per_second`).
+  Defaults stay well under these (`http.requests_per_second`), with 8 parallel workers (`http.workers`).
 - [x] **Cutoff** → 90 days, so "positive in 2 of the last 3 months" has three test months to look at
 - [x] **Sizing-mirrored results** → second pass alongside flat (`simulate.sizing`), shown in the report
 

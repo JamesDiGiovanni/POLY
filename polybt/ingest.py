@@ -6,6 +6,7 @@ import logging
 import re
 import time
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from . import fees as fees_mod
 from .api import PolymarketAPI, parse_market
@@ -148,40 +149,66 @@ def _activity_row(wallet: str, r: dict):
     )
 
 
-def ingest_wallet(con, api: PolymarketAPI, wallet: str, start_ts: int, max_rows: int | None = None) -> int:
-    """Pull activity since the last sync. Never re-pulls a range already stored."""
+def _wallet_plan(con, wallet: str, start_ts: int):
+    """(ranges to pull, earliest start) for a wallet, or None if it was capped before. DB-only."""
     state = con.execute("SELECT start_ts, synced_to, capped FROM wallet_ingest_state WHERE wallet = ?",
                         [wallet]).fetchone()
     if state and state[2]:
-        return 0
-    now = int(time.time())
-    ranges = []
+        return None
     if state is None:
-        ranges.append((start_ts, None))
-    else:
-        if start_ts < state[0]:
-            ranges.append((start_ts, state[0] - 1))  # lookback widened
-        ranges.append((state[1], None))
-    n, seen, capped = 0, 0, False
+        return [(start_ts, None)], start_ts
+    ranges = [(start_ts, state[0] - 1)] if start_ts < state[0] else []  # lookback widened
+    return ranges + [(state[1], None)], min(start_ts, state[0])
+
+
+def _fetch_wallet(api: PolymarketAPI, wallet: str, ranges, max_rows: int | None):
+    """Network only (safe in a worker thread): (rows, capped)."""
+    rows, capped = [], False
     for lo, hi in ranges:
-        batch = []
         for r in api.activity(wallet, lo, hi):
-            batch.append(_activity_row(wallet, r))
-            seen += 1
-            if len(batch) >= 2000:
-                n += _insert_trades(con, batch)
-                batch = []
-            if max_rows and seen >= max_rows:
+            rows.append(_activity_row(wallet, r))
+            if max_rows and len(rows) >= max_rows:
                 capped = True
                 break
-        n += _insert_trades(con, batch)
         if capped:
-            log.info("%s: stopped at %d activity rows (capped)", wallet, seen)
+            log.info("%s: stopped at %d activity rows (capped)", wallet, len(rows))
             break
-    new_start = min(start_ts, state[0]) if state else start_ts
+    return rows, capped
+
+
+def _store_wallet(con, wallet: str, new_start: int, rows, capped: bool, synced_at: int) -> int:
+    n = _insert_trades(con, rows)
     con.execute("INSERT OR REPLACE INTO wallet_ingest_state VALUES (?, ?, ?, ?, ?)",
-                [wallet, new_start, now, now, capped])
+                [wallet, new_start, synced_at, synced_at, capped])
     return n
+
+
+def ingest_wallet(con, api: PolymarketAPI, wallet: str, start_ts: int, max_rows: int | None = None) -> int:
+    """Pull activity since the last sync. Never re-pulls a range already stored."""
+    plan = _wallet_plan(con, wallet, start_ts)
+    if plan is None:
+        return 0
+    now = int(time.time())
+    rows, capped = _fetch_wallet(api, wallet, plan[0], max_rows)
+    return _store_wallet(con, wallet, plan[1], rows, capped, now)
+
+
+def ingest_wallets(con, api: PolymarketAPI, cfg, wallets: list[str]) -> None:
+    """ingest_wallet for many wallets, fetching in parallel (the rate limiter still caps each host)."""
+    max_rows = cfg["http"].get("max_activity_rows")
+    plans = {w: _wallet_plan(con, w, cfg.selection_start_ts) for w in wallets}
+    todo = [w for w in wallets if plans[w] is not None]
+    now = int(time.time())
+    with ThreadPoolExecutor(int(cfg["http"].get("workers", 8))) as pool:
+        futures = {pool.submit(_fetch_wallet, api, w, plans[w][0], max_rows): w for w in todo}
+        for i, fut in enumerate(as_completed(futures)):
+            w = futures[fut]
+            try:
+                rows, capped = fut.result()
+                n = _store_wallet(con, w, plans[w][1], rows, capped, now)
+                log.info("[%d/%d] %s: %d new rows%s", i + 1, len(todo), w, n, " (capped)" if capped else "")
+            except Exception as e:
+                log.warning("[%d/%d] %s failed: %s", i + 1, len(todo), w, e)
 
 
 def _insert_trades(con, rows) -> int:
@@ -202,9 +229,12 @@ def ingest_markets(con, api: PolymarketAPI, cfg, batch: int = 20) -> int:
         LEFT JOIN markets m USING (condition_id)
         WHERE t.condition_id <> '' AND (m.condition_id IS NULL OR (NOT m.resolved AND m.fetched_at < ?))
     """, [stale]).fetchall()]
-    rows = []
-    for i in range(0, len(ids), batch):
-        rows.extend(market_row(parse_market(raw), cfg, api) for raw in api.markets_by_condition(ids[i:i + batch]))
+    workers = int(cfg["http"].get("workers", 8))
+    with ThreadPoolExecutor(workers) as pool:
+        batches = pool.map(api.markets_by_condition, [ids[i:i + batch] for i in range(0, len(ids), batch)])
+        parsed = [parse_market(raw) for b in batches for raw in b]
+        log.info("markets: %d metadata fetched, looking up fee details", len(parsed))
+        rows = list(pool.map(lambda m: market_row(m, cfg, api), parsed))
     insert_many(con, "markets", rows, "INSERT OR REPLACE")
     n = len(rows)
     log.info("markets: %d requested, %d stored", len(ids), n)
@@ -254,21 +284,32 @@ def ingest_prices(con, api: PolymarketAPI, cfg, wallets: list[str], since_ts: in
     todo = needed_price_chunks(con, cfg, wallets, since_ts)
     log.info("price history: %d chunks to fetch", len(todo))
     n = 0
-    for i, (token, start) in enumerate(todo):
-        end = start + chunk
+
+    def fetch(item):
+        token, start = item
         try:
-            points = api.prices_history(token, start, end, fidelity)
+            return item, api.prices_history(token, start, start + chunk, fidelity)
         except Exception as e:
             log.warning("prices for %s @ %d failed: %s", token, start, e)
-            continue
-        if points:
-            insert_many(con, "price_history", [(token, t, p) for t, p in points])
-            n += len(points)
-        if end < time.time() - 3600:  # only a closed window is final
-            con.execute("INSERT OR IGNORE INTO price_fetches VALUES (?, ?, ?)", [token, start, end])
-        if (i + 1) % 100 == 0:
-            log.info("  %d/%d chunks", i + 1, len(todo))
+            return item, None
+
+    with ThreadPoolExecutor(int(cfg["http"].get("workers", 8))) as pool:
+        results = pool.map(fetch, todo)
+        for i, ((token, start), points) in enumerate(results):
+            if points is None:
+                continue
+            n += _store_prices(con, token, start, start + chunk, points)
+            if (i + 1) % 500 == 0:
+                log.info("  %d/%d chunks", i + 1, len(todo))
     return n
+
+
+def _store_prices(con, token: str, start: int, end: int, points) -> int:
+    if points:
+        insert_many(con, "price_history", [(token, t, p) for t, p in points])
+    if end < time.time() - 3600:  # only a closed window is final
+        con.execute("INSERT OR IGNORE INTO price_fetches VALUES (?, ?, ?)", [token, start, end])
+    return len(points)
 
 
 def run(con, api: PolymarketAPI, cfg, wallets: list[str] | None = None, skip_discovery: bool = False) -> list[str]:
@@ -279,11 +320,6 @@ def run(con, api: PolymarketAPI, cfg, wallets: list[str] | None = None, skip_dis
         wallets = [r[0] for r in con.execute("SELECT wallet FROM candidates ORDER BY wallet").fetchall()]
     else:
         wallets = discover(con, api, cfg)
-    for i, w in enumerate(wallets):
-        try:
-            n = ingest_wallet(con, api, w, cfg.selection_start_ts, cfg["http"].get("max_activity_rows"))
-            log.info("[%d/%d] %s: %d new rows", i + 1, len(wallets), w, n)
-        except Exception as e:
-            log.warning("[%d/%d] %s failed: %s", i + 1, len(wallets), w, e)
+    ingest_wallets(con, api, cfg, wallets)
     ingest_markets(con, api, cfg)
     return wallets

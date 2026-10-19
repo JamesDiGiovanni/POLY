@@ -19,11 +19,13 @@ http:
   # Requests per second per host. Polymarket's published limits (docs.polymarket.com/api-reference/rate-limits,
   # sliding 10 s windows, throttled by Cloudflare rather than rejected): Data API 1,000/10 s general and
   # 200/10 s on /trades; CLOB 9,000/10 s general, 1,000/10 s on /prices-history, 1,500/10 s on /book.
-  # These defaults sit at well under half of the tightest relevant limit.
+  # These defaults stay well under the published limits.
   requests_per_second:
-    data-api.polymarket.com: 8
-    clob.polymarket.com: 40
-    gamma-api.polymarket.com: 10
+    data-api.polymarket.com: 30
+    clob.polymarket.com: 60
+    gamma-api.polymarket.com: 15
+  # Requests run in parallel threads; the per-host rates above still cap the total.
+  workers: 8
   # Responses that can still change (latest activity page, open markets, leaderboards)
   # are reused for this long. Immutable responses (closed price windows) are cached forever.
   mutable_ttl_s: 21600
