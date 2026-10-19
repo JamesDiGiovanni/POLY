@@ -40,7 +40,7 @@ http:
 
 discovery:
   seed_wallets: []             # always included, lowercase 0x addresses
-  max_candidates: 400          # cheap: most are bots screened out with one request each
+  max_candidates: 600          # cheap: most are bots screened out with one request each
   # LOOKAHEAD WARNING: every Polymarket leaderboard, all-time included, ranks wallets partly on profit
   # made after the cutoff, i.e. inside the test period. A run that discovered wallets on monthly boards
   # showed 5 of 6 "GO" wallets earning most of their profit in exactly that month. Off by default;

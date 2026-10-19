@@ -122,6 +122,9 @@ def discover(con, api: PolymarketAPI, cfg) -> list[str]:
     ranked = sorted(sources, key=lambda w: ("seed" not in sources[w], -len(sources[w]), w))
     ranked = ranked[: int(disc["max_candidates"])]
     now = int(time.time())
+    # Discovery defines the pool: candidates from earlier runs (possibly found with other, e.g.
+    # lookahead-prone, sources) must not leak into this one.
+    con.execute("DELETE FROM candidates")
     insert_many(con, "candidates", [(w, ",".join(sorted(sources[w])), now) for w in ranked], "INSERT OR REPLACE")
     log.info("discovered %d candidate wallets", len(ranked))
     return ranked

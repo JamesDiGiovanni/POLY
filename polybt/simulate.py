@@ -183,6 +183,7 @@ def run(con, cfg, wallets: list[str] | None = None) -> int:
     if not wallets:
         wallets = [r[0] for r in con.execute(
             "SELECT wallet FROM wallet_scores WHERE passed ORDER BY wallet").fetchall()]
+        con.execute("DELETE FROM sim_trades WHERE mode IN ('copy', 'wallet')")  # results = this shortlist only
     if not wallets:
         log.warning("no wallets to simulate (none passed the filters?)")
         return 0

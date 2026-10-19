@@ -101,6 +101,7 @@ COLUMNS = ["resolved_trades", "span_days", "days_since_last", "roi", "win_rate",
 def run(con, cfg, wallets: list[str] | None = None) -> list[str]:
     if not wallets:
         wallets = [r[0] for r in con.execute("SELECT wallet FROM candidates ORDER BY wallet").fetchall()]
+        con.execute("DELETE FROM wallet_scores")  # scoring the whole pool: drop scores of past pools
     markets = load_markets(con)
     start, cutoff = cfg.selection_start_ts, cfg.cutoff_ts
     capped = {r[0] for r in con.execute("SELECT wallet FROM wallet_ingest_state WHERE capped").fetchall()}
