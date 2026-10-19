@@ -458,3 +458,30 @@ def write_session(con, cfg, session: str) -> list[dict]:
             wr.writerow([d[0] for d in cur.description])
             wr.writerows(cur.fetchall())
     return rows
+
+
+def markdown_summary(con, cfg) -> str:
+    """A short phone-readable summary: verdict, funnel, ranked wallets."""
+    results, summaries = compute(con, cfg)
+    gng = cfg["report"]["go_no_go"]
+    delays = [int(d) for d in cfg["simulate"]["delays_s"]]
+    by = {(r["wallet"], r["delay_s"]): r for r in results if r["category"] == "all" and r["sizing"] == "flat"}
+    n_go = sum(s["go"] for s in summaries)
+    verdict = "GO to paper trading" if n_go >= int(gng["min_wallets"]) else "NO-GO"
+    scores = con.execute("SELECT passed, rejection_reason FROM wallet_scores").fetchall()
+    reasons = Counter(part.split(" ")[0].rstrip(":") for ok, r in scores if not ok and r for part in r.split("; "))
+    pct = lambda v: "–" if v is None else f"{v * 100:+.1f}%"
+    lines = [f"## {verdict}: {n_go} of {len(summaries)} simulated wallets meet every go criterion "
+             f"({gng['min_wallets']} needed)", "",
+             f"**Filter funnel:** {sum(1 for ok, _ in scores if ok)} of {len(scores)} candidates passed. "
+             "Failures: " + ", ".join(f"{k} {v}" for k, v in reasons.most_common()), ""]
+    if summaries:
+        lines += ["| wallet | wallet ROI | " + " | ".join(f"copy @{d}s" for d in delays) + " | trades | go |",
+                  "|---|---|" + "---|" * len(delays) + "---|---|"]
+        key = int(gng["delay_s"])
+        for s in sorted(summaries, key=lambda s: -((by.get((s["wallet"], key)) or {}).get("copy_roi") or -9)):
+            w = s["wallet"]
+            cells = [pct((by.get((w, d)) or {}).get("copy_roi")) for d in delays]
+            lines.append(f"| `{w[:8]}…{w[-4:]}` | {pct(s['wallet_roi'])} | " + " | ".join(cells)
+                         + f" | {(by.get((w, key)) or {}).get('trades', 0)} | {'GO' if s['go'] else 'no'} |")
+    return "\n".join(lines)

@@ -9,7 +9,7 @@ import datetime as dt
 import logging
 import sys
 
-from . import db, fees, filter as filter_mod, ingest, live, report, simulate
+from . import db, fees, filter as filter_mod, ingest, live, probe, report, simulate
 from .api import PolymarketAPI
 from .config import load
 from .http import HttpClient
@@ -146,6 +146,8 @@ def main(argv=None) -> int:
             s.add_argument("--confirm-live", action="store_true", help="required: acknowledges real orders")
     s = sub.add_parser("session", help="summarise a paper/live session against the backtest")
     s.add_argument("--session")
+    sub.add_parser("probe", help="one request per Polymarket endpoint; checks response shapes")
+    sub.add_parser("summary", help="markdown summary of the latest results (verdict, funnel, wallets)")
     s = sub.add_parser("fees", help="fee sources per market, and which formula matches real fills")
     s.add_argument("--since", default="2026-03-30", help="only trades after this date (fee schedule V2)")
 
@@ -186,6 +188,13 @@ def main(argv=None) -> int:
         run_session(con, cfg, args, "live")
     elif args.cmd == "session":
         print_session(con, cfg, args.session or cfg["live"]["session"])
+    elif args.cmd == "probe":
+        failed = [name for name, ok, _ in probe.run(_api(cfg), cfg) if not ok]
+        print(f"\nprobe: {'all OK' if not failed else 'FAILED: ' + ', '.join(failed)}")
+        con.close()
+        return 1 if failed else 0
+    elif args.cmd == "summary":
+        print(report.markdown_summary(con, cfg))
     elif args.cmd == "fees":
         for src, cat, n, avg in con.execute("""
                 SELECT fee_source, fee_category, count(*), avg(fee_rate) FROM markets

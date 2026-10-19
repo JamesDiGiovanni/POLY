@@ -29,6 +29,9 @@ http:
   mutable_ttl_s: 21600
   activity_page_size: 500
   activity_offset_cap: 3000    # Data API rejects deep offsets; we re-window by timestamp past this
+  # Stop pulling a wallet past this many activity rows (~130 a day over the window). Such wallets are
+  # market makers or bots the trades-per-day filter would reject anyway; they're rejected as "capped".
+  max_activity_rows: 60000
 
 discovery:
   seed_wallets: []             # always included, lowercase 0x addresses

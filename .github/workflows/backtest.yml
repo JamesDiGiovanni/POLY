@@ -1,0 +1,136 @@
+# Runs the backtest on GitHub's servers (which can reach Polymarket's APIs).
+# Start it from the Actions tab (Backtest -> Run workflow), the GitHub mobile app, or the API.
+# Results: the run's summary page, the "backtest-output" artifact, and the backtest-results branch.
+name: Backtest
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_candidates:
+        description: "Candidate wallets to discover and score"
+        default: "150"
+      steps:
+        description: "probe only, or the full pipeline"
+        type: choice
+        options: [full, probe]
+        default: full
+      seed_wallets:
+        description: "Extra wallets to include, comma-separated (optional)"
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backtest
+  cancel-in-progress: false
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Unit tests
+        run: python -m pytest -q
+
+      # data/ holds the DuckDB file and HTTP cache, so each run only pulls what's new.
+      - name: Restore data cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: backtest-data-${{ github.run_id }}
+          restore-keys: backtest-data-
+
+      - name: Run config
+        env:
+          MAX_CANDIDATES: ${{ inputs.max_candidates }}
+          SEED_WALLETS: ${{ inputs.seed_wallets }}
+        run: |
+          python - <<'EOF'
+          import os, yaml
+          seeds = [w.strip().lower() for w in os.environ["SEED_WALLETS"].split(",") if w.strip()]
+          cfg = {"discovery": {"max_candidates": int(os.environ["MAX_CANDIDATES"]), "seed_wallets": seeds}}
+          yaml.safe_dump(cfg, open("ci.yaml", "w"))
+          print(yaml.safe_dump(cfg))
+          EOF
+
+      # A failed check is reported in probe.log but doesn't stop the run (tee keeps the step green):
+      # discovery has several sources and one bad endpoint shouldn't block the rest.
+      - name: Probe the APIs
+        run: python -m polybt --config ci.yaml probe 2>&1 | tee probe.log
+
+      - name: Ingest
+        if: inputs.steps == 'full'
+        run: python -m polybt --config ci.yaml ingest
+
+      - name: Filter
+        if: inputs.steps == 'full'
+        run: python -m polybt --config ci.yaml filter
+
+      - name: Prices
+        if: inputs.steps == 'full'
+        run: python -m polybt --config ci.yaml prices
+
+      - name: Simulate
+        if: inputs.steps == 'full'
+        run: python -m polybt --config ci.yaml simulate
+
+      - name: Report
+        if: inputs.steps == 'full'
+        run: python -m polybt --config ci.yaml report
+
+      - name: Checks (fees, sample wallet)
+        if: inputs.steps == 'full'
+        run: |
+          python -m polybt --config ci.yaml fees 2>&1 | tee output/fees.txt
+          W=$(python -c "import duckdb; r=duckdb.connect('data/polybt.duckdb').execute('SELECT wallet FROM wallet_scores ORDER BY passed DESC, resolved_trades DESC LIMIT 1').fetchone(); print(r[0] if r else '')")
+          if [ -n "$W" ]; then python -m polybt --config ci.yaml inspect "$W" 2>&1 | tee output/inspect.txt; fi
+
+      - name: Summary
+        if: always() && inputs.steps == 'full'
+        run: |
+          mkdir -p output
+          python -m polybt --config ci.yaml summary > output/summary.md 2>output/summary.err || cat output/summary.err
+          cat output/summary.md >> "$GITHUB_STEP_SUMMARY"
+          cat output/summary.md
+
+      - name: Save data cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data
+          key: backtest-data-${{ github.run_id }}
+
+      - name: Upload outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backtest-output
+          path: |
+            output/
+            probe.log
+          if-no-files-found: warn
+
+      # Also publish the outputs to a branch, so they can be read without downloading an artifact.
+      - name: Publish to backtest-results branch
+        if: always()
+        run: |
+          mkdir -p /tmp/results && cp -r output/. /tmp/results/ 2>/dev/null || true
+          cp probe.log /tmp/results/ 2>/dev/null || true
+          find /tmp/results -name '*.csv' -size +40M -exec gzip -f {} \;
+          cd /tmp/results
+          git init -q -b backtest-results
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Backtest results from run ${{ github.run_id }}" || exit 0
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" backtest-results

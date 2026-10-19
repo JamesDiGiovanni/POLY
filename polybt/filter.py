@@ -103,9 +103,14 @@ def run(con, cfg, wallets: list[str] | None = None) -> list[str]:
         wallets = [r[0] for r in con.execute("SELECT wallet FROM candidates ORDER BY wallet").fetchall()]
     markets = load_markets(con)
     start, cutoff = cfg.selection_start_ts, cfg.cutoff_ts
+    capped = {r[0] for r in con.execute("SELECT wallet FROM wallet_ingest_state WHERE capped").fetchall()}
     passed, now = [], int(time.time())
     for w in wallets:
         s = score_wallet(load_fills(con, w), markets, cfg, start, cutoff)
+        if w in capped:
+            s["passed"] = False
+            s["rejection_reason"] = "; ".join(filter(None, [
+                f"capped: over {cfg['http'].get('max_activity_rows')} activity rows", s["rejection_reason"]]))
         con.execute("INSERT OR REPLACE INTO wallet_scores VALUES (?," + ",".join("?" * len(COLUMNS)) + ",?)",
                     [w, *(s[c] for c in COLUMNS), now])
         if s["passed"]:

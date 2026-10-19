@@ -52,7 +52,8 @@ CREATE TABLE IF NOT EXISTS wallet_ingest_state (
     wallet VARCHAR PRIMARY KEY,
     start_ts BIGINT,            -- earliest timestamp requested
     synced_to BIGINT,           -- everything up to here has been pulled
-    updated_at BIGINT
+    updated_at BIGINT,
+    capped BOOLEAN              -- stopped at http.max_activity_rows: history incomplete, wallet rejected
 );
 
 CREATE TABLE IF NOT EXISTS price_history (
@@ -201,6 +202,7 @@ MIGRATIONS = [
     "ALTER TABLE sim_trades ADD COLUMN IF NOT EXISTS sizing VARCHAR",
     "ALTER TABLE sim_trades ADD COLUMN IF NOT EXISTS exec_ts BIGINT",
     "ALTER TABLE sim_results ADD COLUMN IF NOT EXISTS sizing VARCHAR",
+    "ALTER TABLE wallet_ingest_state ADD COLUMN IF NOT EXISTS capped BOOLEAN",
 ]
 
 

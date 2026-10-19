@@ -146,10 +146,12 @@ def _activity_row(wallet: str, r: dict):
     )
 
 
-def ingest_wallet(con, api: PolymarketAPI, wallet: str, start_ts: int) -> int:
+def ingest_wallet(con, api: PolymarketAPI, wallet: str, start_ts: int, max_rows: int | None = None) -> int:
     """Pull activity since the last sync. Never re-pulls a range already stored."""
-    state = con.execute("SELECT start_ts, synced_to FROM wallet_ingest_state WHERE wallet = ?",
+    state = con.execute("SELECT start_ts, synced_to, capped FROM wallet_ingest_state WHERE wallet = ?",
                         [wallet]).fetchone()
+    if state and state[2]:
+        return 0
     now = int(time.time())
     ranges = []
     if state is None:
@@ -158,18 +160,25 @@ def ingest_wallet(con, api: PolymarketAPI, wallet: str, start_ts: int) -> int:
         if start_ts < state[0]:
             ranges.append((start_ts, state[0] - 1))  # lookback widened
         ranges.append((state[1], None))
-    n = 0
+    n, seen, capped = 0, 0, False
     for lo, hi in ranges:
         batch = []
         for r in api.activity(wallet, lo, hi):
             batch.append(_activity_row(wallet, r))
+            seen += 1
             if len(batch) >= 2000:
                 n += _insert_trades(con, batch)
                 batch = []
+            if max_rows and seen >= max_rows:
+                capped = True
+                break
         n += _insert_trades(con, batch)
+        if capped:
+            log.info("%s: stopped at %d activity rows (capped)", wallet, seen)
+            break
     new_start = min(start_ts, state[0]) if state else start_ts
-    con.execute("INSERT OR REPLACE INTO wallet_ingest_state VALUES (?, ?, ?, ?)",
-                [wallet, new_start, now, now])
+    con.execute("INSERT OR REPLACE INTO wallet_ingest_state VALUES (?, ?, ?, ?, ?)",
+                [wallet, new_start, now, now, capped])
     return n
 
 
@@ -270,7 +279,7 @@ def run(con, api: PolymarketAPI, cfg, wallets: list[str] | None = None, skip_dis
         wallets = discover(con, api, cfg)
     for i, w in enumerate(wallets):
         try:
-            n = ingest_wallet(con, api, w, cfg.selection_start_ts)
+            n = ingest_wallet(con, api, w, cfg.selection_start_ts, cfg["http"].get("max_activity_rows"))
             log.info("[%d/%d] %s: %d new rows", i + 1, len(wallets), w, n)
         except Exception as e:
             log.warning("[%d/%d] %s failed: %s", i + 1, len(wallets), w, e)
