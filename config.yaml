@@ -1,0 +1,101 @@
+# Polymarket copy-trade backtester configuration.
+# Every threshold the spec calls "a configurable default" lives here.
+
+db_path: data/polybt.duckdb
+cache_dir: data/cache
+output_dir: output
+
+split:
+  # Wallets are selected on trades before the cutoff and tested only on trades after it.
+  cutoff_date: null            # YYYY-MM-DD; null = today minus cutoff_days_ago
+  cutoff_days_ago: 60
+  selection_lookback_days: 365 # how much history before the cutoff to ingest and score
+
+http:
+  timeout_s: 30
+  max_retries: 5
+  backoff_s: 2.0
+  # Requests per second per host. Polymarket's published limits are generous; stay well under.
+  requests_per_second:
+    data-api.polymarket.com: 4
+    clob.polymarket.com: 4
+    gamma-api.polymarket.com: 4
+  # Responses that can still change (latest activity page, open markets, leaderboards)
+  # are reused for this long. Immutable responses (closed price windows) are cached forever.
+  mutable_ttl_s: 21600
+  activity_page_size: 500
+  activity_offset_cap: 3000    # Data API rejects deep offsets; we re-window by timestamp past this
+
+discovery:
+  seed_wallets: []             # always included, lowercase 0x addresses
+  max_candidates: 300
+  leaderboard:
+    enabled: true
+    path: /v1/leaderboard
+    page_size: 50
+    pages: 4
+    # Several boards so losers and high-volume wallets are included, not just today's top PnL.
+    queries:
+      - {category: OVERALL, timePeriod: ALL, orderBy: PNL}
+      - {category: OVERALL, timePeriod: MONTH, orderBy: PNL}
+      - {category: OVERALL, timePeriod: ALL, orderBy: VOL}
+      - {category: CRYPTO, timePeriod: ALL, orderBy: PNL}
+  active_in_markets:
+    enabled: true
+    top_markets: 40            # highest-volume recently closed markets
+    trades_per_market: 1000
+    wallets_per_market: 15
+
+categories:
+  # A market is short-term crypto if its question or slug matches any of these (case-insensitive regex).
+  short_term_crypto:
+    - "up or down"
+    - "updown"
+    - "\\b(5|15)m\\b"
+    - "-(5|15)m-"
+    - "\\b(bitcoin|btc|ethereum|eth|solana|sol|xrp)\\b.*\\b(above|below|price)\\b.*\\b(am|pm|et)\\b"
+  default: other
+
+filters:
+  min_resolved_trades: 200
+  min_active_span_days: 90
+  active_within_days: 30       # must have traded within this many days before the cutoff
+  min_roi: 0.0                 # strictly greater than
+  min_edge_pts: 3.0            # win rate minus avg entry price, in percentage points
+  max_top3_profit_share: 0.40
+  min_median_trade_usd: 20
+  max_trades_per_day: 50
+  wash_window_s: 3600
+  # Share of buys that hit the other side of the same market within the window.
+  # The spec's rule is zero tolerance; 5% lets a rare flip through while still flagging hedgers.
+  max_wash_fraction: 0.05
+
+price_history:
+  fidelity_min: 1
+  chunk_hours: 24              # one CLOB request covers this window
+  pad_s: 3600                  # history pulled on each side of every trade
+
+simulate:
+  delays_s: [10, 60, 300, 900]
+  stake_usd: 10
+  spread_penalty: 0.01
+  spread_penalty_low_volume: 0.02
+  low_volume_threshold_usd: 50000
+  max_copy_price: 0.97
+  # Taker fee as a fraction of notional, per category. CHECK Polymarket's current schedule
+  # before trusting results, especially for short-term crypto.
+  fees:
+    short_term_crypto: 0.0
+    other: 0.0
+
+report:
+  bootstrap_samples: 2000
+  ci_level: 0.90
+  seed: 7
+  go_no_go:
+    delay_s: 60
+    min_copyable_trades: 100
+    months_window: 3
+    months_positive: 2
+    month_days: 30
+    min_wallets: 3
