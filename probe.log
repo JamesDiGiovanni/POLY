@@ -1,0 +1,154 @@
+
+== data-api leaderboard: OK
+[
+ "list[5]",
+ {
+  "rank": "str",
+  "proxyWallet": "str",
+  "userName": "str",
+  "xUsername": "str",
+  "verifiedBadge": "bool",
+  "vol": "float",
+  "pnl": "float",
+  "profileImage": "str"
+ }
+]
+
+== data-api activity: OK
+missing: []
+[
+ "list[5]",
+ {
+  "proxyWallet": "str",
+  "timestamp": "int",
+  "conditionId": "str",
+  "type": "str",
+  "size": "float",
+  "usdcSize": "float",
+  "transactionHash": "str",
+  "price": "int",
+  "asset": "str",
+  "side": "str",
+  "outcomeIndex": "int",
+  "title": "str",
+  "slug": "str",
+  "icon": "str",
+  "eventSlug": "str",
+  "outcome": "str",
+  "name": "str",
+  "pseudonym": "str",
+  "bio": "str",
+  "profileImage": "str",
+  "profileImageOptimized": "str"
+ }
+]
+
+== gamma markets by condition: OK
+missing: []
+[
+ "list[1]",
+ {
+  "id": "str",
+  "question": "str",
+  "conditionId": "str",
+  "slug": "str",
+  "resolutionSource": "str",
+  "endDate": "str",
+  "startDate": "str",
+  "image": "str",
+  "icon": "str",
+  "description": "str",
+  "outcomes": "str",
+  "outcomePrices": "str",
+  "volume": "str",
+  "active": "bool",
+  "closed": "bool",
+  "marketMakerAddress": "str",
+  "createdAt": "str",
+  "updatedAt": "str",
+  "closedTime": "str",
+  "new": "bool",
+  "featured": "bool",
+  "submitted_by": "str",
+  "archived": "bool",
+  "resolvedBy": "str",
+  "restricted": "bool",
+  "groupItemTitle": "str",
+  "groupItemThreshold": "str",
+  "questionID": "str",
+  "umaEndDate": "str",
+  "enableOrderBook": "bool",
+  "orderPriceMinTickSize": "float",
+  "orderMinSize": "int",
+  "umaResolutionStatus": "str",
+  "volumeNum": "float",
+  "endDateIso": "str",
+  "startDateIso": "str",
+  "hasReviewedDates": "bool",
+  "volume1wk": "int",
+  "volume1mo": "int",
+  "volume1yr": "int"
+ }
+]
+
+== clob market info (fees), traded market: OK
+fd = None
+{
+ "r": {
+  "mi": "int",
+  "ma": "float",
+  "e": "bool",
+  "moas": "int"
+ },
+ "t": [
+  "list[2]",
+  {
+   "t": "str",
+   "o": "str"
+  }
+ ],
+ "c": "str",
+ "mos": "int",
+ "mts": "float",
+ "nr": "bool",
+ "cbos": "bool",
+ "ibce": "bool",
+ "v": "str"
+}
+
+== clob prices-history: OK
+120 points around the trade; first: [{'t': 1731485822, 'p': 0.929}, {'t': 1731485883, 'p': 0.929}]
+
+== gamma top closed markets: OK
+3 markets: Will Trump nominate Judy Shelton as the next Fed chair?; Will Trump nominate Kevin Warsh as the next Fed chair?; Will Trump nominate Scott Bessent as the next Fed chair?
+
+== gamma active markets: OK
+Will the Fed decrease interest rates by 50+ bps after the Oc; Will there be no change in Fed interest rates after the Octo; Will the Fed decrease interest rates by 25 bps after the Oct; Will the Fed increase interest rates by 25 bps after the Oct; US x Iran ceasefire continues through October 31?
+
+== clob book, active market: OK
+bids 0 asks 79 best [] / [(0.001, 678755.48), (0.002, 298876.82)]
+
+== clob fee details on active markets: OK
+17/20 active markets carry fd
+'Will the Fed decrease interest rates by 50+ bps af': fd={'r': 0.05, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'ibce', 'mbf', 'mos', 'mts', 'nr', 'r', 't', 'tbf', 'v']
+'Will there be no change in Fed interest rates afte': fd={'r': 0.05, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'ibce', 'mbf', 'mos', 'mts', 'nr', 'r', 't', 'tbf', 'v']
+'Will the Fed decrease interest rates by 25 bps aft': fd={'r': 0.05, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'ibce', 'mbf', 'mos', 'mts', 'nr', 'r', 't', 'tbf', 'v']
+'Will the Fed increase interest rates by 25 bps aft': fd={'r': 0.05, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'ibce', 'mbf', 'mos', 'mts', 'nr', 'r', 't', 'tbf', 'v']
+'US x Iran ceasefire continues through October 31?': fd=None keys=['ao', 'aot', 'c', 'cbos', 'ibce', 'mos', 'mts', 'r', 't', 'v']
+"Will the Tesla Roadster's 0-60 time be less than 1": fd={'r': 0.05, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'ibce', 'mbf', 'mos', 'mts', 'r', 't', 'tbf', 'v']
+'Will Flávio Bolsonaro win the 2026 Brazilian presi': fd={'r': 0.04, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'ibce', 'mbf', 'mos', 'mts', 'nr', 'r', 't', 'tbf', 'v']
+'Will the Fed increase interest rates by 50+ bps af': fd={'r': 0.05, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'ibce', 'mbf', 'mos', 'mts', 'nr', 'r', 't', 'tbf', 'v']
+'US x Iran ceasefire continues through October 22?': fd=None keys=['ao', 'aot', 'c', 'cbos', 'ibce', 'mos', 'mts', 'r', 't', 'v']
+'Counter-Strike: PARIVISION vs magic (BO3) - 1win P': fd={'r': 0.05, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'gst', 'ibce', 'mbf', 'mos', 'mts', 'r', 'sd', 't', 'tbf', 'v']
+'Will Luiz Inácio Lula da Silva win the 2026 Brazil': fd={'r': 0.04, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'ibce', 'mbf', 'mos', 'mts', 'nr', 'r', 't', 'tbf', 'v']
+'Will Shakhtar Donetsk win the 2026-27 UEFA Champio': fd={'r': 0.03, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'ibce', 'mbf', 'mos', 'mts', 'nr', 'r', 't', 'tbf', 'v']
+'Will AC Monza win on 2026-10-19?': fd={'r': 0.05, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'gst', 'ibce', 'mbf', 'mos', 'mts', 'nr', 'r', 'sd', 't', 'tbf', 'v']
+"Japan Women's Open: Katie Boulter vs Himeno Sakats": fd={'r': 0.05, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'gst', 'ibce', 'mbf', 'mos', 'mts', 'r', 'sd', 't', 'tbf', 'v']
+'Commanders vs. 49ers: O/U 52.5': fd={'r': 0.03, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'gst', 'ibce', 'mbf', 'mos', 'mts', 'r', 'sd', 't', 'tbf', 'v']
+'Will Benjamin Netanyahu be the next Prime Minister': fd=None keys=['ao', 'aot', 'c', 'cbos', 'ibce', 'mos', 'mts', 'nr', 'r', 't', 'v']
+'Will the Cleveland Browns win the 2027 NFL league ': fd={'r': 0.03, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'ibce', 'mbf', 'mos', 'mts', 'nr', 'r', 't', 'tbf', 'v']
+'Tampa Bay Rays vs. Cleveland Guardians: O/U 6.5': fd={'r': 0.05, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'gst', 'ibce', 'mbf', 'mos', 'mts', 'r', 't', 'tbf', 'v']
+'Dota 2: Dawn Bulls vs CyberHero - Game 2 Winner': fd={'r': 0.05, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'gst', 'ibce', 'mbf', 'mos', 'mts', 'r', 'sd', 't', 'tbf', 'v']
+'Will John N. Kennedy win the 2028 Republican presi': fd={'r': 0.04, 'e': 1, 'to': True} keys=['ao', 'aot', 'c', 'cbos', 'fd', 'ibce', 'mbf', 'mos', 'mts', 'nr', 'r', 't', 'tbf', 'v']
+
+probe: all OK

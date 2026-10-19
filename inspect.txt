@@ -1,0 +1,19 @@
+wallet          0x2c55621871b5cedb336bc509dd93e61568f6dbb9
+profile         https://polymarket.com/profile/0x2c55621871b5cedb336bc509dd93e61568f6dbb9
+trades          3557 (2106 buys) across 345 markets
+first / last    2025-11-05 11:06 / 2026-08-07 20:24
+bought / sold   $451,910.05 / $435,856.84
+redeemed        $47,865.08
+cash P&L        $31,811.87  (open positions not valued)
+latest trades:
+  2026-07-24 18:09  SELL      18.18 @ 0.550  $    10.00  Iran successfully targets shipping on July 24?
+  2026-07-24 12:36  BUY     1000.00 @ 0.570  $   570.00  Will fewer than 220 ships transit the Bab el-Mandeb Strait b
+  2026-07-23 08:40  SELL      98.18 @ 0.550  $    54.00  Iran successfully targets shipping on July 24?
+  2026-07-23 06:40  SELL       1.82 @ 0.550  $     1.00  Iran successfully targets shipping on July 24?
+  2026-07-23 02:35  BUY      399.00 @ 0.927  $   369.87  0 ships transit Hormuz on any date by July 31?
+  2026-07-23 01:29  BUY     1500.00 @ 0.888  $  1332.54  Iran full airspace closure by July 24?
+  2026-07-23 01:29  BUY     1400.00 @ 0.714  $  1000.22  Iran full airspace closure by July 27?
+  2026-07-23 01:27  BUY      601.00 @ 0.927  $   557.13  0 ships transit Hormuz on any date by July 31?
+  2026-07-23 00:43  BUY     1000.00 @ 0.055  $    55.00  Bab el-Mandeb Strait effectively closed by July 31?
+  2026-07-23 00:36  SELL    2500.00 @ 0.031  $    77.85  Will Iran announce withdrawal from MOU negotiations by July 
+filters         PASSED
