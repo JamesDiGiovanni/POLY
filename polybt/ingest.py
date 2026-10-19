@@ -257,20 +257,27 @@ def _insert_trades(con, rows) -> int:
 def ingest_markets(con, api: PolymarketAPI, cfg, batch: int = 20) -> int:
     """Fetch metadata for every traded market we don't have, or have only as still-open."""
     stale = int(time.time()) - int(cfg["http"]["mutable_ttl_s"])
+    # High-frequency wallets are rejected without scoring, so their markets are never needed.
     ids = [r[0] for r in con.execute("""
         SELECT DISTINCT t.condition_id FROM wallet_trades t
         LEFT JOIN markets m USING (condition_id)
-        WHERE t.condition_id <> '' AND (m.condition_id IS NULL OR (NOT m.resolved AND m.fetched_at < ?))
+        LEFT JOIN wallet_ingest_state s ON s.wallet = t.wallet
+        WHERE t.condition_id <> '' AND NOT coalesce(s.capped, false)
+          AND (m.condition_id IS NULL OR (NOT m.resolved AND m.fetched_at < ?))
     """, [stale]).fetchall()]
+    log.info("markets: %d to fetch", len(ids))
     workers = int(cfg["http"].get("workers", 8))
+    n = 0
+    step = batch * 50  # store as we go, so an interrupted run keeps what it fetched
     with ThreadPoolExecutor(workers) as pool:
-        batches = pool.map(api.markets_by_condition, [ids[i:i + batch] for i in range(0, len(ids), batch)])
-        parsed = [parse_market(raw) for b in batches for raw in b]
-        log.info("markets: %d metadata fetched, looking up fee details", len(parsed))
-        rows = list(pool.map(lambda m: market_row(m, cfg, api), parsed))
-    insert_many(con, "markets", rows, "INSERT OR REPLACE")
-    n = len(rows)
-    log.info("markets: %d requested, %d stored", len(ids), n)
+        for start in range(0, len(ids), step):
+            part = ids[start:start + step]
+            batches = pool.map(api.markets_by_condition, [part[i:i + batch] for i in range(0, len(part), batch)])
+            parsed = [parse_market(raw) for b in batches for raw in b]
+            rows = list(pool.map(lambda m: market_row(m, cfg, api), parsed))
+            insert_many(con, "markets", rows, "INSERT OR REPLACE")
+            n += len(rows)
+            log.info("markets: %d/%d stored", n, len(ids))
     return n
 
 
