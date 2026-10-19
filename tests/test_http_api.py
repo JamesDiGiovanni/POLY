@@ -110,3 +110,13 @@ def test_market_fees_prefer_clob_details_then_category():
     assert market_fees(Api(None), m, cfg) == (0.07, 1.0, "category", "crypto")         # fallback table
     assert fee_category({"question": "x", "slug": "", "gamma_category": "", "tags": ["geopolitics"]}, cfg) == "geopolitics"
     assert fee_category({"question": "Who wins?", "slug": "", "gamma_category": "", "tags": []}, cfg) == "default"
+
+
+def test_prescreen_flags_only_clear_high_frequency():
+    from polybt.ingest import is_high_frequency
+    day = 86400
+    bot = [{"timestamp": 1_700_000_000 + i * 60} for i in range(500)]            # 500 rows in ~8 hours
+    human = [{"timestamp": 1_700_000_000 + i * day // 10} for i in range(500)]   # 10 a day
+    assert is_high_frequency(bot, 500, 150)
+    assert not is_high_frequency(human, 500, 150)
+    assert not is_high_frequency(bot[:100], 500, 150)                             # short page: whole history

@@ -60,6 +60,11 @@ class PolymarketAPI:
                                      "takerOnly": "false"}, ttl=self.mutable_ttl)
         return _as_list(body)
 
+    def recent_activity(self, user: str, limit: int = 500) -> list[dict]:
+        """The wallet's newest activity rows, newest first (one request)."""
+        return _as_list(self.client.get_json(DATA_API, "/activity", {"user": user, "limit": limit, "sortBy": "TIMESTAMP",
+                                                                     "sortDirection": "DESC"}, ttl=self.mutable_ttl))
+
     def activity(self, user: str, start: int, end: int | None = None, live: bool = False) -> Iterator[dict]:
         """All activity rows for a wallet with start <= timestamp (<= end), oldest first.
 

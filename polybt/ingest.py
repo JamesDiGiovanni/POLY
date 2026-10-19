@@ -193,13 +193,46 @@ def ingest_wallet(con, api: PolymarketAPI, wallet: str, start_ts: int, max_rows:
     return _store_wallet(con, wallet, plan[1], rows, capped, now)
 
 
+def is_high_frequency(rows: list[dict], page: int, max_rows_per_day: float) -> bool:
+    """A full page of newest activity spanning so little time that the wallet trades far above the limit."""
+    if len(rows) < page:
+        return False
+    ts = [int(r.get("timestamp") or 0) for r in rows]
+    span_days = max(1e-6, (max(ts) - min(ts)) / 86400)
+    return len(rows) / span_days > max_rows_per_day
+
+
 def ingest_wallets(con, api: PolymarketAPI, cfg, wallets: list[str]) -> None:
-    """ingest_wallet for many wallets, fetching in parallel (the rate limiter still caps each host)."""
+    """ingest_wallet for many wallets, fetching in parallel (the rate limiter still caps each host).
+
+    Wallets never seen before are pre-screened with one request: if their newest page of activity shows
+    them trading at several times the trades-per-day limit, they're marked capped (rejected by the
+    filter) without downloading their full history. Most leaderboard wallets are such bots.
+    """
     max_rows = cfg["http"].get("max_activity_rows")
     plans = {w: _wallet_plan(con, w, cfg.selection_start_ts) for w in wallets}
-    todo = [w for w in wallets if plans[w] is not None]
     now = int(time.time())
-    with ThreadPoolExecutor(int(cfg["http"].get("workers", 8))) as pool:
+    workers = int(cfg["http"].get("workers", 8))
+    pre = cfg["http"].get("prescreen_rows_per_day")
+    new = [w for w in wallets if plans[w] is not None and not con.execute(
+        "SELECT 1 FROM wallet_ingest_state WHERE wallet = ?", [w]).fetchone()]
+    if pre and new:
+        page = 500
+        with ThreadPoolExecutor(workers) as pool:
+            def screen(w):
+                try:
+                    return w, is_high_frequency(api.recent_activity(w, page), page, float(pre))
+                except Exception as e:
+                    log.warning("prescreen %s failed: %s", w, e)
+                    return w, False
+            for w, hot in pool.map(screen, new):
+                if hot:
+                    con.execute("INSERT OR REPLACE INTO wallet_ingest_state VALUES (?, ?, ?, ?, ?)",
+                                [w, cfg.selection_start_ts, now, now, True])
+                    plans[w] = None
+        log.info("prescreen: %d of %d new wallets skipped as high-frequency", sum(plans[w] is None for w in new), len(new))
+    todo = [w for w in wallets if plans[w] is not None]
+    with ThreadPoolExecutor(workers) as pool:
         futures = {pool.submit(_fetch_wallet, api, w, plans[w][0], max_rows): w for w in todo}
         for i, fut in enumerate(as_completed(futures)):
             w = futures[fut]

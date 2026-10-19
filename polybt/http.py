@@ -110,7 +110,8 @@ class HttpClient:
                 if attempt == self.max_retries:
                     raise HttpError(resp.status_code, url, resp.text)
                 retry_after = resp.headers.get("Retry-After")
-                delay = float(retry_after) if retry_after and retry_after.isdigit() else self.backoff_s * 2 ** attempt
+                delay = max(float(retry_after) if retry_after and retry_after.isdigit() else 0.0,
+                            self.backoff_s * 2 ** attempt)
                 log.warning("HTTP %s from %s, retrying in %.1fs", resp.status_code, host, delay)
                 time.sleep(delay)
                 continue

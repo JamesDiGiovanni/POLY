@@ -14,14 +14,14 @@ split:
 
 http:
   timeout_s: 30
-  max_retries: 5
+  max_retries: 8
   backoff_s: 2.0
   # Requests per second per host. Polymarket's published limits (docs.polymarket.com/api-reference/rate-limits,
   # sliding 10 s windows, throttled by Cloudflare rather than rejected): Data API 1,000/10 s general and
   # 200/10 s on /trades; CLOB 9,000/10 s general, 1,000/10 s on /prices-history, 1,500/10 s on /book.
   # These defaults stay well under the published limits.
   requests_per_second:
-    data-api.polymarket.com: 30
+    data-api.polymarket.com: 12  # /activity returns 429s well below the published general limit
     clob.polymarket.com: 60
     gamma-api.polymarket.com: 15
   # Requests run in parallel threads; the per-host rates above still cap the total.
@@ -31,13 +31,16 @@ http:
   mutable_ttl_s: 21600
   activity_page_size: 500
   activity_offset_cap: 3000    # Data API rejects deep offsets; we re-window by timestamp past this
-  # Stop pulling a wallet past this many activity rows (~130 a day over the window). Such wallets are
+  # Stop pulling a wallet past this many activity rows (~65 a day over the window). Such wallets are
   # market makers or bots the trades-per-day filter would reject anyway; they're rejected as "capped".
-  max_activity_rows: 60000
+  max_activity_rows: 30000
+  # Before a full download, one request for the newest 500 rows: a wallet whose recent activity runs
+  # above this many rows a day (several times the trades-per-day filter) is skipped as high-frequency.
+  prescreen_rows_per_day: 150
 
 discovery:
   seed_wallets: []             # always included, lowercase 0x addresses
-  max_candidates: 300
+  max_candidates: 400          # cheap: most are bots screened out with one request each
   leaderboard:
     enabled: true
     path: /v1/leaderboard

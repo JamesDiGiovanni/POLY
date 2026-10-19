@@ -8,7 +8,7 @@ on:
     inputs:
       max_candidates:
         description: "Candidate wallets to discover and score"
-        default: "150"
+        default: "400"
       steps:
         description: "probe only, or the full pipeline"
         type: choice

@@ -110,7 +110,7 @@ def run(con, cfg, wallets: list[str] | None = None) -> list[str]:
         if w in capped:
             s["passed"] = False
             s["rejection_reason"] = "; ".join(filter(None, [
-                f"capped: over {cfg['http'].get('max_activity_rows')} activity rows", s["rejection_reason"]]))
+                "high_frequency: activity over the ingest cap or prescreen rate", s["rejection_reason"]]))
         con.execute("INSERT OR REPLACE INTO wallet_scores VALUES (?," + ",".join("?" * len(COLUMNS)) + ",?)",
                     [w, *(s[c] for c in COLUMNS), now])
         if s["passed"]:
