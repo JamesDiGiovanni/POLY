@@ -333,7 +333,8 @@ def ingest_prices(con, api: PolymarketAPI, cfg, wallets: list[str], since_ts: in
             log.warning("prices for %s @ %d failed: %s", token, start, e)
             return item, None
 
-    with ThreadPoolExecutor(int(cfg["http"].get("workers", 8))) as pool:
+    workers = int(cfg["price_history"].get("workers") or cfg["http"].get("workers", 8))
+    with ThreadPoolExecutor(workers) as pool:
         results = pool.map(fetch, todo)
         for i, ((token, start), points) in enumerate(results):
             if points is None:

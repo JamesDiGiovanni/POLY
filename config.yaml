@@ -86,6 +86,9 @@ price_history:
   fidelity_min: 1
   chunk_hours: 24              # one CLOB request covers this window
   pad_s: 3600                  # history pulled on each side of every trade
+  # Each 1-minute, 24 h window takes the CLOB ~4 s to serve, so more workers than elsewhere;
+  # the per-host request rate still caps the total.
+  workers: 32
 
 # Taker fees (see polybt/fees.py). Each market's own parameters are fetched from the CLOB
 # (GET /clob-markets/{condition_id} -> fd.r / fd.e) and take precedence; this table is the fallback.
