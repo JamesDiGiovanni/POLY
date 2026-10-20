@@ -1,10 +1,8 @@
-Tue Oct 20 05:57:59 UTC 2026
+Tue Oct 20 06:03:00 UTC 2026
 /dev/root        72G   63G  9.6G  87% /
-Mem:            7937        2529        1543          52        4222        5408
+Mem:            7937        2341        1725          53        4219        5595
 3.4G	/home/runner/work/POLY/POLY/data
 
-04:47:16 INFO [122/130] 0xcea58d03ce42096005bbf229f95d545230ae80f7: 0 new rows
-04:47:16 INFO [123/130] 0xd0394bd0de8d901c3fde039a86bf08e6aa4a2532: 1 new rows
 04:47:16 INFO [124/130] 0xc25427ea224b8f9fa2df801233f944006ed33f73: 0 new rows
 04:47:17 INFO [125/130] 0xd2b8e73e3bd41432ef7ad3de1bde60b50efd9d3b: 0 new rows
 04:47:17 INFO [126/130] 0xda4911a6ca2ac8ceea15b85f169220fc6141c716: 0 new rows
@@ -63,3 +61,5 @@ Mem:            7937        2529        1543          52        4222        5408
 05:51:27 INFO   12000/15329 chunks
 05:53:54 INFO   12500/15329 chunks
 05:56:22 INFO   13000/15329 chunks
+05:58:50 INFO   13500/15329 chunks
+06:01:20 INFO   14000/15329 chunks
