@@ -1,0 +1,210 @@
+04:42:45 INFO discovery markets per category: {'sports': 60, 'default': 60, 'economics': 44, 'politics': 60, 'geopolitics': 40, 'crypto': 60}
+04:43:28 WARNING HTTP 429 from data-api.polymarket.com, retrying in 2.0s
+04:44:41 WARNING HTTP 429 from data-api.polymarket.com, retrying in 2.0s
+04:47:06 INFO discovered 272 candidate wallets
+04:47:06 INFO [1/130] 0x00e2d8f88b39d9b430c136c679369f41101cd56a: 0 new rows
+04:47:06 INFO [2/130] 0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1: 0 new rows
+04:47:06 INFO [3/130] 0x8ebfdc251c6c378d4a3a54a8f15cebfa4b9183ce: 0 new rows
+04:47:06 INFO [4/130] 0xd42f6a1634a3707e27cbae14ca966068e5d1047d: 0 new rows
+04:47:07 INFO [5/130] 0x5bcd012df905647463ab8e21b4f13a60cf07fa31: 0 new rows
+04:47:07 INFO [6/130] 0x7e30c3a56d89edac738d788dd218a9e64fb91e50: 3 new rows
+04:47:07 INFO [7/130] 0x94884db79666a1a34c46d03fb4f8e9cbcaf6b5a6: 0 new rows
+04:47:07 INFO [8/130] 0xe82e99f17119cf9ea481b3b20d90b21261fc1ce0: 0 new rows
+04:47:07 INFO [9/130] 0xa0275889acf34a77ae9b66ea6a58112f6101e1d5: 0 new rows
+04:47:07 INFO [10/130] 0x28065f1b88027422274fb33e1e22bf3dad5736e7: 0 new rows
+04:47:07 INFO [11/130] 0x2c5473a2c95c68867f5de771a41a4cc9c8d3257d: 0 new rows
+04:47:07 INFO [12/130] 0xe1e27a12e5aa338a39fd9787adf507aec8130abe: 0 new rows
+04:47:07 INFO [13/130] 0x58d8248b1d54ce937733eb4b64fd6a2932d07a4c: 0 new rows
+04:47:07 INFO [14/130] 0x5bffcf561bcae83af680ad600cb99f1184d6ffbe: 0 new rows
+04:47:07 INFO [15/130] 0x5d1048f76c13558f9c3a25685d960357957edca1: 5 new rows
+04:47:07 INFO [16/130] 0x663e21166595acf8b7c387233cc2daf6ba8161c8: 0 new rows
+04:47:08 INFO [17/130] 0x8d971b3eebf8bcf7e748d9328dfec7b10a8afbd8: 0 new rows
+04:47:08 INFO [18/130] 0xe553da4e6b9cb32230a9ce8776ab6bfade6b2d11: 0 new rows
+04:47:08 INFO [19/130] 0x48e7ca9d4754021dc8b32adcaec0234dd6c9d5f8: 0 new rows
+04:47:08 INFO [20/130] 0x6d85fb0b2ae052d2fed2e556c935aac34e788393: 0 new rows
+04:47:08 INFO [21/130] 0x6bab41a0dc40d6dd4c1a915b8c01969479fd1292: 0 new rows
+04:47:08 INFO [22/130] 0xcdc495702d5caabf60301025c5a2dd4c1a66a880: 0 new rows
+04:47:08 INFO [23/130] 0x06abb30ecb4d741daaa0fa8c1992463b5811b676: 0 new rows
+04:47:08 INFO [24/130] 0x4c9a16633796baf1be58d1199e95519dcd59b2c6: 0 new rows
+04:47:08 INFO [25/130] 0x185782fc6970c2956858096327b01418f189c0ce: 0 new rows
+04:47:08 INFO [26/130] 0x463e797dccfe0fd56839bc855f1e94b3f6ef664e: 0 new rows
+04:47:08 INFO [27/130] 0x09fa3d5a67dbba46911c967800324242e7625b72: 0 new rows
+04:47:08 INFO [28/130] 0x63589ef338c13a63e8cbcdffec58c4630468f4b5: 0 new rows
+04:47:09 INFO [29/130] 0x989b67c86daa5675c2a7d0ee4107d2a38f628ef3: 0 new rows
+04:47:09 INFO [30/130] 0x6897c5cb670230fd4fc4b2a0d2165f1e5143cb1e: 0 new rows
+04:47:09 INFO [31/130] 0xac21f5a71e5492975f9800070c818db99a5d4fe3: 0 new rows
+04:47:09 INFO [32/130] 0xac3e7ebbce3d0a660fe97c830460c2b61cda9aeb: 0 new rows
+04:47:09 INFO [33/130] 0x8ff04326388b1c024c45d7a7ffdd12cdedd0a0ed: 0 new rows
+04:47:09 INFO [34/130] 0xef02ae62bf79392eaaa2c7a4a07daa872d444f7e: 0 new rows
+04:47:09 INFO [35/130] 0xb68a63d94676c8630eb3471d82d3d47b7533c568: 0 new rows
+04:47:09 INFO [36/130] 0x07046535ff9a910d7343a2c319a3e62234621858: 0 new rows
+04:47:09 INFO [37/130] 0x05c7a17697196901916c8a83373c51218d2c4421: 0 new rows
+04:47:09 INFO [38/130] 0x0d05b729b369f742a3b47b1312de4424ad396a81: 0 new rows
+04:47:09 INFO [39/130] 0x18ba5145fba0fd51e68972268f5773175763e68f: 0 new rows
+04:47:10 INFO [40/130] 0x1f1d38f54a615d1c43c77e3b109bd01f56e163d9: 0 new rows
+04:47:10 INFO [41/130] 0x1cba7e44bcfd5acc4513f554ab9e86453d086a4c: 0 new rows
+04:47:10 INFO [42/130] 0x283b2fcdb2f0068498e32122141b8642217a3a9b: 0 new rows
+04:47:10 INFO [43/130] 0x3301e3158f66abb0c31870c253763cdc47e34dd8: 0 new rows
+04:47:10 INFO [44/130] 0x37138457cda5a53c8c5b44054d09d06dd75214e8: 0 new rows
+04:47:10 INFO [45/130] 0x39a1e47b91c336b05272c9d1cabd90a85c25af66: 0 new rows
+04:47:10 INFO [46/130] 0x386819f3c86b123f6c42a874331dedcd3a9e5683: 0 new rows
+04:47:10 INFO [47/130] 0x3e5630959499c5b5e55aceeeeae7446933d335d5: 2 new rows
+04:47:10 INFO [48/130] 0x3f02a8b650d4b30449e83616f2165460209ca51c: 0 new rows
+04:47:10 INFO [49/130] 0x44f2f0df07acf63a1771923f5475997ec9511415: 0 new rows
+04:47:10 INFO [50/130] 0x4e8bd6fbcd4811dc7cda3ec2c02e1b65f543c713: 0 new rows
+04:47:10 INFO [51/130] 0x50a832e2f544cd4a6842fac5fcc5a4425684143f: 0 new rows
+04:47:11 INFO [52/130] 0x627a0123bef3dfa869183b806a39c91cf9afcdc2: 0 new rows
+04:47:11 INFO [53/130] 0x647f7302d32cf4718671543178e509856c052f74: 0 new rows
+04:47:11 INFO [54/130] 0x6fdb583e938828c4117df6caa9a2aca45f4a7ea3: 0 new rows
+04:47:11 INFO [55/130] 0x7327b2dddff1aaf42d5aa627bea59ed479bf151a: 0 new rows
+04:47:11 INFO [56/130] 0x74416687453b92a843de6d05810d6d1a12a15ed5: 0 new rows
+04:47:11 INFO [57/130] 0x7d2299a379eb0b1c6077c7c419a383da6fb7f0cf: 0 new rows
+04:47:11 INFO [58/130] 0x82a0fae6f863c163acfcad28e9efd4f5166333a1: 0 new rows
+04:47:11 INFO [59/130] 0x7a4c34e803f6720aaf96a3ce5eb43c5cbc028a04: 0 new rows
+04:47:11 INFO [60/130] 0x8a4c788f043023b8b28a762216d037e9f148532b: 0 new rows
+04:47:11 INFO [61/130] 0x91df1312d2a5d482506c11dc9318809fecac68c1: 0 new rows
+04:47:11 INFO [62/130] 0x9edeafe62a196437440a97842b2e36d366c68bb4: 0 new rows
+04:47:11 INFO [63/130] 0xa48e29c2bd8b5299dfe8e65330976594ec7db476: 0 new rows
+04:47:12 INFO [64/130] 0xa9878e59934ab507f9039bcb917c1bae0451141d: 0 new rows
+04:47:12 INFO [65/130] 0xab819a61c52a2c6ae86d3bc6ef4826b240a65ecd: 0 new rows
+04:47:12 INFO [66/130] 0xbcb6ebb4368dd51722d68d25c740cde2ef5fc7c9: 0 new rows
+04:47:12 INFO [67/130] 0xbfbfcfd2f2107a6792adc2c46df3ad6458691e6c: 0 new rows
+04:47:12 INFO [68/130] 0xc30c0116e9a5c17f1c03240a0b02a819fe646509: 0 new rows
+04:47:12 INFO [69/130] 0xc4086b708cd3a50880b7069add1a1a80000f4675: 0 new rows
+04:47:12 INFO [70/130] 0xc4439174a5d5f821e173ce86def1d86c3145f19f: 0 new rows
+04:47:12 INFO [71/130] 0xc8a2817af83714dd98a33b1bf2ed87936eb2c590: 0 new rows
+04:47:12 INFO [72/130] 0xccdc1b327d7a256b2747ebcfa00c267e713f567b: 0 new rows
+04:47:12 INFO [73/130] 0xcd9cf0caefcdd0e16635531b4c00ef8fa421fba5: 0 new rows
+04:47:12 INFO [74/130] 0xcdae215927f04fb24fdf679f6c5923f6fb8ab808: 0 new rows
+04:47:12 INFO [75/130] 0xd1acd3925d895de9aec98ff95f3a30c5279d08d5: 0 new rows
+04:47:12 INFO [76/130] 0xd1c769317bd15de7768a70d0214cf0bbcc531d2b: 0 new rows
+04:47:13 INFO [77/130] 0xd5ccdf772f795547e299de57f47966e24de8dea4: 0 new rows
+04:47:13 INFO [78/130] 0xdc9c00c012e428cd9142b3dda82c66baae0442ca: 0 new rows
+04:47:13 INFO [79/130] 0xe426006ed49c7ed56e09f6c1bd466ec412af9766: 0 new rows
+04:47:13 INFO [80/130] 0xebaa7568c8934e897856c004667b02535d52abac: 0 new rows
+04:47:13 INFO [81/130] 0xfbfb0883a151234e76a5a5ea72ffc5f47e9df563: 0 new rows
+04:47:13 INFO [82/130] 0x02fc81db41ced07d14c270f9174f3823c208ddc6: 0 new rows
+04:47:13 INFO [83/130] 0x0523ff55bd7525d5fbda5c77f80f61662db4e38b: 0 new rows
+04:47:13 INFO [84/130] 0x0e5bd76779e74304d08e759072abf126d87da593: 0 new rows
+04:47:13 INFO [85/130] 0x0f37cb80dee49d55b5f6d9e595d52591d6371410: 0 new rows
+04:47:13 INFO [86/130] 0x11e829d2a19e7ade935861fb043715766a015b74: 0 new rows
+04:47:13 INFO [87/130] 0x151275ec1be5ba83bb15fc9df34aa43f7e4b68f3: 0 new rows
+04:47:13 INFO [88/130] 0x21f90e5ff30c12f52fbb2fb220aa268f22faed12: 0 new rows
+04:47:14 INFO [89/130] 0x24d2dce995531ddcde1960388cbf20f5edd41472: 0 new rows
+04:47:14 INFO [90/130] 0x2f701abe16e2a52acffd7cc01eafb3b48e352ee7: 0 new rows
+04:47:14 INFO [91/130] 0x3e426d5b3a5aa4bef22826b5b98de6497c798f95: 0 new rows
+04:47:14 INFO [92/130] 0x4344066fa99418555cd750de88883b703003caef: 0 new rows
+04:47:14 INFO [93/130] 0x494763ded10e3aa2b17a3524ae0f6ab8392bd6fa: 0 new rows
+04:47:14 INFO [94/130] 0x47ab026767cc320ac6e62f6ec747d59cf4d795df: 0 new rows
+04:47:14 INFO [95/130] 0x4aeb23e3c494d0a8f08e083132ba42dddc3b98db: 0 new rows
+04:47:14 INFO [96/130] 0x5471e71461eeaccb25b54be8f3334849870ef4d5: 0 new rows
+04:47:14 INFO [97/130] 0x6b3d278a0a62230364f55f1684ad24c1c12d76dd: 0 new rows
+04:47:14 INFO [98/130] 0x6d71437225a22a574182c6e7ad60c37ab530af7a: 0 new rows
+04:47:14 INFO [99/130] 0x56f88db28511d7e1fc08e35d76886d1c98f55111: 0 new rows
+04:47:14 INFO [100/130] 0x71aca3190326a4b5d94d2aa48d751b6fa8d4fdf1: 0 new rows
+04:47:15 INFO [101/130] 0x72edba94e02dde04f1424212bb4ccf6e1e478aa5: 0 new rows
+04:47:15 INFO [102/130] 0x75049bd489194be19c45c31ed311e556411c9c69: 0 new rows
+04:47:15 INFO [103/130] 0x75e765216a57942d738d880ffcda854d9f869080: 0 new rows
+04:47:15 INFO [104/130] 0x771ddd5d9c3b4d221a1e7ec1894edc7b2810503f: 0 new rows
+04:47:15 INFO [105/130] 0x7812576bb7fce75b26446ccf396e2effcf3ec2a2: 0 new rows
+04:47:15 INFO [106/130] 0x7a37b155092c159421c946aa44483972ea0791aa: 0 new rows
+04:47:15 INFO [107/130] 0x7c156bb0dbb44dcb7387a78778e0da313bf3c9db: 0 new rows
+04:47:15 INFO [108/130] 0x889e7f0464c72eb8cda1525ebc12b6aaba9d09e0: 0 new rows
+04:47:15 INFO [109/130] 0x8dee0cc41e6f6a74c53da29f56f31065f7daaad5: 0 new rows
+04:47:15 INFO [110/130] 0x8e6cfcee2e6a39918eda4ebcf21c4f712b676b18: 0 new rows
+04:47:15 INFO [111/130] 0x950ac006e2d64c97abeea28e97a9acd817d6b380: 0 new rows
+04:47:15 INFO [112/130] 0x99522923ea032ea03080c65f9ad9183d1a292edb: 0 new rows
+04:47:16 INFO [113/130] 0x9ef582748baf671ee716075658b870ae747c5d4f: 0 new rows
+04:47:16 INFO [114/130] 0xa2a3f148f290c06578925f4bf8dadabafe9e5849: 0 new rows
+04:47:16 INFO [115/130] 0xa4b4baeb1bc90c4b6ba27167736d6a21e41fefc6: 0 new rows
+04:47:16 INFO [116/130] 0xab7b6b4ac0426ada55d895564bee7c26cbdaf350: 0 new rows
+04:47:16 INFO [117/130] 0xa9f9c0ca31912bee7ecd8aa25bfad07adcd6b3de: 0 new rows
+04:47:16 INFO [118/130] 0xac2474546159e1349c57514d879732793db3941c: 0 new rows
+04:47:16 INFO [119/130] 0xae363845352952cdea784f581e9ee99a219c8fb5: 0 new rows
+04:47:16 INFO [120/130] 0xb5401c203d11a4bfc54a0037824e1d81c615b343: 0 new rows
+04:47:16 INFO [121/130] 0xbb6b76687dc00d28a280baea8373a51154ba04d6: 0 new rows
+04:47:16 INFO [122/130] 0xcea58d03ce42096005bbf229f95d545230ae80f7: 0 new rows
+04:47:16 INFO [123/130] 0xd0394bd0de8d901c3fde039a86bf08e6aa4a2532: 1 new rows
+04:47:16 INFO [124/130] 0xc25427ea224b8f9fa2df801233f944006ed33f73: 0 new rows
+04:47:17 INFO [125/130] 0xd2b8e73e3bd41432ef7ad3de1bde60b50efd9d3b: 0 new rows
+04:47:17 INFO [126/130] 0xda4911a6ca2ac8ceea15b85f169220fc6141c716: 0 new rows
+04:47:17 INFO [127/130] 0xf05a5efd3bf49ed32eadadbf2214901c5cf361f6: 0 new rows
+04:47:17 INFO [128/130] 0xf43aed2df92d16c4b5ea38b8f8fa872c1bb4cafc: 0 new rows
+04:47:17 INFO [129/130] 0xe0cb1206c4ccacdbbab3bc1d1268294a8bf08e37: 0 new rows
+04:47:17 INFO [130/130] 0xf7850ebb60c10d5375fff6e596d55b69fdec05ed: 0 new rows
+04:47:17 INFO markets: 3367 to fetch
+04:47:24 INFO markets: 0/3367 stored
+04:47:31 INFO markets: 0/3367 stored
+04:47:38 INFO markets: 3/3367 stored
+04:47:40 INFO markets: 3/3367 stored
+04:48:26 INFO filters: 19 of 272 wallets passed
+04:48:27 INFO price history: 15329 chunks to fetch
+04:48:42 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:49:07 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:49:37 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:50:23 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 9
+04:50:38 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:50:38 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:50:53 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:50:53 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 9
+04:51:09 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 9
+04:51:39 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:51:39 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:52:10 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:52:10 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:52:42 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 9
+04:53:05 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:53:05 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:53:05 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:53:05 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:53:37 INFO   500/15329 chunks
+04:56:06 INFO   1000/15329 chunks
+04:58:39 INFO   1500/15329 chunks
+05:01:12 INFO   2000/15329 chunks
+05:03:44 INFO   2500/15329 chunks
+05:06:11 INFO   3000/15329 chunks
+05:08:46 INFO   3500/15329 chunks
+05:11:14 INFO   4000/15329 chunks
+05:13:47 INFO   4500/15329 chunks
+05:16:14 INFO   5000/15329 chunks
+05:18:42 INFO   5500/15329 chunks
+05:21:14 INFO   6000/15329 chunks
+05:23:41 INFO   6500/15329 chunks
+05:26:09 INFO   7000/15329 chunks
+05:28:40 INFO   7500/15329 chunks
+05:31:08 INFO   8000/15329 chunks
+05:33:40 INFO   8500/15329 chunks
+05:36:14 INFO   9000/15329 chunks
+05:38:44 INFO   9500/15329 chunks
+05:41:16 INFO   10000/15329 chunks
+05:43:45 INFO   10500/15329 chunks
+05:46:19 INFO   11000/15329 chunks
+05:48:52 INFO   11500/15329 chunks
+05:51:27 INFO   12000/15329 chunks
+05:53:54 INFO   12500/15329 chunks
+05:56:22 INFO   13000/15329 chunks
+05:58:50 INFO   13500/15329 chunks
+06:01:20 INFO   14000/15329 chunks
+06:03:46 INFO   14500/15329 chunks
+06:06:28 INFO   15000/15329 chunks
+06:08:07 INFO simulated 0x0523ff55bd7525d5fbda5c77f80f61662db4e38b: 123 rows
+06:08:07 INFO simulated 0x11e829d2a19e7ade935861fb043715766a015b74: 436 rows
+06:08:07 INFO simulated 0x39a1e47b91c336b05272c9d1cabd90a85c25af66: 0 rows
+06:08:09 INFO simulated 0x47ab026767cc320ac6e62f6ec747d59cf4d795df: 1038 rows
+06:08:13 INFO simulated 0x50a832e2f544cd4a6842fac5fcc5a4425684143f: 3352 rows
+06:08:17 INFO simulated 0x6bab41a0dc40d6dd4c1a915b8c01969479fd1292: 2194 rows
+06:08:17 INFO simulated 0x74416687453b92a843de6d05810d6d1a12a15ed5: 0 rows
+06:08:18 INFO simulated 0x75e765216a57942d738d880ffcda854d9f869080: 630 rows
+06:08:26 INFO simulated 0x7c156bb0dbb44dcb7387a78778e0da313bf3c9db: 5858 rows
+06:08:38 INFO simulated 0x7e30c3a56d89edac738d788dd218a9e64fb91e50: 9022 rows
+06:08:55 INFO simulated 0x8ebfdc251c6c378d4a3a54a8f15cebfa4b9183ce: 13943 rows
+06:09:03 INFO simulated 0xc25427ea224b8f9fa2df801233f944006ed33f73: 5441 rows
+06:09:16 INFO simulated 0xc30c0116e9a5c17f1c03240a0b02a819fe646509: 9666 rows
+06:09:28 INFO simulated 0xc4086b708cd3a50880b7069add1a1a80000f4675: 10090 rows
+06:09:29 INFO simulated 0xcd9cf0caefcdd0e16635531b4c00ef8fa421fba5: 153 rows
+06:09:31 INFO simulated 0xd1acd3925d895de9aec98ff95f3a30c5279d08d5: 2134 rows
+06:09:59 INFO simulated 0xd1c769317bd15de7768a70d0214cf0bbcc531d2b: 25038 rows
+06:10:00 INFO simulated 0xd2b8e73e3bd41432ef7ad3de1bde60b50efd9d3b: 45 rows
+06:10:01 INFO simulated 0xd5ccdf772f795547e299de57f47966e24de8dea4: 665 rows
+06:10:03 INFO report written to output/report.html (17 wallets, 0 go)
+0 of 17 wallets meet the go criteria -> NO-GO

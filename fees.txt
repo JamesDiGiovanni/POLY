@@ -1,0 +1,11 @@
+market    sports        57486 markets  avg rate 0.021
+market    default       52660 markets  avg rate 0.017
+market    crypto        44511 markets  avg rate 0.088
+market    politics      11111 markets  avg rate 0.016
+market    weather        9605 markets  avg rate 0.027
+market    geopolitics     911 markets  avg rate 0.000
+market    economics       696 markets  avg rate 0.021
+
+calibration on 1131040 trades in fee-bearing markets since 2026-03-30:
+  870602 show no fee (maker fills or fee-free); 260438 were charged
+  matched v1: 49799  v2: 224128  neither: 36032
