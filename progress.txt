@@ -1,14 +1,8 @@
-Tue Oct 20 04:52:44 UTC 2026
+Tue Oct 20 04:57:45 UTC 2026
 /dev/root        72G   63G  9.6G  87% /
-Mem:            7937        3434         156          50        4708        4502
+Mem:            7937        3639         326          51        4309        4297
 3.4G	/home/runner/work/POLY/POLY/data
 
-04:47:14 INFO [92/130] 0x4344066fa99418555cd750de88883b703003caef: 0 new rows
-04:47:14 INFO [93/130] 0x494763ded10e3aa2b17a3524ae0f6ab8392bd6fa: 0 new rows
-04:47:14 INFO [94/130] 0x47ab026767cc320ac6e62f6ec747d59cf4d795df: 0 new rows
-04:47:14 INFO [95/130] 0x4aeb23e3c494d0a8f08e083132ba42dddc3b98db: 0 new rows
-04:47:14 INFO [96/130] 0x5471e71461eeaccb25b54be8f3334849870ef4d5: 0 new rows
-04:47:14 INFO [97/130] 0x6b3d278a0a62230364f55f1684ad24c1c12d76dd: 0 new rows
 04:47:14 INFO [98/130] 0x6d71437225a22a574182c6e7ad60c37ab530af7a: 0 new rows
 04:47:14 INFO [99/130] 0x56f88db28511d7e1fc08e35d76886d1c98f55111: 0 new rows
 04:47:14 INFO [100/130] 0x71aca3190326a4b5d94d2aa48d751b6fa8d4fdf1: 0 new rows
@@ -63,3 +57,9 @@ Mem:            7937        3434         156          50        4708        4502
 04:52:10 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
 04:52:10 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
 04:52:42 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 9
+04:53:05 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:53:05 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:53:05 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:53:05 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:53:37 INFO   500/15329 chunks
+04:56:06 INFO   1000/15329 chunks
