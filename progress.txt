@@ -1,13 +1,64 @@
-Tue Oct 20 14:19:38 UTC 2026
+Tue Oct 20 14:24:39 UTC 2026
 /dev/root        72G   59G   13G  83% /
-Mem:            7938        1607        3649          52        3030        6330
+Mem:            7938        1783        3397          52        3080        6154
 
-13:44:38 WARNING HTTP 429 from gamma-api.polymarket.com, retrying in 2.0s
-13:44:40 WARNING HTTP 429 from gamma-api.polymarket.com, retrying in 4.0s
-13:46:04 INFO gamma tag 'daily-temperature': 14782 temperature events
-13:46:13 WARNING HTTP 429 from gamma-api.polymarket.com, retrying in 2.0s
-13:46:18 WARNING HTTP 429 from gamma-api.polymarket.com, retrying in 2.0s
-13:46:31 INFO gamma tag 'temperature': 1 temperature events
-13:48:32 INFO weather markets: 14783 events, 119027 markets stored, 42654 questions unparsed
-13:48:34 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
-13:48:34 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 9
+14:21:48 INFO observations EFHK: 3 days
+14:21:49 INFO observations EGLC: 3 days
+14:21:50 INFO observations KAUS: 4 days
+14:21:51 INFO observations KBKF: 4 days
+14:21:52 INFO observations KDAL: 4 days
+14:21:53 INFO observations KHOU: 4 days
+14:21:54 INFO observations KMIA: 4 days
+14:21:55 INFO observations KORD: 4 days
+14:21:56 INFO observations KSEA: 4 days
+14:21:57 INFO observations KSFO: 4 days
+14:21:58 INFO observations LIMC: 3 days
+14:21:59 INFO observations NZWN: 3 days
+14:22:00 INFO observations OEJN: 3 days
+14:22:01 INFO observations RKSI: 3 days
+14:22:02 INFO observations SAEZ: 4 days
+14:22:03 INFO observations UUWW: 3 days
+14:22:04 INFO observations ZHCC: 3 days
+14:22:05 INFO observations ZSPD: 3 days
+14:22:06 INFO observations ZUCK: 3 days
+14:22:07 INFO observations KATL: 4 days
+14:22:08 INFO observations KLGA: 4 days
+14:22:09 INFO observations LLBG: 3 days
+14:22:10 INFO observations LTAC: 3 days
+14:22:11 INFO observations LTFM: 3 days
+14:22:12 INFO observations MPMG: 4 days
+14:22:13 INFO observations OPKC: 3 days
+14:22:14 INFO observations RCSS: 3 days
+14:22:15 INFO observations RJTT: 3 days
+14:22:16 INFO observations RKPK: 3 days
+14:22:17 INFO observations RPLL: 3 days
+14:22:18 INFO observations VILK: 3 days
+14:22:19 INFO observations WMKK: 3 days
+14:22:20 INFO observations WSSS: 3 days
+14:22:21 INFO observations ZBAA: 3 days
+14:22:22 INFO observations ZGGG: 3 days
+14:22:23 INFO observations ZGSZ: 3 days
+14:22:24 INFO observations ZHHH: 3 days
+14:22:25 INFO observations ZSQD: 3 days
+14:22:26 INFO observations ZUUU: 3 days
+14:22:27 INFO observations CYYZ: 4 days
+14:22:28 INFO observations EDDM: 3 days
+14:22:29 INFO observations EHAM: 3 days
+14:22:30 INFO observations EPWA: 3 days
+14:22:31 INFO observations FACT: 3 days
+14:22:32 INFO observations KLAX: 4 days
+14:22:33 INFO observations LEMD: 3 days
+14:22:34 INFO observations LFPB: 3 days
+14:22:35 INFO observations LFPG: 3 days
+14:22:36 INFO observations MMMX: 4 days
+14:22:37 INFO observations SBGR: 4 days
+14:22:38 INFO observations WIHH: 3 days
+14:22:39 INFO observations ZSJN: 1 days
+14:22:42 INFO observations RCTP: 993 days
+14:22:45 INFO observations VHHH: 993 days
+14:22:45 INFO weather prices: 105277 tokens to fetch
+14:23:03 WARNING prices 95744727384760303431452195498203470232274465809258368338785153553510290892423 failed: HTTP 400 for https://clob.polymarket.com/prices-history?endTs=1773333345&fidelity=30&market=95744727384760303431452195498203470232274465809258368338785153553510290892423&startTs=1771718400: {"error":"invalid filters: 'startTs' and 'endTs' interval is too long"}
+
+14:23:22 INFO   1000/105277 tokens
+14:23:59 INFO   2000/105277 tokens
+14:24:38 INFO   3000/105277 tokens
