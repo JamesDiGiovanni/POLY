@@ -87,3 +87,21 @@ def test_two_outcome_markets_become_one_side_per_outcome():
     assert set(refs) == {"c1#0", "c1#1", "c2"}
     assert (refs["c1#1"].extra["yes_token"], refs["c1#1"].extra["no_token"]) == ("t2", "t1")
     assert "celtics" in refs["c1#1"].tokens
+
+
+def test_polymarket_paging_follows_100_per_page_and_windows():
+    """Gamma returns at most 100 a page; a short page ends a window, a full one continues it."""
+    cfg = load(overrides={"arb": {"window_days": 7, "horizon_days": 14}})
+    calls = []
+
+    class C:
+        def get_json(self, base, path, params=None, **k):
+            calls.append((params["end_date_min"], params["offset"]))
+            first_window = len({c[0] for c in calls}) == 1
+            n = (100 if params["offset"] == 0 else 30) if first_window else 0
+            return [{"conditionId": f"{params['offset']}-{i}", "question": f"Q{i}", "outcomes": '["Yes", "No"]',
+                     "clobTokenIds": f'["a{i}", "b{i}"]', "endDate": "2026-12-10T00:00:00Z"} for i in range(n)]
+
+    refs = polymarket_refs(C(), cfg)
+    assert len(refs) == 130
+    assert calls[:2] == [(calls[0][0], 0), (calls[0][0], 100)] and len({c[0] for c in calls}) == 3

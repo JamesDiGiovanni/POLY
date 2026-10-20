@@ -201,7 +201,10 @@ weather:
 
 # Polymarket-Kalshi arbitrage measurement (python -m polybt arb-probe / arb-match). See polybt/arb.
 arb:
-  max_poly_markets: 5000       # most-traded open markets first
+  window_days: 7               # Polymarket open markets are walked by end-date window (paging stops near 1,000)
+  horizon_days: 400
+  min_poly_liquidity: 500
+  kalshi_skip_prefixes: [KXMVE]   # multi-leg combo markets
   max_kalshi_event_pages: 100  # x200 events
   max_close_days: 3            # matched markets must close within this many days of each other
   min_score: 0.35              # text similarity to be a candidate

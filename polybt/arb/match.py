@@ -89,39 +89,51 @@ class Ref:
 
 # ---- fetching ----------------------------------------------------------------
 
+def _poly_pages(client, a: dict):
+    """Open markets with real liquidity. Gamma returns at most 100 per page and stops paging near
+    1,000 results, so the end-date range is walked in windows small enough to page through."""
+    page_size, cap = 100, int(a.get("max_per_window", 1000))
+    step = int(a.get("window_days", 7)) * 86400
+    now = int(dt.datetime.now(dt.timezone.utc).timestamp())
+    iso = lambda ts: dt.datetime.fromtimestamp(ts, dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    for lo in range(now - step, now + int(a.get("horizon_days", 400)) * 86400, step):
+        for offset in range(0, cap, page_size):
+            page = _as_list(client.get_json(GAMMA_API, "/markets", {
+                "active": "true", "closed": "false", "end_date_min": iso(lo), "end_date_max": iso(lo + step),
+                "liquidity_num_min": a.get("min_poly_liquidity", 500), "order": "volume24hr", "ascending": "false",
+                "limit": page_size, "offset": offset}, cache=False))
+            yield from page
+            if len(page) < page_size:
+                break
+
+
 def polymarket_refs(client, cfg) -> list[Ref]:
-    """Open binary Polymarket markets, most traded first."""
+    """Open two-outcome Polymarket markets with real liquidity."""
     a = cfg["arb"]
     refs, seen = [], set()
-    for offset in range(0, int(a["max_poly_markets"]), 500):
-        page = _as_list(client.get_json(GAMMA_API, "/markets", {
-            "active": "true", "closed": "false", "order": "volume24hr", "ascending": "false",
-            "limit": 500, "offset": offset}, cache=False))
-        for m in page:
-            outcomes = [str(o) for o in _json_field(m.get("outcomes"))]
-            tokens = [str(t) for t in _json_field(m.get("clobTokenIds"))]
-            if len(outcomes) != 2 or len(tokens) != 2 or m.get("conditionId") in seen:
-                continue
-            seen.add(m.get("conditionId"))
-            ev = (m.get("events") or [{}])[0] if isinstance(m.get("events"), list) else {}
-            end = m.get("endDate")
-            close = int(dt.datetime.fromisoformat(end.replace("Z", "+00:00")).timestamp()) if end else None
-            base = m.get("question") or ""
-            if ev.get("title") and ev["title"].lower() not in base.lower():
-                base = f"{ev['title']} | {base}"
-            # Yes/No markets have one "yes" side. Two-outcome markets ("Lakers" vs "Celtics") are matched
-            # once per outcome: holding that outcome is the YES side, the other outcome the NO side.
-            sides = [(0, "")] if [o.lower() for o in outcomes] == ["yes", "no"] else [(0, outcomes[0]), (1, outcomes[1])]
-            rules = " ".join(x for x in (m.get("description"), m.get("resolutionSource"), ev.get("resolutionSource")) if x)
-            for idx, label in sides:
-                refs.append(Ref("poly", m["conditionId"] + (f"#{idx}" if label else ""),
-                                f"{base} | {label}" if label else base, close, rules=rules,
-                                category=str(ev.get("category") or m.get("category") or ""),
-                                liquidity=float(m.get("liquidityNum") or m.get("liquidity") or 0),
-                                extra={"yes_token": tokens[idx], "no_token": tokens[1 - idx], "question": m.get("question"),
-                                       "outcome": label or "Yes", "volume24h": float(m.get("volume24hr") or 0)}).analyse())
-        if len(page) < 500:
-            break
+    for m in _poly_pages(client, a):
+        outcomes = [str(o) for o in _json_field(m.get("outcomes"))]
+        tokens = [str(t) for t in _json_field(m.get("clobTokenIds"))]
+        if len(outcomes) != 2 or len(tokens) != 2 or m.get("conditionId") in seen:
+            continue
+        seen.add(m.get("conditionId"))
+        ev = (m.get("events") or [{}])[0] if isinstance(m.get("events"), list) else {}
+        end = m.get("endDate")
+        close = int(dt.datetime.fromisoformat(end.replace("Z", "+00:00")).timestamp()) if end else None
+        base = m.get("question") or ""
+        if ev.get("title") and ev["title"].lower() not in base.lower():
+            base = f"{ev['title']} | {base}"
+        # Yes/No markets have one "yes" side. Two-outcome markets ("Lakers" vs "Celtics") are matched
+        # once per outcome: holding that outcome is the YES side, the other outcome the NO side.
+        sides = [(0, "")] if [o.lower() for o in outcomes] == ["yes", "no"] else [(0, outcomes[0]), (1, outcomes[1])]
+        rules = " ".join(x for x in (m.get("description"), m.get("resolutionSource"), ev.get("resolutionSource")) if x)
+        for idx, label in sides:
+            refs.append(Ref("poly", m["conditionId"] + (f"#{idx}" if label else ""),
+                            f"{base} | {label}" if label else base, close, rules=rules,
+                            category=str(ev.get("category") or m.get("category") or ""),
+                            liquidity=float(m.get("liquidityNum") or m.get("liquidity") or 0),
+                            extra={"yes_token": tokens[idx], "no_token": tokens[1 - idx], "question": m.get("question"),
+                                   "outcome": label or "Yes", "volume24h": float(m.get("volume24hr") or 0)}).analyse())
     log.info("polymarket: %d matchable sides from open two-outcome markets", len(refs))
     return refs
 
@@ -135,6 +147,8 @@ def kalshi_refs(kalshi: Kalshi, cfg) -> list[Ref]:
         for m in ev.get("markets") or []:
             if m.get("status") not in (None, "active", "open", "initialized"):
                 continue
+            if str(m.get("ticker", "")).startswith(tuple(a.get("kalshi_skip_prefixes", []))):
+                continue  # multi-leg combos: no one-to-one Polymarket counterpart
             parts = [ev.get("title") or "", m.get("title") or "", m.get("yes_sub_title") or m.get("subtitle") or ""]
             text = " | ".join(dict.fromkeys(p for p in parts if p))
             close = m.get("close_time") or m.get("expected_expiration_time")
