@@ -1,16 +1,7 @@
-Tue Oct 20 15:09:53 UTC 2026
-/dev/root        72G   60G   13G  83% /
-Mem:            7938        2553        2042          52        3650        5384
+Tue Oct 20 15:14:56 UTC 2026
+/dev/root        72G   60G   13G  84% /
+Mem:            7938        2502        2023          52        3709        5435
 
-14:43:00 INFO   32000/105277 tokens
-14:43:35 INFO   33000/105277 tokens
-14:43:51 INFO   34000/105277 tokens
-14:44:10 WARNING request error https://clob.polymarket.com/prices-history?endTs=1785964877&fidelity=30&market=113623678434808940054206822422222273895058123913851639253409221484866711771402&startTs=1785542400 (HTTPSConnectionPool(host='clob.polymarket.com', port=443): Read timed out. (read timeout=30)), retrying
-14:44:19 INFO   35000/105277 tokens
-14:44:56 WARNING request error https://clob.polymarket.com/prices-history?endTs=1786465513&fidelity=30&market=81797874268375148796513201282675379416722587493844666429476310297263035314908&startTs=1786060800 (HTTPSConnectionPool(host='clob.polymarket.com', port=443): Read timed out. (read timeout=30)), retrying
-14:44:56 INFO   36000/105277 tokens
-14:45:34 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
-14:45:34 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
 14:45:34 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
 14:45:36 INFO   37000/105277 tokens
 14:46:20 INFO   38000/105277 tokens
@@ -62,3 +53,12 @@ Mem:            7938        2553        2042          52        3650        5384
 15:08:05 INFO   73000/105277 tokens
 15:08:39 INFO   74000/105277 tokens
 15:09:15 INFO   75000/105277 tokens
+15:09:55 INFO   76000/105277 tokens
+15:10:33 INFO   77000/105277 tokens
+15:11:08 INFO   78000/105277 tokens
+15:11:43 INFO   79000/105277 tokens
+15:12:18 INFO   80000/105277 tokens
+15:12:52 INFO   81000/105277 tokens
+15:13:27 INFO   82000/105277 tokens
+15:13:59 INFO   83000/105277 tokens
+15:14:37 INFO   84000/105277 tokens
