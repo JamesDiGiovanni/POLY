@@ -151,6 +151,9 @@ def main(argv=None) -> int:
     s = sub.add_parser("wx-data", help="weather: markets, stations, forecasts, observations, prices")
     s.add_argument("--steps", default="markets,stations,forecasts,obs,prices")
     sub.add_parser("wx-eval", help="weather: model vs market early check; writes output/weather/scorecard.md")
+    sub.add_parser("arb-probe", help="arbitrage: one request per Kalshi/Polymarket endpoint; checks shapes")
+    s = sub.add_parser("arb-match", help="arbitrage phase 1: match and grade pairs, snapshot books, report")
+    s.add_argument("--no-snapshot", action="store_true")
     sub.add_parser("summary", help="markdown summary of the latest results (verdict, funnel, wallets)")
     s = sub.add_parser("fees", help="fee sources per market, and which formula matches real fills")
     s.add_argument("--since", default="2026-03-30", help="only trades after this date (fee schedule V2)")
@@ -210,6 +213,16 @@ def main(argv=None) -> int:
             print(wx_model.write_outputs(con, cfg, None))
         else:
             print(wx_model.write_outputs(con, cfg, wx_model.evaluate(con, cfg)))
+    elif args.cmd in ("arb-probe", "arb-match"):
+        from .arb import probe as arb_probe, run as arb_run
+        h = cfg["http"]
+        client = HttpClient(cfg["cache_dir"], {**h["requests_per_second"], **cfg["arb"]["requests_per_second"]},
+                            h["timeout_s"], h["max_retries"], h["backoff_s"])
+        if args.cmd == "arb-probe":
+            failed = [n for n, ok in arb_probe.run(client) if not ok]
+            print(f"\narb probe: {'all OK' if not failed else 'FAILED: ' + ', '.join(failed)}")
+        else:
+            print(arb_run.run(con, cfg, ("match",) if args.no_snapshot else ("match", "snapshot")))
     elif args.cmd == "summary":
         print(report.markdown_summary(con, cfg))
     elif args.cmd == "fees":

@@ -198,3 +198,18 @@ weather:
     aviationweather.gov: 2
     mesonet.agron.iastate.edu: 1
     previous-runs-api.open-meteo.com: 2
+
+# Polymarket-Kalshi arbitrage measurement (python -m polybt arb-probe / arb-match). See polybt/arb.
+arb:
+  max_poly_markets: 5000       # most-traded open markets first
+  max_kalshi_event_pages: 100  # x200 events
+  max_close_days: 3            # matched markets must close within this many days of each other
+  min_score: 0.35              # text similarity to be a candidate
+  grade_a_score: 0.55
+  snapshot_pairs: 300
+  min_depth_usd: 50            # gate: dollars available at the best price on every leg
+  min_grade_a_pairs: 30
+  kalshi_fee_rate: 0.07        # x series fee multiplier when Kalshi reports one
+  poly_fee_fallback: 0.05
+  requests_per_second:
+    api.elections.kalshi.com: 8
