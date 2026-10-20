@@ -1,6 +1,7 @@
 """DuckDB storage. All timestamps are unix seconds (UTC)."""
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import duckdb
@@ -213,6 +214,8 @@ def connect(path: str | Path) -> duckdb.DuckDBPyConnection:
     if path != ":memory:":
         Path(path).parent.mkdir(parents=True, exist_ok=True)
     con = duckdb.connect(path)
+    # GitHub's runners have ~8 GB of RAM; DuckDB's default (80% of it) leaves too little for Python.
+    con.execute(f"SET memory_limit = '{os.environ.get('POLYBT_DUCKDB_MEMORY', '3GB')}'")
     con.execute(SCHEMA)
     for m in MIGRATIONS:
         con.execute(m)
