@@ -154,6 +154,8 @@ def main(argv=None) -> int:
     sub.add_parser("arb-probe", help="arbitrage: one request per Kalshi/Polymarket endpoint; checks shapes")
     s = sub.add_parser("arb-match", help="arbitrage phase 1: match and grade pairs, snapshot books, report")
     s.add_argument("--no-snapshot", action="store_true")
+    sub.add_parser("rw-probe", help="liquidity rewards: one request per endpoint; checks shapes")
+    sub.add_parser("rw-scan", help="liquidity rewards phase 1: score each pool's competition, estimate our share")
     sub.add_parser("summary", help="markdown summary of the latest results (verdict, funnel, wallets)")
     s = sub.add_parser("fees", help="fee sources per market, and which formula matches real fills")
     s.add_argument("--since", default="2026-03-30", help="only trades after this date (fee schedule V2)")
@@ -223,6 +225,15 @@ def main(argv=None) -> int:
             print(f"\narb probe: {'all OK' if not failed else 'FAILED: ' + ', '.join(failed)}")
         else:
             print(arb_run.run(con, cfg, ("match",) if args.no_snapshot else ("match", "snapshot")))
+    elif args.cmd in ("rw-probe", "rw-scan"):
+        from .rewards import probe as rw_probe, run as rw_run
+        if args.cmd == "rw-probe":
+            h = cfg["http"]
+            client = HttpClient(cfg["cache_dir"], h["requests_per_second"], h["timeout_s"], h["max_retries"], h["backoff_s"])
+            failed = [n for n, ok in rw_probe.run(client) if not ok]
+            print(f"\nrewards probe: {'all OK' if not failed else 'FAILED: ' + ', '.join(failed)}")
+        else:
+            print(rw_run.run(cfg))
     elif args.cmd == "summary":
         print(report.markdown_summary(con, cfg))
     elif args.cmd == "fees":

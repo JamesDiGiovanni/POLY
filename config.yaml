@@ -218,3 +218,14 @@ arb:
   poly_fee_fallback: 0.05
   requests_per_second:
     api.elections.kalshi.com: 8
+
+# Liquidity-rewards study, phase 1 (python -m polybt rw-probe / rw-scan). See polybt/rewards.
+rewards:
+  capital_usd: 1000            # per market, split across both sides
+  quote_frac: 0.5              # quote at half the max spread from the midpoint (scores 25% of a quote at the mid)
+  competition_mult: 2          # haircut: assume the resting competition doubles
+  snapshots: 6
+  snapshot_interval_s: 1200
+  min_daily_usd: 1.0           # payouts under $1 a day are not paid
+  min_markets: 10
+  top_n: 10
