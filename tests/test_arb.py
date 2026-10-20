@@ -166,3 +166,10 @@ def test_annualised_return_penalises_long_lockups():
     assert annualised(0.02, 365) == pytest.approx(0.02 / 0.98)
     assert annualised(0.02, 36.5) == pytest.approx(10 * 0.02 / 0.98)
     assert annualised(None, 10) is None
+
+
+def test_exact_value_never_pairs_with_an_open_threshold():
+    p = Ref("poly", "P", "Will the Reserve Bank of India increase the policy repo rate by 25 bps at the December meeting?", T).analyse()
+    k = Ref("kalshi", "K", "Reserve Bank of India rate decision in December | Will the Reserve Bank of India hike more "
+            "than 25bps at the December meeting? | Hike more than 25bps", T).analyse()
+    assert any("exact value vs threshold" in w for w in consistent(p, k, 7))

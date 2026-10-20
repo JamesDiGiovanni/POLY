@@ -171,8 +171,9 @@ def kalshi_refs(kalshi: Kalshi, cfg) -> list[Ref]:
         for m in ev.get("markets") or []:
             if m.get("status") not in (None, "active", "open", "initialized"):
                 continue
-            if str(m.get("ticker", "")).startswith(tuple(a.get("kalshi_skip_prefixes", []))):
-                continue  # multi-leg combos: no one-to-one Polymarket counterpart
+            if str(m.get("ticker", "")).startswith(tuple(a.get("kalshi_skip_prefixes", []))) \
+                    or " AND " in f"{m.get('title') or ''} {m.get('yes_sub_title') or ''}":
+                continue  # multi-leg combos ("Headline ... AND Core ..."): no one-to-one counterpart
             parts = [ev.get("title") or "", m.get("title") or "", m.get("yes_sub_title") or m.get("subtitle") or ""]
             text = " | ".join(dict.fromkeys(p for p in parts if p))
             # Kalshi's close_time often trails the event by days; the expected expiration is the event.
@@ -231,6 +232,9 @@ def consistent(p: Ref, k: Ref, max_close_days: float) -> list[str]:
         why.append(f"direction {sorted(p.moves)} vs {sorted(k.moves)}")
     if p.comparator and k.comparator and p.comparator.split("_")[1] != k.comparator.split("_")[1]:
         why.append(f"threshold direction {p.comparator} vs {k.comparator}")
+    if p.numbers and bool(p.comparator) != bool(k.comparator):
+        # "by 25 bps" is exactly 25; "more than 25bps" is not: same number, different proposition.
+        why.append(f"exact value vs threshold ({p.comparator or 'exact'} / {k.comparator or 'exact'})")
     if p.rank and k.rank and p.rank != k.rank:
         why.append(f"rank {p.rank} vs {k.rank}")
     if p.numbers != k.numbers:
