@@ -1,0 +1,48 @@
+
+== gamma events tag=daily-temperature: OK
+100 events, 100 temperature events
+title: Highest temperature in San Francisco on October 19?
+slug: highest-temperature-in-san-francisco-on-october-19-2026
+markets: 11
+parsed rows from page: 572, unparsed: 528 ['Will the lowest temperature in San Francisco be 45°F or below on October 19?', 'Will the lowest temperature in San Francisco be between 46-47°F on October 19?', 'Will the lowest temperature in San Francisco be between 48-49°F on October 19?']
+question: Will the highest temperature in San Francisco be 51°F or below on October 19?
+parsed: Bucket(city='San Francisco', unit='F', lo=None, hi=51.0, month=10, day=19, year=None)
+station: KSFO
+description: This market will resolve to the temperature range that contains the highest temperature recorded by NOAA at the San Francisco International Airport Station in degrees Fahrenheit on 19 Oct '26.
+
+The resolution source for this market will be information from NOAA, specifically the highest reading under the "Temp" column for all times on this day, available here: https://www.weather.gov/wrh/timeseries?site=ksfo
+
+This market will resolve off of the Hourly Data provided using the "Show Hourly Data" b
+keys: ['acceptingOrders', 'acceptingOrdersTimestamp', 'active', 'approved', 'archived', 'automaticallyActive', 'automaticallyResolved', 'bestAsk', 'clearBookOnStart', 'clobTokenIds', 'closed', 'closedTime', 'comboStatus', 'competitive', 'conditionId', 'createdAt', 'customLiveness', 'cyom', 'deploying', 'deployingTimestamp', 'description', 'enableOrderBook', 'endDate', 'endDateIso', 'fallbackResolutionType', 'featured', 'feeSchedule', 'feeType', 'feesEnabled', 'funded', 'gameStartTime', 'groupItemThreshold', 'groupItemTitle', 'hasReviewedDates', 'holdingRewardsEnabled', 'icon', 'id', 'image', 'lastTradePrice', 'liquidity', 'liquidityAmm', 'liquidityClob', 'liquidityNum', 'makerBaseFee', 'manualActivation', 'marketMakerAddress', 'negRisk', 'negRiskMarketID', 'negRiskOther', 'negRiskRequestID', 'new', 'orderMinSize', 'orderPriceMinTickSize', 'outcomePrices', 'outcomes', 'pendingDeployment', 'question', 'questionID', 'ready', 'resolutionSource']
+
+== gamma events tag=temperature: OK
+100 events, 97 temperature events
+title: September 2026 Temperature Increase (ºC)
+slug: september-2026-temperature-increase-c
+markets: 6
+parsed rows from page: 1045, unparsed: 13 ['Will global temperature increase by less than 1.30ºC in September 2026?', 'Will global temperature increase by between 1.30ºC and 1.34ºC in September 2026?', 'Will global temperature increase by between 1.35ºC and 1.39ºC in September 2026?']
+question: Will global temperature increase by less than 1.30ºC in September 2026?
+parsed: None
+station: None
+description: This market will resolve according to the value reported by the Global Land-Ocean Temperature Index for September 2026 when it is released.
+
+An anomaly within a named bracket for September 2026 is necessary and sufficient to resolve this market immediately once the data becomes available, regardless of whether the figure for September 2026 is later revised.
+
+The brackets are mutually exclusive and collectively exhaustive: each range is inclusive of both of its stated endpoints, and the reported 
+keys: ['acceptingOrders', 'acceptingOrdersTimestamp', 'active', 'approved', 'archived', 'automaticallyActive', 'automaticallyResolved', 'bestAsk', 'clearBookOnStart', 'clobTokenIds', 'closed', 'closedTime', 'comboStatus', 'conditionId', 'createdAt', 'customLiveness', 'cyom', 'deploying', 'deployingTimestamp', 'description', 'enableOrderBook', 'endDate', 'endDateIso', 'fallbackResolutionType', 'featured', 'feeSchedule', 'feeType', 'feesEnabled', 'funded', 'groupItemThreshold', 'groupItemTitle', 'hasReviewedDates', 'holdingRewardsEnabled', 'id', 'lastTradePrice', 'makerBaseFee', 'manualActivation', 'marketMakerAddress', 'negRisk', 'negRiskMarketID', 'negRiskOther', 'negRiskRequestID', 'new', 'oneDayPriceChange', 'oneMonthPriceChange', 'oneWeekPriceChange', 'orderMinSize', 'orderPriceMinTickSize', 'outcomePrices', 'outcomes', 'pendingDeployment', 'question', 'questionID', 'ready', 'resolutionSource', 'resolvedBy', 'restricted', 'rewardsMaxSpread', 'rewardsMinSize', 'rfqEnabled']
+
+== aviationweather station info: OK
+[{"id": "EGLC", "icaoId": "EGLC", "iataId": "LCY", "faaId": null, "wmoId": null, "site": "London City Arpt", "lat": 51.505, "lon": 0.055, "elev": 10, "state": "EN", "country": "GB", "priority": 6, "siteType": ["METAR", "TAF"]}, {"id": "KLGA", "icaoId": "KLGA", "iataId": "LGA", "faaId": "LGA", "wmoId": "72503", "site": "New York/La Guardia Arpt", "lat": 40.77945, "lon": -73.88027, "elev": 9, "state": "NY", "country": "US", "priority": 6, "siteType": ["METAR", "TAF"]}]
+
+== IEM ASOS observations: OK
+station,valid,tmpf
+LGA,2026-06-01 00:51,72.00
+LGA,2026-06-01 01:51,71.00
+LGA,2026-06-01 02:51,70.00
+LGA,2026-06-01 03:51,68.00
+LGA,2026-06-01 03:56,68.00
+
+== Open-Meteo previous runs: OK
+timezone America/New_York; keys ['temperature_2m_previous_day1_ecmwf_ifs025', 'temperature_2m_previous_day1_gfs_seamless', 'temperature_2m_previous_day1_icon_seamless', 'temperature_2m_previous_day2_ecmwf_ifs025', 'temperature_2m_previous_day2_gfs_seamless', 'temperature_2m_previous_day2_icon_seamless', 'time']; first values {"time": ["2026-06-01T00:00", "2026-06-01T01:00", "2026-06-01T02:00"], "temperature_2m_previous_day1_ecmwf_ifs025": [19.1, 18.7, 18.2], "temperature_2m_previous_day2_ecmwf_ifs025": [19.1, 18.6, 18.1], "temperature_2m_previous_day1_gfs_seamless": [17.0, 16.6, 15.9], "temperature_2m_previous_day2_gfs_seamless": [20.0, 19.6, 19.1], "temperature_2m_previous_day1_icon_seamless": [19.1, 17.5, 17.5], "temperature_2m_previous_day2_icon_seamless": [19.1, 18.8, 17.7]}
+
+weather probe: all OK
