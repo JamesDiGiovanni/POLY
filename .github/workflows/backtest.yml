@@ -143,11 +143,20 @@ jobs:
           W=$(python -c "import duckdb; r=duckdb.connect('data/polybt.duckdb').execute('SELECT wallet FROM wallet_scores ORDER BY passed DESC, resolved_trades DESC LIMIT 1').fetchone(); print(r[0] if r else '')")
           if [ -n "$W" ]; then python -m polybt --config ci.yaml inspect "$W" 2>&1 | tee output/inspect.txt; fi
 
+      # On failure, say so: the database still holds the previous run's results, and summarising
+      # those as if they were this run's would be misleading.
       - name: Summary
         if: always() && inputs.steps == 'full'
+        env:
+          JOB_STATUS: ${{ job.status }}
         run: |
           mkdir -p output
-          python -m polybt --config ci.yaml summary > output/summary.md 2>output/summary.err || cat output/summary.err
+          if [ "$JOB_STATUS" != "success" ]; then
+            { echo "## RUN FAILED - no results"; echo; echo "A pipeline step failed; see run.log. Last lines:"; echo;
+              echo '```'; tail -n 25 run.log 2>/dev/null; echo '```'; } > output/summary.md
+          else
+            python -m polybt --config ci.yaml summary > output/summary.md 2>output/summary.err || cat output/summary.err
+          fi
           cat output/summary.md >> "$GITHUB_STEP_SUMMARY"
           cat output/summary.md
 

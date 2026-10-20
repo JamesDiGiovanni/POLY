@@ -215,3 +215,14 @@ def test_stale_signal_and_min_order():
     eng = CopyEngine(market(), BacktestExecutor(prices, SimParams(), 60), Policy(stake_usd=0.5), T0)
     eng.on_fill(buy(T0, 0.5))
     assert eng.skips[0].reason == "below_min_order"
+
+
+def test_zero_size_exit_is_ignored():
+    from polybt.engine import CopyEngine, MirrorExecutor, Policy
+    m = market()
+    m[CID].token_ids = [YES, NO]
+    fills = [buy(T0, 0.5), Fill(T0 + 10, "", CID, "MERGE", 0.0, 0.0, 0.0, "m0"), sell(T0 + 20, 0.6, 0)]
+    eng = CopyEngine(m, MirrorExecutor(), Policy.mirror(), T0)
+    for f in fills:
+        eng.on_fill(f)  # used to raise ZeroDivisionError
+    assert eng.lots[0].open_shares == 100

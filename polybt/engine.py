@@ -293,7 +293,7 @@ class CopyEngine:
         held = self.wallet_shares.get(token, 0.0)
         self.wallet_shares[token] = max(0.0, held - size)
         mine = [lot for lot in self.open_lots.get(token, []) if not lot.closed]
-        if not mine or held <= EPS:
+        if not mine or held <= EPS or size <= EPS:  # zero-size exits (seen on real merges) sell nothing
             return
         frac = min(1.0, size / held)
         m = self.markets.get(f.condition_id)
