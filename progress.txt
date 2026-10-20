@@ -1,15 +1,7 @@
-Tue Oct 20 15:19:57 UTC 2026
+Tue Oct 20 15:25:01 UTC 2026
 /dev/root        72G   60G   13G  84% /
-Mem:            7938        2516        1960          52        3764        5422
+Mem:            7938        2419        2015          52        3822        5519
 
-14:49:09 WARNING request error https://clob.polymarket.com/prices-history?endTs=1788762169&fidelity=30&market=42807364621372906165922445176119126879566435324000654013854846530197849845724&startTs=1788307200 (HTTPSConnectionPool(host='clob.polymarket.com', port=443): Read timed out. (read timeout=30)), retrying
-14:49:19 INFO   42000/105277 tokens
-14:50:02 INFO   43000/105277 tokens
-14:50:15 WARNING request error https://clob.polymarket.com/prices-history?endTs=1789412205&fidelity=30&market=86526390342894872598182532419862721101762108890611187245420428593050191421071&startTs=1788998400 (HTTPSConnectionPool(host='clob.polymarket.com', port=443): Read timed out. (read timeout=30)), retrying
-14:50:38 INFO   44000/105277 tokens
-14:51:14 INFO   45000/105277 tokens
-14:51:55 INFO   46000/105277 tokens
-14:52:01 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
 14:52:01 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
 14:52:01 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
 14:52:01 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
@@ -62,3 +54,11 @@ Mem:            7938        2516        1960          52        3764        5422
 15:18:12 INFO   90000/105277 tokens
 15:18:54 INFO   91000/105277 tokens
 15:19:31 INFO   92000/105277 tokens
+15:20:10 INFO   93000/105277 tokens
+15:20:53 INFO   94000/105277 tokens
+15:21:33 INFO   95000/105277 tokens
+15:22:18 INFO   96000/105277 tokens
+15:23:01 INFO   97000/105277 tokens
+15:23:42 INFO   98000/105277 tokens
+15:24:19 INFO   99000/105277 tokens
+15:24:57 INFO   100000/105277 tokens
