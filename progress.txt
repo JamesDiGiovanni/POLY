@@ -1,0 +1,13 @@
+Tue Oct 20 13:49:30 UTC 2026
+/dev/root        72G   59G   13G  83% /
+Mem:            7938        1585        3695          48        2996        6352
+
+13:44:38 WARNING HTTP 429 from gamma-api.polymarket.com, retrying in 2.0s
+13:44:40 WARNING HTTP 429 from gamma-api.polymarket.com, retrying in 4.0s
+13:46:04 INFO gamma tag 'daily-temperature': 14782 temperature events
+13:46:13 WARNING HTTP 429 from gamma-api.polymarket.com, retrying in 2.0s
+13:46:18 WARNING HTTP 429 from gamma-api.polymarket.com, retrying in 2.0s
+13:46:31 INFO gamma tag 'temperature': 1 temperature events
+13:48:32 INFO weather markets: 14783 events, 119027 markets stored, 42654 questions unparsed
+13:48:34 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+13:48:34 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 9
