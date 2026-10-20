@@ -65,6 +65,7 @@ class MarketState:
     last_ts: float | None = None
     final: float | None = None   # resolution value of YES, once known
     quoted_s: float = 0.0
+    stale_loss: float = 0.0   # mid jumped past a quote before we re-quoted: what a fast trader takes
     side_check: list = field(default_factory=lambda: [0, 0])   # prints on the expected side of the mid / not
 
 
@@ -157,6 +158,12 @@ def step(st: MarketState, book: dict | None, prints: list[dict], now: float, p: 
         st.minutes.append({"ts": now, "mid": None, "theirs": None, "ours": 0, "inv": st.inv})
         return
     mid = bs["mid"]
+    # Without us the book may never trade at our prices (empty books): count every jump through a quote
+    # as if someone picked it off before the re-quote.
+    for q in st.quotes.values():
+        gap = (mid - q.price) if q.side == "ask" else (q.price - mid)
+        if gap > EPS:
+            st.stale_loss += gap * q.size
     st.mids.append((now, mid))
     bid, ask = quote_prices(mid, m["max_spread"], p["quote_frac"], m.get("tick") or 0.01)
     size = p["capital_usd"] / max(0.05, 1 - (ask - bid))
@@ -195,6 +202,7 @@ def summarise(st: MarketState, horizons_min, end_ts: float) -> dict:
     out = {"condition_id": st.m["condition_id"], "question": st.m["question"], "tier": st.tier,
            "pool": st.m["daily_rate"], "hours": hours, "quoted_hours": st.quoted_s / 3600,
            "rewards": st.rewards, "trading_pnl": pnl, "net": st.rewards + pnl, "inventory": st.inv,
+           "stale_loss": st.stale_loss, "net_if_picked_off": st.rewards + pnl - st.stale_loss,
            "fills": len(st.fills), "filled_shares": sum(f.size for f in st.fills),
            "edge_at_fill": sum((f.mid - f.price if f.side == "bid" else f.price - f.mid) * f.size for f in st.fills),
            "resolved": st.final is not None,
@@ -219,7 +227,10 @@ def select_markets(rapi: RewardsAPI, papi: PolymarketAPI, p: dict) -> list[tuple
     for m in ms:
         m["yes_token"] = None              # need both tokens and the tick: fetch the full market
     _fill_tokens(rapi, ms)
-    ms = [m for m in ms if m["yes_token"] and m.get("no_token") and m["max_spread"] > 0]
+    today = dt.datetime.now(dt.timezone.utc).date().isoformat()
+    # A market past its end date is waiting on resolution: no market maker would quote it.
+    ms = [m for m in ms if m["yes_token"] and m.get("no_token") and m["max_spread"] > 0
+          and not (m.get("end") and str(m["end"])[:10] < today)]
 
     def one(m):
         try:
@@ -227,7 +238,7 @@ def select_markets(rapi: RewardsAPI, papi: PolymarketAPI, p: dict) -> list[tuple
         except Exception as e:
             return m, {"error": str(e)}
 
-    with ThreadPoolExecutor(16) as pool:
+    with ThreadPoolExecutor(6) as pool:
         scored = [(m, s) for m, s in pool.map(one, ms) if "error" not in s and 0.10 <= s["mid"] <= 0.90]
     t = p["tiers"]
     tier = lambda theirs: "empty" if theirs < t["thin_below"] else "crowded" if theirs >= t["crowded_from"] else "medium"
@@ -318,9 +329,13 @@ def report(root: Path, p: dict) -> str:
              f"${cap:,.0f} quoted per market on both sides at {p['quote_frac']} x the max spread from the midpoint, "
              "re-quoted every minute. Fills come from real taker prints (through our price, or at it once the queue "
              "ahead is gone). Markout = fill price against the midpoint later; negative = picked off.", "",
-             "| tier | market-hours | rewards | trading P&L | net | net $/day per $1k | fills | " +
+             "Stale-quote loss: whenever the midpoint jumps past one of our quotes between re-quotes, the whole "
+             "quote is assumed picked off at that gap, even with no print (an empty book only trades once someone "
+             "quotes). Net if picked off subtracts it; the truth is between the two nets.", "",
+             "| tier | market-hours | rewards | trading P&L | net | net $/day per $1k | stale-quote loss | "
+             "net if picked off $/day per $1k | fills | " +
              " | ".join(f"markout {h}m" for h in hz) + " |",
-             "|---|---|---|---|---|---|---|" + "---|" * len(hz)]
+             "|---|---|---|---|---|---|---|---|---|" + "---|" * len(hz)]
     tiers = {}
     for name in ("empty", "medium", "crowded"):
         g = [r for r in rows if r["tier"] == name]
@@ -328,19 +343,22 @@ def report(root: Path, p: dict) -> str:
             continue
         hrs = sum(r["hours"] for r in g)
         rw, tp = sum(r["rewards"] for r in g), sum(r["trading_pnl"] for r in g)
+        sl = sum(r.get("stale_loss", 0) for r in g)
         per_day = (rw + tp) / hrs * 24 if hrs else 0.0
+        worst = (rw + tp - sl) / hrs * 24 if hrs else 0.0
         tiers[name] = per_day
         lines.append(f"| {name} | {hrs:,.0f} | ${rw:,.2f} | ${tp:,.2f} | ${rw + tp:,.2f} | ${per_day:,.2f} | "
+                     f"${sl:,.2f} | ${worst:,.2f} | "
                      f"{sum(r['fills'] for r in g):.0f} | " + " | ".join(f"${sum(r[f'markout_{h}m'] for r in g):,.2f}" for h in hz) + " |")
     ok, wrong = sum(r.get("prints_side_ok", 0) for r in rows), sum(r.get("prints_side_wrong", 0) for r in rows)
     lines += ["", f"Check on the print data: {ok:.0f} taker prints sat on the expected side of the midpoint "
               f"(buys above, sells below), {wrong:.0f} did not."]
     lines += ["", "Per market (latest first):", "",
-              "| session | tier | market | pool | hours | rewards | trading P&L | net | fills | inventory | markout 30m |",
-              "|---|---|---|---|---|---|---|---|---|---|---|"]
+              "| session | tier | market | pool | hours | rewards | trading P&L | net | stale-quote loss | fills | inventory | markout 30m |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in sorted(rows, key=lambda r: (r["session"], r["tier"], -r["net"]), reverse=False)[-80:]:
         lines.append(f"| {r['session']} | {r['tier']} | {r['question'][:50]} | {r['pool']:.0f} | {r['hours']:.1f} | "
-                     f"${r['rewards']:.2f} | ${r['trading_pnl']:.2f} | ${r['net']:.2f} | {r['fills']:.0f} | "
+                     f"${r['rewards']:.2f} | ${r['trading_pnl']:.2f} | ${r['net']:.2f} | ${r.get('stale_loss', 0):.2f} | {r['fills']:.0f} | "
                      f"{r['inventory']:.0f} | ${r.get('markout_30m', 0):.2f} |")
     text = "\n".join(lines) + "\n"
     (root / "report.md").write_text(text)

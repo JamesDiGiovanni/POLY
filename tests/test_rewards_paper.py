@@ -54,6 +54,8 @@ def test_session_fills_rewards_and_markouts():
     assert s["markout_5m"] == pytest.approx(200 * (0.52 - 0.60))
     assert s["trading_pnl"] == pytest.approx(200 * 0.52 - 200 * 0.60)
     assert s["fills"] == 1 and s["rewards"] > 0
+    # the jump to 0.60 went through the 0.52 ask still resting (size - 200): counted as picked off
+    assert s["stale_loss"] == pytest.approx(0.08 * (size - 200))
 
 
 def test_inventory_cap_stops_one_side():
