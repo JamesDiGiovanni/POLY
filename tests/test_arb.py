@@ -105,3 +105,35 @@ def test_polymarket_paging_follows_100_per_page_and_windows():
     refs = polymarket_refs(C(), cfg)
     assert len(refs) == 130
     assert calls[:2] == [(calls[0][0], 0), (calls[0][0], 100)] and len({c[0] for c in calls}) == 3
+
+
+def test_iso_dates_are_dates_not_thresholds():
+    r = Ref("poly", "x", "Will FC Barcelona win on 2026-10-20?", T).analyse()
+    assert r.dates == {(10, 20)} and r.numbers == frozenset()
+
+
+def test_candidates_found_when_shared_words_are_not_the_rarest():
+    """Regression: indexing only words rarer than the median word dropped every word both venues share."""
+    cfg = load()
+    word = lambda i, tag: tag + "".join(chr(97 + (i // 26 ** k) % 26) for k in range(3))  # distinct, digit-free
+    # Like the real data: most words occur in just one market.
+    filler = [Ref("kalshi", f"F{i}", f"{word(i, 'zq')} {word(i, 'yq')} {word(i, 'xq')} Ballon", T).analyse()
+              for i in range(300)]
+    target = Ref("kalshi", "KBALLON", "Who will win the Ballon d'Or in 2026? | Erling Haaland", T,
+                 extra={"yes_side": "erling haaland"}).analyse()
+    others = [Ref("kalshi", f"O{i}", f"Who will win the Ballon d'Or in 2026? | Player{i} Name{i}", T,
+                  extra={"yes_side": f"player{i} name{i}"}).analyse() for i in range(5)]
+    poly = Ref("poly", "P", "2026 Ballon d'Or winner | Will Erling Haaland win the 2026 Ballon d'Or?", T).analyse()
+    pairs = match([poly], filler + others + [target], cfg)
+    assert [(p.poly.id, p.kalshi.id) for p in pairs] == [("P", "KBALLON")]
+
+
+def test_two_outcome_side_pairs_only_with_its_own_kalshi_yes_side():
+    cfg = load()
+    k_big = Ref("kalshi", "KBIG", "BIG vs. TheMongolz | BIG wins | BIG", T, extra={"yes_side": "big"}).analyse()
+    k_mon = Ref("kalshi", "KMON", "BIG vs. TheMongolz | TheMongolz wins | TheMongolz", T,
+                extra={"yes_side": "themongolz"}).analyse()
+    side = lambda lab: Ref("poly", f"P-{lab}", f"Counter-Strike: TheMongolz vs BIG (BO3) | {lab}", T,
+                           extra={"outcome": lab}).analyse()
+    pairs = {p.poly.id: p.kalshi.id for p in match([side("TheMongolz"), side("BIG")], [k_big, k_mon], cfg)}
+    assert pairs == {"P-TheMongolz": "KMON", "P-BIG": "KBIG"}

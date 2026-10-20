@@ -206,8 +206,10 @@ arb:
   min_poly_liquidity: 500
   kalshi_skip_prefixes: [KXMVE]   # multi-leg combo markets
   max_kalshi_event_pages: 100  # x200 events
-  max_close_days: 3            # matched markets must close within this many days of each other
-  min_score: 0.35              # text similarity to be a candidate
+  max_close_days: 7            # matched markets must close within this many days of each other
+  grade_a_close_days: 2
+  min_score: 0.30              # text similarity to be a candidate (sports wording differs a lot by venue)
+  max_candidate_df: 3000       # words in more Kalshi markets than this aren't used to find candidates
   grade_a_score: 0.55
   snapshot_pairs: 300
   min_depth_usd: 50            # gate: dollars available at the best price on every leg

@@ -41,6 +41,7 @@ KNOWN_SOURCES = ["associated press", "federal reserve", "bureau of labor statist
 _NUM = re.compile(r"(?<![\w.])([$€£]?)(-?\d+(?:,\d{3})*(?:\.\d+)?)\s*(%|k|m|bn|b|bps|°f|°c|°)?(?![\w])", re.IGNORECASE)
 _DATE = re.compile(r"\b(" + "|".join(sorted(MONTHS, key=len, reverse=True)) + r")\.?\s+(\d{1,2})(?:st|nd|rd|th)?\b(?:,?\s+(\d{4}))?",
                    re.IGNORECASE)
+_ISO_DATE = re.compile(r"\b(20\d\d)-(\d{1,2})-(\d{1,2})\b")
 _URL = re.compile(r"https?://([^/\s\"')]+)", re.IGNORECASE)
 
 
@@ -60,7 +61,8 @@ class Ref:
 
     def analyse(self) -> "Ref":
         t = self.text.lower().replace("’", "'")
-        dates = set()
+        dates = {(int(m), int(d)) for _, m, d in _ISO_DATE.findall(t)}
+        t = _ISO_DATE.sub(" ", t)
         for mon, day, year in _DATE.findall(t):
             dates.add((MONTHS[mon.lower()], int(day)))
         t_no_dates = _DATE.sub(" ", t)
@@ -151,7 +153,8 @@ def kalshi_refs(kalshi: Kalshi, cfg) -> list[Ref]:
                 continue  # multi-leg combos: no one-to-one Polymarket counterpart
             parts = [ev.get("title") or "", m.get("title") or "", m.get("yes_sub_title") or m.get("subtitle") or ""]
             text = " | ".join(dict.fromkeys(p for p in parts if p))
-            close = m.get("close_time") or m.get("expected_expiration_time")
+            # Kalshi's close_time often trails the event by days; the expected expiration is the event.
+            close = m.get("expected_expiration_time") or m.get("close_time")
             close_ts = int(dt.datetime.fromisoformat(close.replace("Z", "+00:00")).timestamp()) if close else None
             refs.append(Ref("kalshi", m["ticker"], text, close_ts,
                             rules=f"{m.get('rules_primary') or ''} {m.get('rules_secondary') or ''}",
@@ -159,6 +162,7 @@ def kalshi_refs(kalshi: Kalshi, cfg) -> list[Ref]:
                             liquidity=float(_dollars(m, "liquidity") or 0),
                             extra={"event_ticker": ev.get("event_ticker"), "series_ticker": ev.get("series_ticker"),
                                    "sources_text": ev_sources,
+                                   "yes_side": (m.get("yes_sub_title") or m.get("subtitle") or "").lower(),
                                    "volume24h": float(m.get("volume_24h_fp") or m.get("volume_24h") or 0),
                                    "yes_bid": _dollars(m, "yes_bid"), "yes_ask": _dollars(m, "yes_ask")}).analyse())
     log.info("kalshi: %d open markets", len(refs))
@@ -189,9 +193,18 @@ def similarity(a: Ref, b: Ref, idf: dict[str, float]) -> float:
     return inter / union if union else 0.0
 
 
+def _words(s: str) -> set[str]:
+    return {SYNONYMS.get(w, w) for w in re.findall(r"[a-z][a-z'.&-]+", s.lower())} - STOP
+
+
 def consistent(p: Ref, k: Ref, max_close_days: float) -> list[str]:
     """Reasons the two can't be the same proposition (empty = consistent)."""
     why = []
+    label = p.extra.get("outcome")
+    if label and label != "Yes" and k.extra.get("yes_side") is not None:
+        # A two-outcome Polymarket side ("TheMongolz") must be Kalshi's YES side, not the opponent's.
+        if not (_words(label) & _words(k.extra["yes_side"] or k.text.split("|")[-1])):
+            why.append(f"outcome '{label}' is not Kalshi's YES side")
     if p.numbers != k.numbers:
         why.append(f"numbers {sorted(p.numbers)} vs {sorted(k.numbers)}")
     if p.dates and k.dates and not (p.dates & k.dates):
@@ -228,15 +241,17 @@ def near_misses(polys: list[Ref], kalshis: list[Ref], cfg, top: int = 400) -> li
 def match(polys: list[Ref], kalshis: list[Ref], cfg, series_sources=None) -> list[Pair]:
     a = cfg["arb"]
     idf = idf_weights(polys + kalshis)
-    rare_cut = sorted(idf.values())[len(idf) // 2] if idf else 0
+    # Index every word except the very common ones. (An earlier version kept only words rarer than the
+    # median word; most words occur once, so that excluded every word the two venues share.)
+    max_df = int(a.get("max_candidate_df", 3000))
     index: dict[str, list[int]] = defaultdict(list)
     for i, k in enumerate(kalshis):
         for t in k.tokens:
-            if idf[t] >= rare_cut:
-                index[t].append(i)
+            index[t].append(i)
+    index = {t: ix for t, ix in index.items() if len(ix) <= max_df}
     pairs = []
     for p in polys:
-        hits = Counter(i for t in p.tokens if idf.get(t, 0) >= rare_cut for i in index.get(t, []))
+        hits = Counter(i for t in p.tokens for i in index.get(t, []))
         best = None
         for i, shared in hits.most_common(200):
             if shared < 2:
@@ -256,7 +271,7 @@ def match(polys: list[Ref], kalshis: list[Ref], cfg, series_sources=None) -> lis
         reasons = []
         if s < float(a["grade_a_score"]):
             reasons.append(f"text similarity {s:.2f} < {a['grade_a_score']}")
-        if close_days is not None and close_days > 1:
+        if close_days is not None and close_days > float(a.get("grade_a_close_days", 2)):
             reasons.append(f"close {close_days:.1f} days apart")
         if not shared:
             reasons.append("no shared resolution source found")
