@@ -1,21 +1,7 @@
-Tue Oct 20 14:44:44 UTC 2026
+Tue Oct 20 14:49:46 UTC 2026
 /dev/root        72G   60G   13G  83% /
-Mem:            7938        2311        2570          52        3356        5627
+Mem:            7938        2480        2394          52        3382        5458
 
-14:22:32 INFO observations KLAX: 4 days
-14:22:33 INFO observations LEMD: 3 days
-14:22:34 INFO observations LFPB: 3 days
-14:22:35 INFO observations LFPG: 3 days
-14:22:36 INFO observations MMMX: 4 days
-14:22:37 INFO observations SBGR: 4 days
-14:22:38 INFO observations WIHH: 3 days
-14:22:39 INFO observations ZSJN: 1 days
-14:22:42 INFO observations RCTP: 993 days
-14:22:45 INFO observations VHHH: 993 days
-14:22:45 INFO weather prices: 105277 tokens to fetch
-14:23:03 WARNING prices 95744727384760303431452195498203470232274465809258368338785153553510290892423 failed: HTTP 400 for https://clob.polymarket.com/prices-history?endTs=1773333345&fidelity=30&market=95744727384760303431452195498203470232274465809258368338785153553510290892423&startTs=1771718400: {"error":"invalid filters: 'startTs' and 'endTs' interval is too long"}
-
-14:23:22 INFO   1000/105277 tokens
 14:23:59 INFO   2000/105277 tokens
 14:24:38 INFO   3000/105277 tokens
 14:25:17 INFO   4000/105277 tokens
@@ -62,3 +48,17 @@ Mem:            7938        2311        2570          52        3356        5627
 14:43:51 INFO   34000/105277 tokens
 14:44:10 WARNING request error https://clob.polymarket.com/prices-history?endTs=1785964877&fidelity=30&market=113623678434808940054206822422222273895058123913851639253409221484866711771402&startTs=1785542400 (HTTPSConnectionPool(host='clob.polymarket.com', port=443): Read timed out. (read timeout=30)), retrying
 14:44:19 INFO   35000/105277 tokens
+14:44:56 WARNING request error https://clob.polymarket.com/prices-history?endTs=1786465513&fidelity=30&market=81797874268375148796513201282675379416722587493844666429476310297263035314908&startTs=1786060800 (HTTPSConnectionPool(host='clob.polymarket.com', port=443): Read timed out. (read timeout=30)), retrying
+14:44:56 INFO   36000/105277 tokens
+14:45:34 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+14:45:34 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+14:45:34 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+14:45:36 INFO   37000/105277 tokens
+14:46:20 INFO   38000/105277 tokens
+14:46:24 WARNING request error https://clob.polymarket.com/prices-history?endTs=1787239393&fidelity=30&market=87403286534337782321198106648570347574386514380558750056319442954974063374186&startTs=1786838400 (HTTPSConnectionPool(host='clob.polymarket.com', port=443): Read timed out. (read timeout=30)), retrying
+14:47:06 INFO   39000/105277 tokens
+14:47:51 INFO   40000/105277 tokens
+14:48:32 WARNING request error https://clob.polymarket.com/prices-history?endTs=1788449100&fidelity=30&market=36614282678631450568416880550050912914382204911739037363237175544851707836164&startTs=1788048000 (HTTPSConnectionPool(host='clob.polymarket.com', port=443): Read timed out. (read timeout=30)), retrying
+14:48:36 INFO   41000/105277 tokens
+14:49:09 WARNING request error https://clob.polymarket.com/prices-history?endTs=1788762169&fidelity=30&market=42807364621372906165922445176119126879566435324000654013854846530197849845724&startTs=1788307200 (HTTPSConnectionPool(host='clob.polymarket.com', port=443): Read timed out. (read timeout=30)), retrying
+14:49:19 INFO   42000/105277 tokens
