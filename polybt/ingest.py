@@ -187,7 +187,10 @@ def _fetch_wallet(api: PolymarketAPI, wallet: str, ranges, max_rows: int | None)
 
 
 def _store_wallet(con, wallet: str, new_start: int, rows, capped: bool, synced_at: int) -> int:
-    n = _insert_trades(con, rows)
+    """A capped wallet is rejected without scoring, so its rows are not kept (they only fill the disk)."""
+    n = 0 if capped else _insert_trades(con, rows)
+    if capped:
+        con.execute("DELETE FROM wallet_trades WHERE wallet = ?", [wallet])
     con.execute("INSERT OR REPLACE INTO wallet_ingest_state VALUES (?, ?, ?, ?, ?)",
                 [wallet, new_start, synced_at, synced_at, capped])
     return n
@@ -372,5 +375,8 @@ def run(con, api: PolymarketAPI, cfg, wallets: list[str] | None = None, skip_dis
     else:
         wallets = discover(con, api, cfg)
     ingest_wallets(con, api, cfg, wallets)
+    # Rows of high-frequency wallets from earlier runs (before they were purged on capping).
+    con.execute("""DELETE FROM wallet_trades WHERE wallet IN
+                   (SELECT wallet FROM wallet_ingest_state WHERE capped)""")
     ingest_markets(con, api, cfg)
     return wallets

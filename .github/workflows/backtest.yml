@@ -58,6 +58,13 @@ jobs:
           key: backtest-data-${{ github.run_id }}
           restore-keys: backtest-data-
 
+      # Earlier versions disk-cached every API response, duplicating the database and filling the
+      # runner's disk. The database alone is the cache now.
+      - name: Free disk
+        run: |
+          rm -rf data/cache
+          df -h . | tail -1; du -sh data 2>/dev/null || true
+
       - name: Run config
         env:
           MAX_CANDIDATES: ${{ inputs.max_candidates }}
@@ -94,7 +101,8 @@ jobs:
             mkdir -p /tmp/hb && cd /tmp/hb && git init -q -b backtest-progress
             while true; do
               sleep 300
-              { date -u; echo; tail -n 60 "$GITHUB_WORKSPACE/run.log"; } > progress.txt
+              { date -u; df -h "$GITHUB_WORKSPACE" | tail -1; free -m | sed -n 2p; du -sh "$GITHUB_WORKSPACE/data";
+                echo; tail -n 60 "$GITHUB_WORKSPACE/run.log"; } > progress.txt
               git add -A && git -c user.name=github-actions -c user.email=actions@github.com commit -qm progress
               git push -qf "https://x-access-token:$TOKEN@github.com/$REPO.git" backtest-progress
             done' > /dev/null 2>&1 &

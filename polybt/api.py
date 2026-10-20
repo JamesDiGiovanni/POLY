@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import logging
-import time
 from typing import Iterator
 
 from .http import HttpClient, HttpError
@@ -75,10 +74,9 @@ class PolymarketAPI:
         while True:
             params = {"user": user, "limit": self.page_size, "offset": offset, "start": start,
                       "end": end, "sortBy": "TIMESTAMP", "sortDirection": "ASC"}
-            # A page that lies wholly in the past can't change; anything else may.
-            ttl = None if end is not None and end < time.time() - 86400 else self.mutable_ttl
             try:
-                rows = _as_list(self.client.get_json(DATA_API, "/activity", params, ttl=ttl, cache=not live))
+                # Not disk-cached: rows go straight into DuckDB, and incremental sync never re-requests them.
+                rows = _as_list(self.client.get_json(DATA_API, "/activity", params, cache=False))
             except HttpError as e:
                 if e.status != 400 or offset == 0:
                     raise
@@ -107,7 +105,7 @@ class PolymarketAPI:
                 break
             body = self.client.get_json(GAMMA_API, "/markets",
                                         {"condition_ids": missing, "closed": closed,
-                                         "limit": len(missing)}, ttl=self.mutable_ttl, cache=not live)
+                                         "limit": len(missing)}, ttl=self.mutable_ttl, cache=False)
             for m in _as_list(body):
                 if m.get("conditionId"):
                     found[m["conditionId"]] = m
@@ -127,7 +125,7 @@ class PolymarketAPI:
     def clob_market_info(self, condition_id: str) -> dict | None:
         """CLOB market info, including fee details `fd: {r, e, to}`. None if the CLOB doesn't know it."""
         try:
-            body = self.client.get_json(CLOB_API, f"/clob-markets/{condition_id}", ttl=self.mutable_ttl)
+            body = self.client.get_json(CLOB_API, f"/clob-markets/{condition_id}", cache=False)
         except HttpError as e:
             if e.status in (400, 404):
                 return None
@@ -146,10 +144,10 @@ class PolymarketAPI:
                 "timestamp": body.get("timestamp")}
 
     def prices_history(self, token_id: str, start_ts: int, end_ts: int, fidelity: int) -> list[tuple[int, float]]:
-        ttl = None if end_ts < time.time() - 3600 else self.mutable_ttl
+        # Not disk-cached: points go into price_history, and fetched windows are recorded in price_fetches.
         body = self.client.get_json(CLOB_API, "/prices-history",
                                     {"market": token_id, "startTs": start_ts, "endTs": end_ts,
-                                     "fidelity": fidelity}, ttl=ttl)
+                                     "fidelity": fidelity}, cache=False)
         return [(int(p["t"]), float(p["p"])) for p in _as_list(body, "history")]
 
 
