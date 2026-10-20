@@ -86,7 +86,8 @@ CREATE TABLE IF NOT EXISTS wallet_scores (
     wash_fraction DOUBLE,
     passed BOOLEAN,
     rejection_reason VARCHAR,
-    scored_at BIGINT
+    scored_at BIGINT,
+    specialty VARCHAR           -- the category a specialist qualified in (filters.specialist)
 );
 
 -- One row per simulated lot (a copied buy) or skipped trade.
@@ -206,6 +207,7 @@ MIGRATIONS = [
     "ALTER TABLE sim_results ADD COLUMN IF NOT EXISTS sizing VARCHAR",
     "ALTER TABLE wallet_ingest_state ADD COLUMN IF NOT EXISTS capped BOOLEAN",
     "ALTER TABLE sim_results ADD COLUMN IF NOT EXISTS markets INTEGER",
+    "ALTER TABLE wallet_scores ADD COLUMN IF NOT EXISTS specialty VARCHAR",
 ]
 
 

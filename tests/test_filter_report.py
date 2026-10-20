@@ -101,3 +101,21 @@ def test_svg_renders_with_missing_points():
     svg = edge_decay_svg([{"copy_roi": 0.1, "ci_low": 0.0, "ci_high": 0.2, "trades": 5, "delay_label": "10s"},
                           {"copy_roi": None, "ci_low": None, "ci_high": None, "trades": 0, "delay_label": "1m"}], 0.15)
     assert svg.startswith("<svg") and "Wallet ROI" in svg
+
+
+def test_specialist_qualifies_in_its_best_category_only():
+    from polybt.filter import score_specialist
+    cfg = load(overrides={"filters": {"specialist": True, "min_resolved_trades": 100, "min_median_trade_usd": 5}})
+    good, gm = _history(150, win_every=3, price=0.25, spacing=DAY)   # wins 1 in 3 at 25c: profitable
+    bad, bm = _history(150, win_every=5, price=0.5, spacing=DAY)     # wins 1 in 5 at 50c: loses
+    for m in gm.values():
+        m.fee_category = "politics"
+    for f in bad:
+        f.condition_id = "s" + f.condition_id
+        f.token_id = "s" + f.token_id
+    bm = {"s" + k: Market("s" + k, "other", 1e6, True, v.end_time, {"s" + t: p for t, p in v.payouts.items()},
+                          fee_category="sports") for k, v in bm.items()}
+    s = score_specialist(good + bad, {**gm, **bm}, cfg, T0 - DAY, T0 + 155 * DAY)
+    assert s["passed"] and s["specialty"] == "politics" and s["resolved_trades"] == 150
+    s = score_specialist(bad, bm, cfg, T0 - DAY, T0 + 155 * DAY)
+    assert not s["passed"] and s["rejection_reason"].startswith("[sports]")

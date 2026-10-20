@@ -46,6 +46,7 @@ class Market:
     payouts: dict[str, float] = field(default_factory=dict)  # token_id -> payout per share
     fees: FeeParams = ZERO
     token_ids: list[str] = field(default_factory=list)
+    fee_category: str = "default"   # politics, sports, crypto, ... (used for specialist scoring)
 
     def resolved_by(self, ts: int) -> bool:
         return self.resolved and self.end_time is not None and self.end_time <= ts

@@ -120,3 +120,28 @@ def test_prescreen_flags_only_clear_high_frequency():
     assert is_high_frequency(bot, 500, 150)
     assert not is_high_frequency(human, 500, 150)
     assert not is_high_frequency(bot[:100], 500, 150)                             # short page: whole history
+
+
+def test_discovery_balances_categories_and_ranks_by_activity():
+    from polybt import db
+    from polybt.ingest import discover
+    cfg = load(overrides={"discovery": {"max_candidates": 3, "active_in_markets": {
+        "enabled": True, "by_category": True, "top_markets": 100, "markets_per_category": 2,
+        "wallets_per_market": 5, "candidates_per_category": 2, "min_category_markets": 2}}})
+
+    class Api:
+        def top_closed_markets(self, limit, end_min, end_max=None, offset=0):
+            ms = [{"conditionId": f"c{i}", "question": "Will the Lakers win?", "slug": ""} for i in range(4)]
+            ms += [{"conditionId": f"p{i}", "question": "Who wins the senate election?", "slug": ""} for i in range(2)]
+            return ms if offset == 0 else []
+
+        def market_trades(self, cid, limit, offset=0):
+            if offset:
+                return []
+            who = {"c0": ["0xa", "0xb"], "c1": ["0xa", "0xb"], "p0": ["0xz", "0xy"], "p1": ["0xz"]}.get(cid, ["0xq"])
+            return [{"proxyWallet": w} for w in who]
+
+    got = discover(db.connect(":memory:"), Api(), cfg)
+    # sports keeps only its top 2 markets (c0, c1); 0xq (only in c2/c3) is never seen;
+    # 0xy appears in one politics market, below the 2-market minimum.
+    assert set(got) == {"0xa", "0xb", "0xz"}

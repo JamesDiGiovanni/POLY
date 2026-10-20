@@ -484,22 +484,25 @@ def markdown_summary(con, cfg) -> str:
     n_go = sum(s["go"] for s in summaries)
     verdict = "GO to paper trading" if n_go >= int(gng["min_wallets"]) else "NO-GO"
     scores = con.execute("SELECT passed, rejection_reason FROM wallet_scores").fetchall()
-    reasons = Counter(part.split(" ")[0].rstrip(":") for ok, r in scores if not ok and r for part in r.split("; "))
+    specialty = dict(con.execute("SELECT wallet, specialty FROM wallet_scores").fetchall())
+    # Specialist reasons are prefixed with "[category] "; count by filter name either way.
+    reasons = Counter(part.split(" ")[0].rstrip(":")
+                      for ok, r in scores if not ok and r for part in r.split("] ")[-1].split("; "))
     pct = lambda v: "–" if v is None else f"{v * 100:+.1f}%"
     lines = [f"## {verdict}: {n_go} of {len(summaries)} simulated wallets meet every go criterion "
              f"({gng['min_wallets']} needed)", "",
              f"**Filter funnel:** {sum(1 for ok, _ in scores if ok)} of {len(scores)} candidates passed. "
              "Failures: " + ", ".join(f"{k} {v}" for k, v in reasons.most_common()), ""]
     if summaries:
-        lines += ["| wallet | wallet ROI | " + " | ".join(f"copy @{d}s" for d in delays)
+        lines += ["| wallet | specialty | wallet ROI | " + " | ".join(f"copy @{d}s" for d in delays)
                   + f" | 90% CI @{gng['delay_s']}s | trades (markets) | go |",
-                  "|---|---|" + "---|" * len(delays) + "---|---|---|"]
+                  "|---|---|---|" + "---|" * len(delays) + "---|---|---|"]
         key = int(gng["delay_s"])
         for s in sorted(summaries, key=lambda s: -((by.get((s["wallet"], key)) or {}).get("copy_roi") or -9)):
             w = s["wallet"]
             cells = [pct((by.get((w, d)) or {}).get("copy_roi")) for d in delays]
             k = by.get((w, key)) or {}
-            lines.append(f"| `{w[:8]}…{w[-4:]}` | {pct(s['wallet_roi'])} | " + " | ".join(cells)
+            lines.append(f"| `{w[:8]}…{w[-4:]}` | {specialty.get(w) or 'all'} | {pct(s['wallet_roi'])} | " + " | ".join(cells)
                          + f" | {pct(k.get('ci_low'))} … {pct(k.get('ci_high'))} | {k.get('trades', 0)} ({k.get('markets', 0)})"
                          + f" | {'GO' if s['go'] else 'no'} |")
     return "\n".join(lines)

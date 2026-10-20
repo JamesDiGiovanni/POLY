@@ -18,9 +18,9 @@ on:
         description: "Extra wallets to include, comma-separated (optional)"
         default: ""
       profile:
-        description: "spec: the spec's filters. sensitivity: broader discovery, looser filters"
+        description: "spec: the spec's filters. sensitivity: looser filters. specialist: per-category, 9-month test"
         type: choice
-        options: [spec, sensitivity]
+        options: [spec, sensitivity, specialist]
         default: spec
 
 permissions:
@@ -79,6 +79,15 @@ jobs:
               # Looser thresholds where many real traders failed by a narrow margin in the spec run.
               # Discovery stays lookahead-free (no leaderboards), see config.yaml.
               cfg["filters"] = {"max_top3_profit_share": 0.60, "min_edge_pts": 0.0, "min_median_trade_usd": 5}
+          if os.environ["PROFILE"] == "specialist":
+              # Category specialists, judged and copied only in their category, over a ~9-month test window.
+              cfg["split"] = {"cutoff_days_ago": 270}
+              cfg["http"] = {"max_activity_rows": 45000}   # longer history per wallet
+              cfg["discovery"]["active_in_markets"] = {"by_category": True, "top_markets": 1500,
+                  "markets_per_category": 60, "wallets_per_market": 15, "candidates_per_category": 70,
+                  "min_category_markets": 2}
+              cfg["filters"] = {"specialist": True, "min_resolved_trades": 100, "min_markets": 20,
+                                "max_top3_profit_share": 0.60, "min_edge_pts": 0.0, "min_median_trade_usd": 5}
           yaml.safe_dump(cfg, open("ci.yaml", "w"))
           print(yaml.safe_dump(cfg))
           EOF
@@ -167,7 +176,7 @@ jobs:
           cp probe.log run.log /tmp/results/ 2>/dev/null || true
           find /tmp/results -name '*.csv' -size +40M -exec gzip -f {} \;
           cd /tmp/results
-          BRANCH=backtest-results$([ "${{ inputs.profile }}" = sensitivity ] && echo -sensitivity)
+          BRANCH=backtest-results$([ "${{ inputs.profile }}" != spec ] && echo "-${{ inputs.profile }}")
           git init -q -b "$BRANCH"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

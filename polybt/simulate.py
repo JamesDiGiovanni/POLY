@@ -120,12 +120,13 @@ def simulate(fills: list[Fill], markets: dict[str, Market], prices: dict[str, Pr
 
 def load_markets(con, formula: str = "v2") -> dict[str, Market]:
     out = {}
-    for cid, cat, vol, resolved, end_time, tokens, payouts, rate, exponent in con.execute("""
-            SELECT condition_id, category, volume, resolved, end_time, token_ids, payouts, fee_rate, fee_exponent
+    for cid, cat, vol, resolved, end_time, tokens, payouts, rate, exponent, fee_cat in con.execute("""
+            SELECT condition_id, category, volume, resolved, end_time, token_ids, payouts, fee_rate, fee_exponent,
+                   fee_category
             FROM markets""").fetchall():
         fees = FeeParams(rate=rate or 0.0, exponent=exponent or 1.0, formula=formula)
         out[cid] = Market(cid, cat, vol, bool(resolved), end_time, dict(zip(tokens or [], payouts or [])),
-                          fees, list(tokens or []))
+                          fees, list(tokens or []), fee_cat or "default")
     return out
 
 
@@ -191,9 +192,13 @@ def run(con, cfg, wallets: list[str] | None = None) -> int:
     markets = load_markets(con, cfg["fees"]["formula"])
     cutoff = cfg.cutoff_ts
     sizings = cfg["simulate"].get("sizing") or ["flat"]
+    specialty = dict(con.execute("SELECT wallet, specialty FROM wallet_scores WHERE specialty IS NOT NULL").fetchall())
     n = 0
     for w in wallets:
         fills = load_fills(con, w)
+        if w in specialty:  # a specialist is copied only in the category it qualified in
+            fills = [f for f in fills if f.condition_id in markets
+                     and markets[f.condition_id].fee_category == specialty[w]]
         prices = load_prices(con, {f.token_id for f in fills if f.ts >= cutoff}
                              | {t for f in fills if f.side == "MERGE" and f.condition_id in markets
                                 for t in markets[f.condition_id].token_ids})

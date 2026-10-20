@@ -62,10 +62,12 @@ def categorize(question: str, slug: str, cfg: dict) -> str:
 def discover(con, api: PolymarketAPI, cfg) -> list[str]:
     disc = cfg["discovery"]
     sources: dict[str, set[str]] = {}
+    weight: Counter = Counter()  # how many markets (or boards) a wallet turned up in
 
-    def add(wallet, source):
+    def add(wallet, source, n=1):
         if wallet and isinstance(wallet, str) and wallet.startswith("0x"):
             sources.setdefault(wallet.lower(), set()).add(source)
+            weight[wallet.lower()] += n
 
     for w in disc.get("seed_wallets") or []:
         add(w, "seed")
@@ -100,10 +102,22 @@ def discover(con, api: PolymarketAPI, cfg) -> list[str]:
             markets += got
             if len(got) < page:
                 break
+        if am.get("by_category"):
+            # Category-balanced: the top markets of each category, so specialists in quieter
+            # categories aren't crowded out by crypto and sports volume.
+            per_cat: dict[str, list[dict]] = {}
+            for m in markets:
+                if m.get("conditionId"):
+                    per_cat.setdefault(fee_category(parse_market(m), cfg), []).append(m)
+            n = int(am.get("markets_per_category", 50))
+            markets = [m for ms in per_cat.values() for m in ms[:n]]
+            log.info("discovery markets per category: %s", {c: min(len(ms), n) for c, ms in per_cat.items()})
+        cat_hits: dict[str, Counter] = {}
         for m in markets:
             cid = m.get("conditionId")
             if not cid:
                 continue
+            cat = fee_category(parse_market(m), cfg) if am.get("by_category") else "all"
             counts: Counter = Counter()
             limit = 500
             for offset in range(0, int(am["trades_per_market"]), limit):
@@ -116,10 +130,23 @@ def discover(con, api: PolymarketAPI, cfg) -> list[str]:
                 if len(rows) < limit:
                     break
             for w, _ in counts.most_common(int(am["wallets_per_market"])):
-                add(w, "active_market")
+                if w:
+                    cat_hits.setdefault(cat, Counter())[w] += 1
+        if am.get("by_category"):
+            # A specialist turns up across many markets of one category.
+            k, need = int(am.get("candidates_per_category", 60)), int(am.get("min_category_markets", 2))
+            for cat, hits in cat_hits.items():
+                for w, n in hits.most_common(k):
+                    if n >= need:
+                        add(w, f"category:{cat}", n)
+        else:
+            for hits in cat_hits.values():
+                for w, n in hits.items():
+                    add(w, "active_market", n)
 
-    # Seeds first, then wallets found by the most sources.
-    ranked = sorted(sources, key=lambda w: ("seed" not in sources[w], -len(sources[w]), w))
+    # Seeds first, then wallets seen in the most markets / boards. (Ranking by number of source
+    # types alone tied almost everyone, so the cap used to fall back to address order.)
+    ranked = sorted(sources, key=lambda w: ("seed" not in sources[w], -weight[w], -len(sources[w]), w))
     ranked = ranked[: int(disc["max_candidates"])]
     now = int(time.time())
     # Discovery defines the pool: candidates from earlier runs (possibly found with other, e.g.

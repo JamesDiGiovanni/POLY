@@ -67,6 +67,9 @@ def score_wallet(fills: list[Fill], markets: dict[str, Market], cfg, start_ts: i
     wash = wash_fraction(window, int(fc["wash_window_s"]))
 
     reasons = []
+    n_markets = len({lot.condition_id for lot in closed})
+    if fc.get("min_markets") and n_markets < fc["min_markets"]:
+        reasons.append(f"markets {n_markets} < {fc['min_markets']}")
     if len(closed) < fc["min_resolved_trades"]:
         reasons.append(f"resolved_trades {len(closed)} < {fc['min_resolved_trades']}")
     if span_days is None or span_days < fc["min_active_span_days"]:
@@ -94,6 +97,35 @@ def score_wallet(fills: list[Fill], markets: dict[str, Market], cfg, start_ts: i
     }
 
 
+def score_specialist(fills: list[Fill], markets: dict[str, Market], cfg, start_ts: int, cutoff_ts: int) -> dict:
+    """Score a wallet within each category on its own; it qualifies in its best passing category.
+
+    Returns the best passing category's score (highest ROI), else the category with the most
+    resolved trades, labelled with that category so the rejection reasons make sense.
+    """
+    by_cat: dict[str, list[Fill]] = defaultdict(list)
+    for f in fills:
+        m = markets.get(f.condition_id)
+        if m is not None:
+            by_cat[m.fee_category].append(f)
+    scores = []
+    for cat, cat_fills in by_cat.items():
+        if cat == "default" and not cfg["filters"].get("specialist_include_uncategorised", False):
+            continue
+        s = score_wallet(cat_fills, markets, cfg, start_ts, cutoff_ts)
+        s["specialty"] = cat
+        scores.append(s)
+    if not scores:
+        s = score_wallet([], markets, cfg, start_ts, cutoff_ts)
+        s["specialty"] = None
+        return s
+    ok = [s for s in scores if s["passed"]]
+    best = max(ok, key=lambda s: s["roi"]) if ok else max(scores, key=lambda s: s["resolved_trades"])
+    if not ok:
+        best["rejection_reason"] = f"[{best['specialty']}] {best['rejection_reason']}"
+    return best
+
+
 COLUMNS = ["resolved_trades", "span_days", "days_since_last", "roi", "win_rate", "avg_entry", "edge_pts",
            "top3_share", "median_trade_usd", "trades_per_day", "wash_fraction", "passed", "rejection_reason"]
 
@@ -106,14 +138,20 @@ def run(con, cfg, wallets: list[str] | None = None) -> list[str]:
     start, cutoff = cfg.selection_start_ts, cfg.cutoff_ts
     capped = {r[0] for r in con.execute("SELECT wallet FROM wallet_ingest_state WHERE capped").fetchall()}
     passed, now = [], int(time.time())
+    specialist = bool(cfg["filters"].get("specialist"))
     for w in wallets:
-        s = score_wallet(load_fills(con, w), markets, cfg, start, cutoff)
+        fills = load_fills(con, w)
+        if specialist:
+            s = score_specialist(fills, markets, cfg, start, cutoff)
+        else:
+            s = score_wallet(fills, markets, cfg, start, cutoff)
+            s["specialty"] = None
         if w in capped:
             s["passed"] = False
             s["rejection_reason"] = "; ".join(filter(None, [
                 "high_frequency: activity over the ingest cap or prescreen rate", s["rejection_reason"]]))
-        con.execute("INSERT OR REPLACE INTO wallet_scores VALUES (?," + ",".join("?" * len(COLUMNS)) + ",?)",
-                    [w, *(s[c] for c in COLUMNS), now])
+        con.execute("INSERT OR REPLACE INTO wallet_scores VALUES (?," + ",".join("?" * len(COLUMNS)) + ",?,?)",
+                    [w, *(s[c] for c in COLUMNS), now, s["specialty"]])
         if s["passed"]:
             passed.append(w)
         else:

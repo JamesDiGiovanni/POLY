@@ -67,6 +67,9 @@ and latest fills next to its profile URL, to compare against polymarket.com by h
   fees), on the same period, so it sits directly beside copy ROI. Edge decay = copy ROI ÷ wallet ROI.
 - **Confidence.** 90% percentile bootstrap (2,000 resamples, fixed seed) that resamples whole **markets**,
   not fills: a wallet's 100 fills in one market are one bet. The go rule also needs 30+ distinct markets.
+- **Category specialists** (`filters.specialist`, the workflow's `specialist` profile). Candidates are
+  drawn evenly across Polymarket's categories, each wallet is scored separately within every category,
+  and a wallet that passes in one is copied **only in that category**, the bets where it showed skill.
 - **No lookahead in discovery.** Candidates come only from markets that closed before the cutoff.
   Polymarket's leaderboards (even all-time) rank wallets partly on test-period profit, so they're off by
   default (`discovery.leaderboard.enabled`). A run that used monthly boards produced 6 "GO" wallets, 5 of
