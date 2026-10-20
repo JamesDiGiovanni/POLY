@@ -41,3 +41,34 @@ def run(client) -> list[tuple[str, bool]]:
                           f"min_size range {min((m['min_size'] for m in ms), default=0)}-{max((m['min_size'] for m in ms), default=0)}")
     check("all pages", total)
     return results
+
+
+def books(client, cfg, n: int = 60) -> None:
+    """Are the YES and NO books mirrors of one book, or separate? Compares the YES book with the NO book
+    flipped (NO bid at p = YES ask at 1 - p) on the richest pools, and how the score changes if NO-book
+    orders are added."""
+    from ..api import PolymarketAPI
+    from .scoring import book_score
+    papi, rapi = PolymarketAPI(client, cfg), RewardsAPI(client)
+    ms = sorted(rapi.current(), key=lambda m: -m["daily_rate"])[:n]
+    same = differ = 0
+    for m in ms:
+        full = rapi.market(m["condition_id"])
+        toks = {str(t.get("outcome", "")).lower(): t.get("token_id") for t in full.get("tokens") or []}
+        if "yes" not in toks or "no" not in toks:
+            continue
+        y, no = papi.book(toks["yes"]), papi.book(toks["no"])
+        flip_bids = sorted([(round(1 - p, 4), q) for p, q in no["asks"]], key=lambda lv: -lv[0])
+        flip_asks = sorted([(round(1 - p, 4), q) for p, q in no["bids"]], key=lambda lv: lv[0])
+        mirrored = y["bids"][:5] == flip_bids[:5] and y["asks"][:5] == flip_asks[:5]
+        same += mirrored
+        differ += not mirrored
+        alone = book_score(y["bids"], y["asks"], m["max_spread"], m["min_size"])
+        both = book_score(y["bids"] + flip_bids, y["asks"] + flip_asks, m["max_spread"], m["min_size"])
+        print(f"{(full.get('question') or '')[:55]:55} pool {m['daily_rate']:6.0f} mirrored={mirrored} "
+              f"yes bid/ask {y['bids'][0][0] if y['bids'] else None}/{y['asks'][0][0] if y['asks'] else None} "
+              f"no-flipped {flip_bids[0][0] if flip_bids else None}/{flip_asks[0][0] if flip_asks else None} "
+              f"score yes-only {alone and round(alone['q_min'])} with-no {both and round(both['q_min'])}")
+        if differ == 1 and not mirrored:
+            print("  yes book:", y["bids"][:4], y["asks"][:4], "\n  no book:", no["bids"][:4], no["asks"][:4])
+    print(f"\nmirrored {same}, different {differ}")

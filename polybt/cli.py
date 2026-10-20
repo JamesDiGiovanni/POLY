@@ -231,6 +231,7 @@ def main(argv=None) -> int:
             h = cfg["http"]
             client = HttpClient(cfg["cache_dir"], h["requests_per_second"], h["timeout_s"], h["max_retries"], h["backoff_s"])
             failed = [n for n, ok in rw_probe.run(client) if not ok]
+            rw_probe.books(client, cfg)
             print(f"\nrewards probe: {'all OK' if not failed else 'FAILED: ' + ', '.join(failed)}")
         else:
             print(rw_run.run(cfg))
