@@ -1,0 +1,19 @@
+wallet          0x2d99e29c4f066ba32098c65e4c7454b277d94ca3
+profile         https://polymarket.com/profile/0x2d99e29c4f066ba32098c65e4c7454b277d94ca3
+trades          17061 (14278 buys) across 846 markets
+first / last    2025-07-22 05:46 / 2026-10-20 00:30
+bought / sold   $39,259,972.53 / $5,619,962.40
+redeemed        $33,624,976.10
+cash P&L        $-15,034.02  (open positions not valued)
+latest trades:
+  2026-10-19 20:48  BUY     1745.06 @ 0.925  $  1614.08  US x Iran ceasefire continues through October 22?
+  2026-10-19 20:25  BUY     2997.90 @ 0.790  $  2368.34  US x Iran ceasefire continues through October 31?
+  2026-10-19 18:39  BUY     1000.00 @ 0.917  $   917.00  US x Iran ceasefire continues through October 22?
+  2026-10-19 18:34  BUY     2392.47 @ 0.930  $  2225.00  US x Iran ceasefire continues through October 22?
+  2026-10-19 18:33  BUY      984.54 @ 0.928  $   913.65  US x Iran ceasefire continues through October 22?
+  2026-10-19 18:32  BUY     2022.76 @ 0.927  $  1876.03  US x Iran ceasefire continues through October 22?
+  2026-10-19 17:16  SELL    1000.00 @ 0.721  $   721.00  US x Iran ceasefire continues through October 22?
+  2026-10-19 17:10  BUY     1000.00 @ 0.652  $   652.00  US x Iran ceasefire continues through October 22?
+  2026-10-19 13:11  SELL      44.15 @ 0.960  $    42.38  Will the Iranian regime fall before 2027?
+  2026-10-19 13:11  SELL       1.04 @ 0.960  $     1.00  Will the Iranian regime fall before 2027?
+filters         PASSED
