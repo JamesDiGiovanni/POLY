@@ -147,6 +147,10 @@ def main(argv=None) -> int:
     s = sub.add_parser("session", help="summarise a paper/live session against the backtest")
     s.add_argument("--session")
     sub.add_parser("probe", help="one request per Polymarket endpoint; checks response shapes")
+    sub.add_parser("wx-probe", help="weather: one request per data source; checks response shapes")
+    s = sub.add_parser("wx-data", help="weather: markets, stations, forecasts, observations, prices")
+    s.add_argument("--steps", default="markets,stations,forecasts,obs,prices")
+    sub.add_parser("wx-eval", help="weather: model vs market early check; writes output/weather/scorecard.md")
     sub.add_parser("summary", help="markdown summary of the latest results (verdict, funnel, wallets)")
     s = sub.add_parser("fees", help="fee sources per market, and which formula matches real fills")
     s.add_argument("--since", default="2026-03-30", help="only trades after this date (fee schedule V2)")
@@ -193,6 +197,19 @@ def main(argv=None) -> int:
         print(f"\nprobe: {'all OK' if not failed else 'FAILED: ' + ', '.join(failed)}")
         con.close()
         return 1 if failed else 0
+    elif args.cmd in ("wx-probe", "wx-data", "wx-eval"):
+        from .weather import data as wx_data, model as wx_model, probe as wx_probe
+        h = cfg["http"]
+        client = HttpClient(cfg["cache_dir"], {**h["requests_per_second"], **cfg["weather"]["requests_per_second"]},
+                            h["timeout_s"], h["max_retries"], h["backoff_s"])
+        if args.cmd == "wx-probe":
+            failed = [n for n, ok in wx_probe.run(client, cfg) if not ok]
+            print(f"\nweather probe: {'all OK' if not failed else 'FAILED: ' + ', '.join(failed)}")
+        elif args.cmd == "wx-data":
+            wx_data.run(con, cfg, tuple(args.steps.split(",")))
+            print(wx_model.write_outputs(con, cfg, None))
+        else:
+            print(wx_model.write_outputs(con, cfg, wx_model.evaluate(con, cfg)))
     elif args.cmd == "summary":
         print(report.markdown_summary(con, cfg))
     elif args.cmd == "fees":

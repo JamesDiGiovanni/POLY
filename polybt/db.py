@@ -139,6 +139,51 @@ CREATE TABLE IF NOT EXISTS sim_results (
     markets INTEGER
 );
 
+-- Weather backtest (polybt.weather). One row per temperature-range market of a city-day event.
+CREATE TABLE IF NOT EXISTS wx_markets (
+    condition_id VARCHAR PRIMARY KEY,
+    event_key VARCHAR,          -- city-day: all ranges of one event share it
+    question VARCHAR,
+    yes_token VARCHAR,
+    city VARCHAR,
+    station VARCHAR,            -- ICAO from the market's Weather Underground link
+    unit VARCHAR,               -- F | C
+    lo DOUBLE,                  -- inclusive whole degrees, NULL = open below
+    hi DOUBLE,                  -- inclusive whole degrees, NULL = open above
+    date DATE,
+    end_time BIGINT,
+    resolved BOOLEAN,
+    yes_won BOOLEAN,
+    volume DOUBLE,
+    fee_rate DOUBLE
+);
+
+CREATE TABLE IF NOT EXISTS wx_stations (
+    station VARCHAR PRIMARY KEY,
+    lat DOUBLE,
+    lon DOUBLE,
+    tz VARCHAR
+);
+
+-- Observed daily high at the station, local calendar day, degrees C.
+CREATE TABLE IF NOT EXISTS wx_obs (
+    station VARCHAR,
+    date DATE,
+    tmax_c DOUBLE,
+    n_obs INTEGER,
+    PRIMARY KEY (station, date)
+);
+
+-- Forecast daily high as issued `lead` days earlier (Open-Meteo previous runs), degrees C.
+CREATE TABLE IF NOT EXISTS wx_forecasts (
+    station VARCHAR,
+    model VARCHAR,
+    lead INTEGER,
+    date DATE,
+    tmax_c DOUBLE,
+    PRIMARY KEY (station, model, lead, date)
+);
+
 -- Paper / live trading. One session = one continuous run of the shared engine.
 CREATE TABLE IF NOT EXISTS live_sessions (
     session VARCHAR PRIMARY KEY,

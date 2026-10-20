@@ -19,7 +19,7 @@ def _shape(v, depth=0):
 
 
 def run(api, cfg) -> list[tuple[str, bool, str]]:
-    c, results = api.client, []
+    results = []
 
     def check(name, fn):
         try:

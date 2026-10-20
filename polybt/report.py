@@ -287,7 +287,6 @@ def render_html(cfg, results: list[dict], summaries: list[dict], scores: list[tu
     key_sizing = gng.get("sizing", "flat")
     by = {(r["wallet"], r["category"], r["delay_s"]): r for r in results if r["sizing"] == key_sizing}
     prop = {(r["wallet"], r["delay_s"]): r for r in results if r["sizing"] == "proportional" and r["category"] == "all"}
-    summ = {s["wallet"]: s for s in summaries}
 
     def sort_key(s):
         r = by.get((s["wallet"], "all", key_delay))

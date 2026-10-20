@@ -94,6 +94,17 @@ class HttpClient:
             self.stats["hits"] += 1
             return cached["body"]
 
+        body = self._fetch(url).json()
+        if cache:
+            self._write_cache(url, body)
+        return body
+
+    def get_text(self, base: str, path: str, params: dict | None = None) -> str:
+        """Uncached GET returning the body as text (CSV endpoints)."""
+        return self._fetch(build_url(base, path, params)).text
+
+    def _fetch(self, url: str) -> requests.Response:
+        """GET with per-host rate limiting; retries network errors, 429s and 5xx."""
         host = urlsplit(url).hostname or ""
         for attempt in range(self.max_retries + 1):
             self.limiter.wait(host)
@@ -117,8 +128,5 @@ class HttpClient:
                 continue
             if resp.status_code >= 400:
                 raise HttpError(resp.status_code, url, resp.text)
-            body = resp.json()
-            if cache:
-                self._write_cache(url, body)
-            return body
+            return resp
         raise AssertionError("unreachable")
