@@ -1,0 +1,60 @@
+# Liquidity rewards phase 2: paper market making. Each run is one session (default 5 h) in a fresh pick of
+# reward markets; sessions accumulate on the mm-paper branch, whose report.md covers all of them.
+name: Paper market making
+
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "session length in minutes (max ~330)"
+        default: "300"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mm-paper
+  cancel-in-progress: false
+
+jobs:
+  paper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Unit tests
+        run: python -m pytest -q
+      - name: Earlier sessions
+        run: |
+          git clone -q --single-branch --branch mm-paper \
+            "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" /tmp/mm-paper \
+            || { mkdir -p /tmp/mm-paper && cd /tmp/mm-paper && git init -q -b mm-paper; }
+      - name: Paper session
+        run: python -m polybt rw-paper --session "run-${{ github.run_id }}" --minutes "${{ inputs.minutes }}" 2>&1 | tee run.log
+      - name: Publish to mm-paper branch
+        if: always()
+        run: |
+          S="run-${{ github.run_id }}"
+          [ -d "output/mm/$S" ] || exit 0
+          cp run.log "output/mm/$S/" 2>/dev/null || true
+          cd /tmp/mm-paper
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -rf "$S" && cp -r "$GITHUB_WORKSPACE/output/mm/$S" .
+          (cd "$GITHUB_WORKSPACE" && python -c "from pathlib import Path; from polybt.config import load; \
+            from polybt.rewards.paper import report; c = load(); \
+            print(report(Path('/tmp/mm-paper'), {**c['rewards'], **c['rewards']['paper']}))") > /dev/null
+          git add -A
+          git commit -q -m "Paper market-making session $S" || exit 0
+          git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" mm-paper
+      - name: Summary
+        if: always()
+        run: cat /tmp/mm-paper/report.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || tail -n 30 run.log >> "$GITHUB_STEP_SUMMARY"

@@ -40,7 +40,8 @@ def _fill_tokens(rapi: RewardsAPI, markets: list[dict]) -> None:
     def one(m):
         try:
             full = parse_config(rapi.market(m["condition_id"]))
-            m["yes_token"] = full["yes_token"]
+            for k in ("yes_token", "no_token", "tick", "end"):
+                m[k] = full[k]
             m["question"] = m["question"] or full["question"]
             for k in ("min_size", "max_spread", "daily_rate"):
                 m[k] = m[k] or full[k]

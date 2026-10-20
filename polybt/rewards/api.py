@@ -32,6 +32,9 @@ def parse_config(m: dict) -> dict:
             "max_spread": max_spread_c / 100.0,   # the API gives cents
             "sponsored": _f(m, "total_daily_rate") > _f(m, "native_daily_rate", default=_f(m, "total_daily_rate")),
             "yes_token": yes.get("token_id"),
+            "no_token": next((t.get("token_id") for t in tokens if t is not yes), None),
+            "tick": _f(m, "minimum_tick_size", default=0.01),
+            "end": m.get("end_date_iso"),
             "yes_price": _f(yes, "price", default=None)}
 
 
@@ -52,6 +55,12 @@ class RewardsAPI:
 
     def market(self, condition_id: str) -> dict:
         return self.client.get_json(CLOB_API, f"/markets/{condition_id}", cache=False) or {}
+
+    def taker_trades(self, condition_id: str, limit: int = 500) -> list[dict]:
+        """The market's newest taker prints, both outcome tokens, newest first."""
+        from ..api import DATA_API
+        return _as_list(self.client.get_json(DATA_API, "/trades", {"market": condition_id, "limit": limit,
+                                                                  "takerOnly": "true"}, cache=False))
 
     def holding_reward_markets(self, max_pages: int = 10) -> list[dict]:
         """Open Gamma markets flagged for holding rewards (4% a year on positions held)."""

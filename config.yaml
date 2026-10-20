@@ -229,3 +229,14 @@ rewards:
   min_daily_usd: 1.0           # payouts under $1 a day are not paid
   min_markets: 10
   top_n: 10
+  # Phase 2: paper market making (python -m polybt rw-paper). Fresh market pick each session.
+  paper:
+    minutes: 300               # a session; GitHub Actions jobs stop at 6 h
+    interval_s: 60
+    per_tier: 7
+    min_pool: 20               # $/day; smaller pools are not worth a slot
+    max_inventory_mult: 2      # stop quoting the side that would take inventory past 2 x the quote size
+    markout_min: [5, 30, 120]
+    tiers:
+      thin_below: 50           # resting score: under this the book is effectively empty near the mid
+      crowded_from: 2000
