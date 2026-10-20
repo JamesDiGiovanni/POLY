@@ -1,20 +1,7 @@
-Tue Oct 20 14:34:42 UTC 2026
+Tue Oct 20 14:39:43 UTC 2026
 /dev/root        72G   60G   13G  83% /
-Mem:            7938        2006        2999          52        3229        5931
+Mem:            7938        2135        2843          52        3278        5802
 
-14:22:08 INFO observations KLGA: 4 days
-14:22:09 INFO observations LLBG: 3 days
-14:22:10 INFO observations LTAC: 3 days
-14:22:11 INFO observations LTFM: 3 days
-14:22:12 INFO observations MPMG: 4 days
-14:22:13 INFO observations OPKC: 3 days
-14:22:14 INFO observations RCSS: 3 days
-14:22:15 INFO observations RJTT: 3 days
-14:22:16 INFO observations RKPK: 3 days
-14:22:17 INFO observations RPLL: 3 days
-14:22:18 INFO observations VILK: 3 days
-14:22:19 INFO observations WMKK: 3 days
-14:22:20 INFO observations WSSS: 3 days
 14:22:21 INFO observations ZBAA: 3 days
 14:22:22 INFO observations ZGGG: 3 days
 14:22:23 INFO observations ZGSZ: 3 days
@@ -62,3 +49,16 @@ Mem:            7938        2006        2999          52        3229        5931
 14:33:30 INFO   17000/105277 tokens
 14:33:53 INFO   18000/105277 tokens
 14:34:24 INFO   19000/105277 tokens
+14:35:03 INFO   20000/105277 tokens
+14:35:15 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+14:35:15 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+14:35:15 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+14:35:15 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+14:35:15 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+14:35:42 INFO   21000/105277 tokens
+14:36:21 INFO   22000/105277 tokens
+14:36:29 WARNING request error https://clob.polymarket.com/prices-history?endTs=1781541388&fidelity=30&market=23036619189121662121099081394173959519319339251838272335815378258994135241735&startTs=1781136000 (HTTPSConnectionPool(host='clob.polymarket.com', port=443): Read timed out. (read timeout=30)), retrying
+14:36:57 INFO   23000/105277 tokens
+14:37:40 INFO   24000/105277 tokens
+14:38:20 INFO   25000/105277 tokens
+14:39:06 INFO   26000/105277 tokens
