@@ -1,15 +1,7 @@
-Tue Oct 20 14:59:50 UTC 2026
+Tue Oct 20 15:04:52 UTC 2026
 /dev/root        72G   60G   13G  83% /
-Mem:            7938        2599        2140          52        3518        5338
+Mem:            7938        2582        2066          52        3585        5355
 
-14:35:15 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
-14:35:15 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
-14:35:15 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
-14:35:42 INFO   21000/105277 tokens
-14:36:21 INFO   22000/105277 tokens
-14:36:29 WARNING request error https://clob.polymarket.com/prices-history?endTs=1781541388&fidelity=30&market=23036619189121662121099081394173959519319339251838272335815378258994135241735&startTs=1781136000 (HTTPSConnectionPool(host='clob.polymarket.com', port=443): Read timed out. (read timeout=30)), retrying
-14:36:57 INFO   23000/105277 tokens
-14:37:40 INFO   24000/105277 tokens
 14:38:20 INFO   25000/105277 tokens
 14:39:06 INFO   26000/105277 tokens
 14:39:44 INFO   27000/105277 tokens
@@ -62,3 +54,11 @@ Mem:            7938        2599        2140          52        3518        5338
 14:58:21 INFO   57000/105277 tokens
 14:58:58 INFO   58000/105277 tokens
 14:59:34 INFO   59000/105277 tokens
+15:00:11 INFO   60000/105277 tokens
+15:00:46 INFO   61000/105277 tokens
+15:01:21 INFO   62000/105277 tokens
+15:01:55 INFO   63000/105277 tokens
+15:02:30 INFO   64000/105277 tokens
+15:03:07 INFO   65000/105277 tokens
+15:03:49 INFO   66000/105277 tokens
+15:04:25 INFO   67000/105277 tokens
