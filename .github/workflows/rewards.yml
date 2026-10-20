@@ -1,5 +1,5 @@
 # Polymarket liquidity rewards, phase 1: estimate what a $1,000 two-sided quote earns per pool.
-# Results: run summary, the rewards-output artifact, and the rewards-results branch.
+# Results: run summary, the rewards-output artifact, and the rewards-probe or rewards-scan branch.
 name: Liquidity rewards
 
 on:
@@ -59,15 +59,15 @@ jobs:
             probe.log
             run.log
           if-no-files-found: warn
-      - name: Publish to rewards-results branch
+      - name: Publish to rewards-probe or rewards-scan branch
         if: always()
         run: |
           mkdir -p /tmp/results && cp -r output/rewards/. /tmp/results/ 2>/dev/null || true
           cp probe.log run.log /tmp/results/ 2>/dev/null || true
           cd /tmp/results
-          git init -q -b rewards-results
+          git init -q -b "rewards-${{ inputs.steps }}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -q -m "Rewards results (${{ inputs.steps }}) from run ${{ github.run_id }}" || exit 0
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" rewards-results
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "rewards-${{ inputs.steps }}"
