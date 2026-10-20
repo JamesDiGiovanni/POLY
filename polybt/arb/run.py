@@ -11,7 +11,7 @@ from pathlib import Path
 from ..api import PolymarketAPI
 from ..http import HttpClient
 from .kalshi import Kalshi, asks_from_bids
-from .match import Pair, kalshi_refs, match, polymarket_refs
+from .match import Pair, Ref, kalshi_refs, match, polymarket_refs
 
 log = logging.getLogger(__name__)
 
@@ -78,6 +78,7 @@ def run(con, cfg, steps=("match", "snapshot")) -> str:
     polys, kalshis = polymarket_refs(client, cfg), kalshi_refs(kalshi, cfg)
 
     series_cache: dict[str, set] = {}
+    fee_mult: dict[str, float] = {}
 
     def series_sources(k):
         t = k.extra.get("series_ticker")
@@ -86,10 +87,9 @@ def run(con, cfg, steps=("match", "snapshot")) -> str:
         if t not in series_cache:
             try:
                 s = kalshi.series(t)
-                k.extra["sources_text"] = " ".join(f"{x.get('name', '')} {x.get('url', '')}"
-                                                   for x in s.get("settlement_sources") or [])
-                k.extra["fee_multiplier"] = s.get("fee_multiplier")
-                series_cache[t] = k.sources()
+                text = " ".join(f"{x.get('name', '')} {x.get('url', '')}" for x in s.get("settlement_sources") or [])
+                series_cache[t] = Ref("kalshi", t, "", None, rules=text).sources()
+                fee_mult[t] = float(s.get("fee_multiplier") or 1.0)
             except Exception as e:
                 log.warning("series %s failed: %s", t, e)
                 series_cache[t] = set()
@@ -109,7 +109,7 @@ def run(con, cfg, steps=("match", "snapshot")) -> str:
                 rate = float(((info or {}).get("fd") or {}).get("r") or 0)  # no fd: fee-free
             except Exception:
                 rate = float(a["poly_fee_fallback"])
-            mult = float(p.kalshi.extra.get("fee_multiplier") or 1.0)
+            mult = fee_mult.get(p.kalshi.extra.get("series_ticker"), 1.0)
             try:
                 return i, snapshot(p, papi, kalshi, rate, mult, float(a["kalshi_fee_rate"]))
             except Exception as e:

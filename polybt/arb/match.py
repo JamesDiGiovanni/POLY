@@ -112,9 +112,10 @@ def polymarket_refs(client, cfg) -> list[Ref]:
             # Yes/No markets have one "yes" side. Two-outcome markets ("Lakers" vs "Celtics") are matched
             # once per outcome: holding that outcome is the YES side, the other outcome the NO side.
             sides = [(0, "")] if [o.lower() for o in outcomes] == ["yes", "no"] else [(0, outcomes[0]), (1, outcomes[1])]
+            rules = " ".join(x for x in (m.get("description"), m.get("resolutionSource"), ev.get("resolutionSource")) if x)
             for idx, label in sides:
                 refs.append(Ref("poly", m["conditionId"] + (f"#{idx}" if label else ""),
-                                f"{base} | {label}" if label else base, close, rules=m.get("description") or "",
+                                f"{base} | {label}" if label else base, close, rules=rules,
                                 category=str(ev.get("category") or m.get("category") or ""),
                                 liquidity=float(m.get("liquidityNum") or m.get("liquidity") or 0),
                                 extra={"yes_token": tokens[idx], "no_token": tokens[1 - idx], "question": m.get("question"),
@@ -129,6 +130,8 @@ def kalshi_refs(kalshi: Kalshi, cfg) -> list[Ref]:
     a = cfg["arb"]
     refs = []
     for ev in kalshi.events("open", max_pages=int(a["max_kalshi_event_pages"])):
+        ev_sources = " ".join(f"{x.get('name', '')} {x.get('url', '')}" for x in ev.get("settlement_sources") or []
+                              if isinstance(x, dict))
         for m in ev.get("markets") or []:
             if m.get("status") not in (None, "active", "open", "initialized"):
                 continue
@@ -141,7 +144,8 @@ def kalshi_refs(kalshi: Kalshi, cfg) -> list[Ref]:
                             category=str(ev.get("category") or ""),
                             liquidity=float(_dollars(m, "liquidity") or 0),
                             extra={"event_ticker": ev.get("event_ticker"), "series_ticker": ev.get("series_ticker"),
-                                   "volume24h": float(m.get("volume_24h") or 0),
+                                   "sources_text": ev_sources,
+                                   "volume24h": float(m.get("volume_24h_fp") or m.get("volume_24h") or 0),
                                    "yes_bid": _dollars(m, "yes_bid"), "yes_ask": _dollars(m, "yes_ask")}).analyse())
     log.info("kalshi: %d open markets", len(refs))
     return refs
