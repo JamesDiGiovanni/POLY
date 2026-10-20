@@ -178,8 +178,11 @@ weather:
   discovery_window_days: 7     # ~50 city-days a day; Gamma stops paging near 1,000 results
   max_events_per_window: 1000
   models: [ecmwf_ifs025, gfs_seamless, icon_seamless]
-  leads: [1, 2]                # 1 = decide on the morning of the day, 2 = the morning before
-  decision_hour_local: 8
+  leads: [1, 2]                # 1 = decide on the day (at decision_hour_local), 2 = the day before
+  # Midnight local: the previous-runs forecast for the afternoon high was issued by the previous
+  # evening, so this is when it is freshest relative to the market. At 08:00 the market already had
+  # the overnight model runs and the morning's readings (first full run: model log loss 1.57 vs 1.29).
+  decision_hour_local: 0
   max_price_age_h: 12          # a range needs a price print within this long before the decision
   price_fidelity_min: 30
   price_days_before: 3

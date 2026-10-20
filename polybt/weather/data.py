@@ -256,9 +256,9 @@ def ingest_forecasts(con, client: HttpClient, cfg) -> int:
 def decision_ts(date: dt.date, lead: int, tz: str, hour: int) -> int:
     """When a lead-`lead` decision is made: `hour` local time, (lead - 1) days before the market's day.
 
-    Open-Meteo's previous_day{lead} value for a valid hour comes from a run started about `lead` days
-    earlier, so for every hour of the day it is published by roughly the start of day D-(lead-1),
-    plus a few hours of model/publication delay. Deciding at 08:00 local keeps clear of that.
+    Open-Meteo's previous_day{lead} value for a valid hour is the forecast as it stood about `lead`
+    days earlier, so the afternoon hours that set the day's high were published by the evening of
+    D-lead. Midnight local on D-(lead-1) is therefore after publication for the hours that matter.
     """
     local = dt.datetime.combine(date - dt.timedelta(days=lead - 1), dt.time(hour), ZoneInfo(tz))
     return int(local.timestamp())

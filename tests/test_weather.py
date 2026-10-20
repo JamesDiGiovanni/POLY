@@ -124,7 +124,7 @@ def test_evaluate_end_to_end(tmp_path, informed_market):
         win = next(j for j, (lo, hi) in enumerate(ranges)
                    if (lo is None or round(obs_f) >= lo) and (hi is None or round(obs_f) <= hi))
         events.append(_event(day, ranges, win))
-        t = decision_ts(day, 1, "America/New_York", 8)
+        t = decision_ts(day, 1, "America/New_York", int(cfg["weather"]["decision_hour_local"]))
         for j in range(len(ranges)):
             if informed_market:
                 px = 0.9 if j == win else 0.025
