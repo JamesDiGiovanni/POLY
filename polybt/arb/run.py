@@ -122,6 +122,25 @@ def run(con, cfg, steps=("match", "snapshot")) -> str:
     return write_report(cfg, polys, kalshis, pairs, snaps, misses)
 
 
+def _days(p: Pair) -> str:
+    if not p.kalshi.close_ts:
+        return "–"
+    return str(max(1, round((p.kalshi.close_ts - dt.datetime.now(dt.timezone.utc).timestamp()) / 86400)))
+
+
+def annualised(edge: float | None, days: float) -> float | None:
+    """Return per year on the capital locked in both legs until settlement (simple, not compounded)."""
+    if edge is None or edge <= -1 or days <= 0:
+        return None
+    return edge / (1 - edge) * 365 / days
+
+
+def _annual(p: Pair, s: dict) -> str:
+    d = _days(p)
+    a = annualised(s.get("first_edge"), float(d)) if d != "–" else None
+    return "–" if a is None else f"{a * 100:+.0f}%"
+
+
 def write_report(cfg, polys, kalshis, pairs: list[Pair], snaps: dict[int, dict], misses=()) -> str:
     a = cfg["arb"]
     out = Path(cfg["output_dir"]) / "arb"
@@ -150,15 +169,16 @@ def write_report(cfg, polys, kalshis, pairs: list[Pair], snaps: dict[int, dict],
              f"on every leg. Found **{len(liquid_a)}**.", "",
              f"Snapshot of {len(snaps)} pairs: {len(positive)} showed a positive edge after both fees at the moment "
              "of the snapshot (a single moment; the logger in phase 2 measures how often and how long).", "",
-             "| grade | score | Polymarket | Kalshi | close | best edge | contracts at ≥0 | profit |",
-             "|---|---|---|---|---|---|---|---|"]
+             "Annualised = edge ÷ capital tied up (both legs) × 365 ÷ days until settlement; compare with ~4% risk-free.", "",
+             "| grade | score | Polymarket | Kalshi | close | days | best edge | annualised | contracts at ≥0 | profit |",
+             "|---|---|---|---|---|---|---|---|---|---|"]
     order = sorted(range(len(pairs)), key=lambda i: (pairs[i].grade, -(snaps.get(i, {}).get("first_edge") or -9)))
     for i in order[:60]:
         p, s = pairs[i], snaps.get(i, {})
         close = dt.datetime.fromtimestamp(p.kalshi.close_ts, dt.timezone.utc).date() if p.kalshi.close_ts else "–"
         q = (p.poly.extra.get("question") or "")[:60] + (f" [{p.poly.extra['outcome']}]" if p.poly.extra.get("outcome") not in (None, "Yes") else "")
-        lines.append(f"| {p.grade} | {p.score:.2f} | {q} | {p.kalshi.text[:60]} | {close} | "
-                     f"{pct(s.get('first_edge'))} | {s.get('contracts', 0):.0f} | ${s.get('profit', 0):.2f} |")
+        lines.append(f"| {p.grade} | {p.score:.2f} | {q} | {p.kalshi.text[:60]} | {close} | {_days(p)} | "
+                     f"{pct(s.get('first_edge'))} | {_annual(p, s)} | {s.get('contracts', 0):.0f} | ${s.get('profit', 0):.2f} |")
     by_cat: dict[str, list[int]] = {}
     for p in pairs:
         by_cat.setdefault(p.kalshi.category or "?", [0, 0])

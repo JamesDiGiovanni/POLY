@@ -137,3 +137,32 @@ def test_two_outcome_side_pairs_only_with_its_own_kalshi_yes_side():
                            extra={"outcome": lab}).analyse()
     pairs = {p.poly.id: p.kalshi.id for p in match([side("TheMongolz"), side("BIG")], [k_big, k_mon], cfg)}
     assert pairs == {"P-TheMongolz": "KMON", "P-BIG": "KBIG"}
+
+
+def test_meaning_changing_words_block_or_downgrade_pairs():
+    cfg = load()
+    src = "https://www.rbi.org.in"
+    p_up = Ref("poly", "P1", "Will the Reserve Bank of India increase the policy repo rate by 25 bps at the December meeting?",
+               T, rules=src).analyse()
+    k_cut = Ref("kalshi", "K1", "Reserve Bank of India rate decision in December | Will the Reserve Bank of India cut more "
+                "than 25bps at the December Monetary Policy Committee meeting? | Cut more than 25bps", T, rules=src).analyse()
+    assert any("direction" in w for w in consistent(p_up, k_cut, 7))
+
+    p3 = Ref("poly", "P2", "Will Moonshot be the third-best Chinese AI company at the end of October 2026?", T).analyse()
+    k1 = Ref("kalshi", "K2", "Top Chinese AI Company week of October 26th | Moonshot", T).analyse()
+    assert any("rank" in w for w in consistent(p3, k1, 7))
+
+    rt = "https://www.rottentomatoes.com"
+    p_incl = Ref("poly", "P3", 'Will "Wild Horse Nine" score at least 95 on the Rotten Tomatoes Tomatometer?', T, rules=rt).analyse()
+    k_strict = Ref("kalshi", "K3", "Wild Horse Nine · Rotten Tomatoes score | Wild Horse Nine Rotten Tomatoes score? | Above 95",
+                   T, rules=rt).analyse()
+    assert consistent(p_incl, k_strict, 7) == []
+    (pair,) = match([p_incl], [k_strict], cfg)
+    assert pair.grade == "B" and any("threshold" in r for r in pair.reasons)
+
+
+def test_annualised_return_penalises_long_lockups():
+    from polybt.arb.run import annualised
+    assert annualised(0.02, 365) == pytest.approx(0.02 / 0.98)
+    assert annualised(0.02, 36.5) == pytest.approx(10 * 0.02 / 0.98)
+    assert annualised(None, 10) is None

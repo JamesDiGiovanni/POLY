@@ -41,6 +41,19 @@ KNOWN_SOURCES = ["associated press", "federal reserve", "bureau of labor statist
 _NUM = re.compile(r"(?<![\w.])([$€£]?)(-?\d+(?:,\d{3})*(?:\.\d+)?)\s*(%|k|m|bn|b|bps|°f|°c|°)?(?![\w])", re.IGNORECASE)
 _DATE = re.compile(r"\b(" + "|".join(sorted(MONTHS, key=len, reverse=True)) + r")\.?\s+(\d{1,2})(?:st|nd|rd|th)?\b(?:,?\s+(\d{4}))?",
                    re.IGNORECASE)
+# Words that flip or narrow a proposition while leaving its wording similar (found in the first
+# matched run: "increase 25 bps" vs "cut more than 25bps", "third-best" vs "Top", "at least 95" vs "Above 95").
+_UP = re.compile(r"\b(increase[sd]?|rais(?:e|es|ed)|hikes?|hiked|rises?|rose)\b")
+_DOWN = re.compile(r"\b(decrease[sd]?|cuts?|reduc(?:e|es|ed)|lowers?|lowered|falls?|fell)\b")
+_HOLD = re.compile(r"\b(no change|unchanged|holds?|maintains?|pause[sd]?)\b")
+_INCL_UP = re.compile(r"\b(at least|or more|or higher|or above|or greater|\d+\s*\+)")
+_STRICT_UP = re.compile(r"\b(above|more than|greater than|over|exceeds?|higher than)\b")
+_INCL_DOWN = re.compile(r"\b(at most|or less|or fewer|or lower|or below)\b")
+_STRICT_DOWN = re.compile(r"\b(below|less than|fewer than|under|lower than)\b")
+_RANK = re.compile(r"\b(first|second|third|fourth|fifth|1st|2nd|3rd|4th|5th)[- ](?:best|place|largest|biggest|most)\b")
+_TOP = re.compile(r"\b(top|best|leading|largest|biggest|#1|number one)\b")
+RANKS = {"first": 1, "1st": 1, "second": 2, "2nd": 2, "third": 3, "3rd": 3, "fourth": 4, "4th": 4, "fifth": 5, "5th": 5}
+
 _ISO_DATE = re.compile(r"\b(20\d\d)-(\d{1,2})-(\d{1,2})\b")
 _URL = re.compile(r"https?://([^/\s\"')]+)", re.IGNORECASE)
 
@@ -58,6 +71,9 @@ class Ref:
     tokens: set = field(default_factory=set)
     numbers: frozenset = frozenset()
     dates: frozenset = frozenset()
+    moves: frozenset = frozenset()     # up / down / hold verbs
+    comparator: str | None = None      # incl_up, strict_up, incl_down, strict_down
+    rank: int | None = None
 
     def analyse(self) -> "Ref":
         t = self.text.lower().replace("’", "'")
@@ -80,6 +96,12 @@ class Ref:
             if w and w not in STOP and len(w) > 1:
                 toks.add(w)
         self.tokens, self.numbers, self.dates = toks, frozenset(nums), frozenset(dates)
+        self.moves = frozenset(n for n, rx in (("up", _UP), ("down", _DOWN), ("hold", _HOLD)) if rx.search(t))
+        self.comparator = next((n for n, rx in (("incl_up", _INCL_UP), ("incl_down", _INCL_DOWN),
+                                                ("strict_up", _STRICT_UP), ("strict_down", _STRICT_DOWN))
+                                if rx.search(t)), None)
+        r = _RANK.search(t)
+        self.rank = RANKS[r[1]] if r else (1 if _TOP.search(t) else None)
         return self
 
     def sources(self) -> set[str]:
@@ -205,6 +227,12 @@ def consistent(p: Ref, k: Ref, max_close_days: float) -> list[str]:
         # A two-outcome Polymarket side ("TheMongolz") must be Kalshi's YES side, not the opponent's.
         if not (_words(label) & _words(k.extra["yes_side"] or k.text.split("|")[-1])):
             why.append(f"outcome '{label}' is not Kalshi's YES side")
+    if p.moves and k.moves and p.moves != k.moves:
+        why.append(f"direction {sorted(p.moves)} vs {sorted(k.moves)}")
+    if p.comparator and k.comparator and p.comparator.split("_")[1] != k.comparator.split("_")[1]:
+        why.append(f"threshold direction {p.comparator} vs {k.comparator}")
+    if p.rank and k.rank and p.rank != k.rank:
+        why.append(f"rank {p.rank} vs {k.rank}")
     if p.numbers != k.numbers:
         why.append(f"numbers {sorted(p.numbers)} vs {sorted(k.numbers)}")
     if p.dates and k.dates and not (p.dates & k.dates):
@@ -275,6 +303,8 @@ def match(polys: list[Ref], kalshis: list[Ref], cfg, series_sources=None) -> lis
             reasons.append(f"close {close_days:.1f} days apart")
         if not shared:
             reasons.append("no shared resolution source found")
+        if p.comparator and k.comparator and p.comparator != k.comparator:
+            reasons.append(f"{p.comparator} vs {k.comparator}: differs when the value lands exactly on the threshold")
         pairs.append(Pair(p, k, s, "B" if reasons else "A", shared, reasons))
     log.info("pairs: %d (%d grade A)", len(pairs), sum(x.grade == "A" for x in pairs))
     return pairs
