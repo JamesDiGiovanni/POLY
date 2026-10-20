@@ -1,18 +1,7 @@
-Tue Oct 20 14:39:43 UTC 2026
+Tue Oct 20 14:44:44 UTC 2026
 /dev/root        72G   60G   13G  83% /
-Mem:            7938        2135        2843          52        3278        5802
+Mem:            7938        2311        2570          52        3356        5627
 
-14:22:21 INFO observations ZBAA: 3 days
-14:22:22 INFO observations ZGGG: 3 days
-14:22:23 INFO observations ZGSZ: 3 days
-14:22:24 INFO observations ZHHH: 3 days
-14:22:25 INFO observations ZSQD: 3 days
-14:22:26 INFO observations ZUUU: 3 days
-14:22:27 INFO observations CYYZ: 4 days
-14:22:28 INFO observations EDDM: 3 days
-14:22:29 INFO observations EHAM: 3 days
-14:22:30 INFO observations EPWA: 3 days
-14:22:31 INFO observations FACT: 3 days
 14:22:32 INFO observations KLAX: 4 days
 14:22:33 INFO observations LEMD: 3 days
 14:22:34 INFO observations LFPB: 3 days
@@ -62,3 +51,14 @@ Mem:            7938        2135        2843          52        3278        5802
 14:37:40 INFO   24000/105277 tokens
 14:38:20 INFO   25000/105277 tokens
 14:39:06 INFO   26000/105277 tokens
+14:39:44 INFO   27000/105277 tokens
+14:40:26 INFO   28000/105277 tokens
+14:41:05 INFO   29000/105277 tokens
+14:41:42 INFO   30000/105277 tokens
+14:41:59 WARNING request error https://clob.polymarket.com/prices-history?endTs=1784791783&fidelity=30&market=86650217360014579386820962133270257220304201171522504513568538243808638563566&startTs=1784332800 (HTTPSConnectionPool(host='clob.polymarket.com', port=443): Read timed out. (read timeout=30)), retrying
+14:42:20 INFO   31000/105277 tokens
+14:43:00 INFO   32000/105277 tokens
+14:43:35 INFO   33000/105277 tokens
+14:43:51 INFO   34000/105277 tokens
+14:44:10 WARNING request error https://clob.polymarket.com/prices-history?endTs=1785964877&fidelity=30&market=113623678434808940054206822422222273895058123913851639253409221484866711771402&startTs=1785542400 (HTTPSConnectionPool(host='clob.polymarket.com', port=443): Read timed out. (read timeout=30)), retrying
+14:44:19 INFO   35000/105277 tokens
