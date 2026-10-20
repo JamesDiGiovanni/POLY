@@ -1,0 +1,37 @@
+## Paper market making for liquidity rewards: 1 sessions
+
+$1,000 quoted per market on both sides at 0.5 x the max spread from the midpoint, re-quoted every minute. Fills come from real taker prints (through our price, or at it once the queue ahead is gone). Markout = fill price against the midpoint later; negative = picked off.
+
+| tier | market-hours | rewards | trading P&L | net | net $/day per $1k | fills | markout 5m | markout 30m | markout 120m |
+|---|---|---|---|---|---|---|---|---|---|
+| empty | 2 | $10.09 | $0.00 | $10.09 | $148.26 | 0 | $0.00 | $0.00 | $0.00 |
+| medium | 2 | $8.16 | $0.00 | $8.16 | $119.98 | 0 | $0.00 | $0.00 | $0.00 |
+| crowded | 2 | $2.51 | $0.00 | $2.51 | $36.87 | 0 | $0.00 | $0.00 | $0.00 |
+
+Check on the print data: 7 taker prints sat on the expected side of the midpoint (buys above, sells below), 1 did not.
+
+Per market (latest first):
+
+| session | tier | market | pool | hours | rewards | trading P&L | net | fills | inventory | markout 30m |
+|---|---|---|---|---|---|---|---|---|---|---|
+| run-39495687078 | crowded | Will "Grand Theft Auto VI Launch Trailer" get betw | 500 | 0.2 | $1.12 | $0.00 | $1.12 | 0 | 0 | $0.00 |
+| run-39495687078 | crowded | US x Iran ceasefire continues through October 31? | 1000 | 0.2 | $0.40 | $0.00 | $0.40 | 0 | 0 | $0.00 |
+| run-39495687078 | crowded | Will Anthropic announce bankruptcy by December 31, | 330 | 0.2 | $0.24 | $0.00 | $0.24 | 0 | 0 | $0.00 |
+| run-39495687078 | crowded | US x Iran ceasefire continues through October 24? | 1000 | 0.2 | $0.21 | $0.00 | $0.21 | 0 | 0 | $0.00 |
+| run-39495687078 | crowded | US x Iran ceasefire continues through October 28? | 1000 | 0.2 | $0.20 | $0.00 | $0.20 | 0 | 0 | $0.00 |
+| run-39495687078 | crowded | Will Anthropic IPO by December 15, 2026? | 300 | 0.2 | $0.20 | $0.00 | $0.20 | 0 | 0 | $0.00 |
+| run-39495687078 | crowded | US-Iran Hormuz Agreement by December 31? | 200 | 0.2 | $0.15 | $0.00 | $0.15 | 0 | 0 | $0.00 |
+| run-39495687078 | empty | WTI Crude Oil (WTI) Up or Down on October 20? | 200 | 0.2 | $1.94 | $0.00 | $1.94 | 0 | 0 | $0.00 |
+| run-39495687078 | empty | Marseille public gathering ban effectively lifted  | 200 | 0.2 | $1.94 | $0.00 | $1.94 | 0 | 0 | $0.00 |
+| run-39495687078 | empty | Marseille public gathering ban effectively lifted  | 200 | 0.2 | $1.70 | $0.00 | $1.70 | 0 | 0 | $0.00 |
+| run-39495687078 | empty | Will Anthropic have the best AI model on LiveBench | 152 | 0.2 | $1.48 | $0.00 | $1.48 | 0 | 0 | $0.00 |
+| run-39495687078 | empty | Will OpenAI have the third highest OpenRouter mark | 111 | 0.2 | $1.08 | $0.00 | $1.08 | 0 | 0 | $0.00 |
+| run-39495687078 | empty | S&P 500 (SPX) Opens Up or Down on October 21? | 100 | 0.2 | $0.97 | $0.00 | $0.97 | 0 | 0 | $0.00 |
+| run-39495687078 | empty | S&P 500 (SPX) Up or Down on October 21? | 100 | 0.2 | $0.97 | $0.00 | $0.97 | 0 | 0 | $0.00 |
+| run-39495687078 | medium | Paris curfew effectively lifted by October 24? | 200 | 0.2 | $1.60 | $0.00 | $1.60 | 0 | 0 | $0.00 |
+| run-39495687078 | medium | Lyon curfew effectively lifted by October 24? | 200 | 0.2 | $1.34 | $0.00 | $1.34 | 0 | 0 | $0.00 |
+| run-39495687078 | medium | Will MrBeast's next video get less than 150 millio | 188 | 0.2 | $1.28 | $0.00 | $1.28 | 0 | 0 | $0.00 |
+| run-39495687078 | medium | Paris curfew effectively lifted by October 31? | 200 | 0.2 | $1.23 | $0.00 | $1.23 | 0 | 0 | $0.00 |
+| run-39495687078 | medium | Will Trump say "Ass" during his Midterm Rally in N | 150 | 0.2 | $1.03 | $0.00 | $1.03 | 0 | 0 | $0.00 |
+| run-39495687078 | medium | Will Trump say "Hell" 15+ times during his Midterm | 150 | 0.2 | $0.87 | $0.00 | $0.87 | 0 | 0 | $0.00 |
+| run-39495687078 | medium | Will Trump say "Fentanyl" or "Deport" or "Deported | 100 | 0.2 | $0.82 | $0.00 | $0.82 | 0 | 0 | $0.00 |
