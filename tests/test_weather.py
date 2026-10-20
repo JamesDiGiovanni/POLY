@@ -27,7 +27,9 @@ def test_parse_question(q, lo, hi, unit):
 def test_parse_rejects_other_markets_and_finds_station():
     assert parse_question("Will Bitcoin be above $100k on August 12?") is None
     assert parse_station("Source: https://www.wunderground.com/history/daily/us/ny/new-york-city/KLGA.") == "KLGA"
+    assert parse_station("available here: https://www.weather.gov/wrh/timeseries?site=ksfo\n") == "KSFO"
     assert parse_station("no link here") is None
+    assert parse_question("Will the lowest temperature in San Francisco be 45°F or below on October 19?") is None
 
 
 def test_market_date_year_rollover():

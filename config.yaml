@@ -174,8 +174,8 @@ report:
 weather:
   data_start: 2024-02-01       # forecasts as issued exist from Jan 2024 (Open-Meteo previous runs)
   test_days: 120               # the last 120 days are the test period; everything is fitted before it
-  gamma_tags: [weather, temperature, daily-temperature, climate]
-  max_events: 6000
+  gamma_tags: [daily-temperature, temperature]   # daily-temperature is the daily city markets
+  max_events: 8000
   models: [ecmwf_ifs025, gfs_seamless, icon_seamless]
   leads: [1, 2]                # 1 = decide on the morning of the day, 2 = the morning before
   decision_hour_local: 8

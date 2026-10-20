@@ -6,8 +6,9 @@ A city-day is one event with several binary markets, one per temperature range, 
     Will the highest temperature in New York City be 83°F or below on August 12?
     Will the highest temperature in London be 20°C on August 12?
 
-They resolve to the day's high at one airport station on Weather Underground, in whole degrees,
-named in the market's rules (usually with a wunderground.com/history/daily/.../<ICAO> link).
+They resolve to the day's high at one airport station, in whole degrees, named in the market's rules
+with a link to Weather Underground (wunderground.com/history/daily/.../<ICAO>) or NOAA
+(weather.gov/wrh/timeseries?site=<icao>). "Lowest temperature" markets are not parsed.
 """
 from __future__ import annotations
 
@@ -31,6 +32,7 @@ _BELOW = re.compile(rf"{_NUM}{_DEG}\s*or (?:below|lower|less|under)", re.IGNOREC
 _ABOVE = re.compile(rf"{_NUM}{_DEG}\s*or (?:higher|above|more|over)", re.IGNORECASE)
 _SINGLE = re.compile(rf"^(?:exactly )?{_NUM}{_DEG}$", re.IGNORECASE)
 _ICAO = re.compile(r"wunderground\.com/history/daily/[^\s\"')]*?/([A-Z]{4})(?=[/\s\"')?.,;]|$)")
+_NOAA = re.compile(r"weather\.gov/[^\s\"')]*?[?&]site=([A-Za-z]{4})\b")
 
 
 @dataclass
@@ -77,9 +79,9 @@ def parse_question(q: str) -> Bucket | None:
 
 
 def parse_station(text: str) -> str | None:
-    """ICAO code from the Weather Underground link in a market's rules."""
-    m = _ICAO.search(text or "")
-    return m[1] if m else None
+    """ICAO code from the resolution link in a market's rules: Weather Underground or NOAA weather.gov."""
+    m = _ICAO.search(text or "") or _NOAA.search(text or "")
+    return m[1].upper() if m else None
 
 
 def market_date(b: Bucket, end_ts: int | None) -> dt.date | None:
