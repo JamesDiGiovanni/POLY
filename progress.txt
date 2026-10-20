@@ -1,24 +1,8 @@
-Tue Oct 20 04:47:42 UTC 2026
+Tue Oct 20 04:52:44 UTC 2026
 /dev/root        72G   63G  9.6G  87% /
-Mem:            7937        1231        1370          49        5698        6706
+Mem:            7937        3434         156          50        4708        4502
 3.4G	/home/runner/work/POLY/POLY/data
 
-04:47:12 INFO [76/130] 0xd1c769317bd15de7768a70d0214cf0bbcc531d2b: 0 new rows
-04:47:13 INFO [77/130] 0xd5ccdf772f795547e299de57f47966e24de8dea4: 0 new rows
-04:47:13 INFO [78/130] 0xdc9c00c012e428cd9142b3dda82c66baae0442ca: 0 new rows
-04:47:13 INFO [79/130] 0xe426006ed49c7ed56e09f6c1bd466ec412af9766: 0 new rows
-04:47:13 INFO [80/130] 0xebaa7568c8934e897856c004667b02535d52abac: 0 new rows
-04:47:13 INFO [81/130] 0xfbfb0883a151234e76a5a5ea72ffc5f47e9df563: 0 new rows
-04:47:13 INFO [82/130] 0x02fc81db41ced07d14c270f9174f3823c208ddc6: 0 new rows
-04:47:13 INFO [83/130] 0x0523ff55bd7525d5fbda5c77f80f61662db4e38b: 0 new rows
-04:47:13 INFO [84/130] 0x0e5bd76779e74304d08e759072abf126d87da593: 0 new rows
-04:47:13 INFO [85/130] 0x0f37cb80dee49d55b5f6d9e595d52591d6371410: 0 new rows
-04:47:13 INFO [86/130] 0x11e829d2a19e7ade935861fb043715766a015b74: 0 new rows
-04:47:13 INFO [87/130] 0x151275ec1be5ba83bb15fc9df34aa43f7e4b68f3: 0 new rows
-04:47:13 INFO [88/130] 0x21f90e5ff30c12f52fbb2fb220aa268f22faed12: 0 new rows
-04:47:14 INFO [89/130] 0x24d2dce995531ddcde1960388cbf20f5edd41472: 0 new rows
-04:47:14 INFO [90/130] 0x2f701abe16e2a52acffd7cc01eafb3b48e352ee7: 0 new rows
-04:47:14 INFO [91/130] 0x3e426d5b3a5aa4bef22826b5b98de6497c798f95: 0 new rows
 04:47:14 INFO [92/130] 0x4344066fa99418555cd750de88883b703003caef: 0 new rows
 04:47:14 INFO [93/130] 0x494763ded10e3aa2b17a3524ae0f6ab8392bd6fa: 0 new rows
 04:47:14 INFO [94/130] 0x47ab026767cc320ac6e62f6ec747d59cf4d795df: 0 new rows
@@ -63,3 +47,19 @@ Mem:            7937        1231        1370          49        5698        6706
 04:47:31 INFO markets: 0/3367 stored
 04:47:38 INFO markets: 3/3367 stored
 04:47:40 INFO markets: 3/3367 stored
+04:48:26 INFO filters: 19 of 272 wallets passed
+04:48:27 INFO price history: 15329 chunks to fetch
+04:48:42 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:49:07 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:49:37 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:50:23 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 9
+04:50:38 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:50:38 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:50:53 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:50:53 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 9
+04:51:09 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 9
+04:51:39 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:51:39 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:52:10 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:52:10 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 10
+04:52:42 WARNING Connection pool is full, discarding connection: clob.polymarket.com. Connection pool size: 9
