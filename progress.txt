@@ -1,18 +1,7 @@
-Tue Oct 20 14:29:40 UTC 2026
-/dev/root        72G   59G   13G  83% /
-Mem:            7938        1882        3222          52        3148        6056
+Tue Oct 20 14:34:42 UTC 2026
+/dev/root        72G   60G   13G  83% /
+Mem:            7938        2006        2999          52        3229        5931
 
-14:21:57 INFO observations KSFO: 4 days
-14:21:58 INFO observations LIMC: 3 days
-14:21:59 INFO observations NZWN: 3 days
-14:22:00 INFO observations OEJN: 3 days
-14:22:01 INFO observations RKSI: 3 days
-14:22:02 INFO observations SAEZ: 4 days
-14:22:03 INFO observations UUWW: 3 days
-14:22:04 INFO observations ZHCC: 3 days
-14:22:05 INFO observations ZSPD: 3 days
-14:22:06 INFO observations ZUCK: 3 days
-14:22:07 INFO observations KATL: 4 days
 14:22:08 INFO observations KLGA: 4 days
 14:22:09 INFO observations LLBG: 3 days
 14:22:10 INFO observations LTAC: 3 days
@@ -62,3 +51,14 @@ Mem:            7938        1882        3222          52        3148        6056
 14:28:53 WARNING request error https://clob.polymarket.com/prices-history?endTs=1777361644&fidelity=30&market=88386266493941925291243375387070213169156314715703370522782442578188815967146&startTs=1776902400 (HTTPSConnectionPool(host='clob.polymarket.com', port=443): Read timed out. (read timeout=30)), retrying
 14:28:54 WARNING request error https://clob.polymarket.com/prices-history?endTs=1777187508&fidelity=30&market=35366316427471905552168366352492759538913639840642152061957587595020357425797&startTs=1776816000 (HTTPSConnectionPool(host='clob.polymarket.com', port=443): Read timed out. (read timeout=30)), retrying
 14:29:18 INFO   9000/105277 tokens
+14:29:56 INFO   10000/105277 tokens
+14:30:32 INFO   11000/105277 tokens
+14:31:03 INFO   12000/105277 tokens
+14:31:35 INFO   13000/105277 tokens
+14:31:55 WARNING request error https://clob.polymarket.com/prices-history?endTs=1778918950&fidelity=30&market=112415172570046164804638763013268243849298545902434583014212881923627643157889&startTs=1778544000 (HTTPSConnectionPool(host='clob.polymarket.com', port=443): Read timed out. (read timeout=30)), retrying
+14:32:10 INFO   14000/105277 tokens
+14:32:42 INFO   15000/105277 tokens
+14:33:07 INFO   16000/105277 tokens
+14:33:30 INFO   17000/105277 tokens
+14:33:53 INFO   18000/105277 tokens
+14:34:24 INFO   19000/105277 tokens
