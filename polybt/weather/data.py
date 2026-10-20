@@ -28,25 +28,35 @@ def _iso(ts: int) -> str:
 # ---- markets ---------------------------------------------------------------
 
 def gamma_temperature_events(client: HttpClient, wcfg: dict, since_ts: int) -> list[dict]:
-    """Closed weather events since since_ts. Tries each configured tag; returns raw Gamma events."""
+    """Closed temperature events since since_ts, for each configured tag.
+
+    Gamma stops paging after roughly 1,000 results, and there are ~50 city-days a day, so the range
+    is walked in windows of end dates small enough to page through completely.
+    """
     events: dict[str, dict] = {}
+    step = int(wcfg.get("discovery_window_days", 7)) * 86400
+    now = int(dt.datetime.now(dt.timezone.utc).timestamp())
     for tag in wcfg["gamma_tags"]:
         n_tag = 0
-        for offset in range(0, int(wcfg["max_events"]), 100):
-            try:
-                page = _as_list(client.get_json(GAMMA_API, "/events", {
-                    "tag_slug": tag, "closed": "true", "limit": 100, "offset": offset,
-                    "end_date_min": _iso(since_ts), "order": "endDate", "ascending": "false"}, cache=False))
-            except HttpError as e:
-                log.warning("events for tag %s failed: %s", tag, e)
-                break
-            for ev in page:
-                title = f"{ev.get('title', '')} {ev.get('slug', '')}".lower()
-                if "temperature" in title and ev.get("id") is not None:
-                    events[str(ev["id"])] = ev
-                    n_tag += 1
-            if len(page) < 100:
-                break
+        for lo in range(since_ts, now, step):
+            for offset in range(0, int(wcfg.get("max_events_per_window", 1000)), 100):
+                try:
+                    page = _as_list(client.get_json(GAMMA_API, "/events", {
+                        "tag_slug": tag, "closed": "true", "limit": 100, "offset": offset,
+                        "end_date_min": _iso(lo), "end_date_max": _iso(lo + step),
+                        "order": "endDate", "ascending": "true"}, cache=False))
+                except HttpError as e:
+                    log.warning("events for tag %s at %s failed: %s", tag, _iso(lo), e)
+                    break
+                for ev in page:
+                    title = f"{ev.get('title', '')} {ev.get('slug', '')}".lower()
+                    if "temperature" in title and ev.get("id") is not None and str(ev["id"]) not in events:
+                        events[str(ev["id"])] = ev
+                        n_tag += 1
+                if len(page) < 100:
+                    break
+                if offset + 100 >= int(wcfg.get("max_events_per_window", 1000)):
+                    log.warning("tag %s window %s hit the page cap; shorten discovery_window_days", tag, _iso(lo))
         log.info("gamma tag %r: %d temperature events", tag, n_tag)
     return list(events.values())
 

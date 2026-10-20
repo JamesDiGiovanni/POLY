@@ -175,7 +175,8 @@ weather:
   data_start: 2024-02-01       # forecasts as issued exist from Jan 2024 (Open-Meteo previous runs)
   test_days: 120               # the last 120 days are the test period; everything is fitted before it
   gamma_tags: [daily-temperature, temperature]   # daily-temperature is the daily city markets
-  max_events: 8000
+  discovery_window_days: 7     # ~50 city-days a day; Gamma stops paging near 1,000 results
+  max_events_per_window: 1000
   models: [ecmwf_ifs025, gfs_seamless, icon_seamless]
   leads: [1, 2]                # 1 = decide on the morning of the day, 2 = the morning before
   decision_hour_local: 8
@@ -183,6 +184,9 @@ weather:
   price_fidelity_min: 30
   price_days_before: 3
   min_obs_per_day: 18          # station-days with fewer readings are not used
+  bias_window_days: 30         # rolling bias: errors over the last 30 known days (seasonal/local drift)
+  bias_window_min: 10          # fewer known days than this: use the long-run bias
+  shrink_days: 10              # weight of the long-run estimate when blending with the window
   default_fee_rate: 0.05       # weather taker rate if a market's own rate is unknown
   spread: 0.02                 # thin markets: pay 2c over the last price
   edge_thresholds: [0.03, 0.05, 0.10]

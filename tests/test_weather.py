@@ -141,3 +141,19 @@ def test_evaluate_end_to_end(tmp_path, informed_market):
     else:
         assert test["diff"] < 0 and test["diff_ci"][1] < 0 and res["accuracy_pass"]
     assert "Weather early check" in write_outputs(con, cfg, res)
+
+
+def test_rolling_bias_tracks_seasonal_drift_without_lookahead():
+    from polybt.weather.model import predict
+    days = [dt.date(2025, 1, 1) + dt.timedelta(days=i) for i in range(400)]
+    obs = {d: 20.0 for d in days}
+    # The model runs 3 degrees warm in "summer" (days 150-250) and 1 cold otherwise.
+    fc = {"m": {d: obs[d] + (3.0 if 150 <= i < 250 else -1.0) for i, d in enumerate(days)}}
+    g = fit(fc, obs, days[100])                  # long-run fit sees only the cold-bias season
+    mu, sigma = predict(fc, obs, g, days[200], 1, 30, 10, 10)
+    assert g.bias["m"] == pytest.approx(-1)
+    assert mu == pytest.approx(20 + 3 - (30 * 3 + 10 * -1) / 40)   # mostly the recent +3 bias
+    # Errors after the target day must not matter: change them and the prediction is identical.
+    for d in days[201:]:
+        fc["m"][d] += 40
+    assert predict(fc, obs, g, days[200], 1, 30, 10, 10)[0] == pytest.approx(mu)

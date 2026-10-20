@@ -78,6 +78,36 @@ def ensemble(forecasts: dict[str, dict[dt.date, float]], bias: dict[str, float],
     return float(np.mean(vals)) if vals else None
 
 
+def predict(forecasts: dict[str, dict[dt.date, float]], obs: dict[dt.date, float], g: Fit, date: dt.date,
+            lead: int, window: int, min_days: int, shrink: float, sigma_floor: float = 0.8):
+    """(mu, sigma) in °C for `date`, correcting each model by its recent bias.
+
+    Only errors for days up to date - lead are used: at the decision time (morning of
+    date - (lead - 1)) those days are complete. The window estimate is blended with the long-run
+    fit (`shrink` pseudo-days), which matters most for seasonal and local drift.
+    """
+    known = [date - dt.timedelta(days=lead + k) for k in range(window)]
+    vals, resid_days = [], []
+    for m, gb in g.bias.items():
+        series = forecasts.get(m, {})
+        if date not in series:
+            continue
+        errs = [series[d] - obs[d] for d in known if d in series and d in obs]
+        b = (sum(errs) + shrink * gb) / (len(errs) + shrink) if len(errs) >= min_days else gb
+        vals.append(series[date] - b)
+    if not vals:
+        return None
+    for d in known:
+        mu_d = ensemble(forecasts, g.bias, d)
+        if mu_d is not None and d in obs:
+            resid_days.append(mu_d - obs[d])
+    sigma = g.sigma
+    if len(resid_days) >= min_days:
+        recent = float(np.mean(np.square(np.array(resid_days) - np.mean(resid_days))))
+        sigma = math.sqrt((len(resid_days) * recent + shrink * g.sigma ** 2) / (len(resid_days) + shrink))
+    return float(np.mean(vals)), max(sigma_floor, sigma)
+
+
 def to_unit(mu_c: float, sigma_c: float, unit: str) -> tuple[float, float]:
     return (mu_c * 9 / 5 + 32, sigma_c * 9 / 5) if unit == "F" else (mu_c, sigma_c)
 
@@ -150,16 +180,18 @@ def build_rows(con, cfg) -> tuple[list[Row], dict[str, int]]:
         bounds = [((-math.inf if r[4] is None else r[4] - 0.5), (math.inf if r[5] is None else r[5] + 0.5)) for r in rs]
         for lead in leads:
             f = fits.get((station, lead))
-            mu_c = ensemble(fc[(station, lead)], f.bias, date) if f else None
-            if mu_c is None:
+            pred = predict(fc[(station, lead)], obs[station], f, date, lead, int(w["bias_window_days"]),
+                           int(w["bias_window_min"]), float(w["shrink_days"])) if f else None
+            if pred is None:
                 skipped[f"no forecast/fit (lead {lead})"] += 1
                 continue
+            mu_c, sigma_c = pred
             t = decision_ts(date, lead, tz[station], int(w["decision_hour_local"]))
             px = [price_at(*prices.get(r[7], ([], [])), t, int(w["max_price_age_h"]) * 3600) for r in rs]
             if any(p is None for p in px):
                 skipped[f"no market price at decision time (lead {lead})"] += 1
                 continue
-            mu, sd = to_unit(mu_c, f.sigma, unit)
+            mu, sd = to_unit(mu_c, sigma_c, unit)
             total = sum(px)
             if total <= 0:
                 continue
