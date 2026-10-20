@@ -5,13 +5,14 @@ import csv
 import datetime as dt
 import json
 import logging
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from ..api import PolymarketAPI
 from ..http import HttpClient
 from .kalshi import Kalshi, asks_from_bids
-from .match import Pair, Ref, kalshi_refs, match, polymarket_refs
+from .match import Pair, Ref, kalshi_refs, match, near_misses, polymarket_refs
 
 log = logging.getLogger(__name__)
 
@@ -96,6 +97,7 @@ def run(con, cfg, steps=("match", "snapshot")) -> str:
         return series_cache[t]
 
     pairs = match(polys, kalshis, cfg, series_sources)
+    misses = near_misses(polys, kalshis, cfg)
     pairs.sort(key=lambda p: (p.grade, -(p.poly.extra.get("volume24h", 0) + p.kalshi.extra.get("volume24h", 0))))
 
     snaps: dict[int, dict] = {}
@@ -117,10 +119,10 @@ def run(con, cfg, steps=("match", "snapshot")) -> str:
 
         with ThreadPoolExecutor(8) as pool:
             snaps = dict(pool.map(one, todo))
-    return write_report(cfg, polys, kalshis, pairs, snaps)
+    return write_report(cfg, polys, kalshis, pairs, snaps, misses)
 
 
-def write_report(cfg, polys, kalshis, pairs: list[Pair], snaps: dict[int, dict]) -> str:
+def write_report(cfg, polys, kalshis, pairs: list[Pair], snaps: dict[int, dict], misses=()) -> str:
     a = cfg["arb"]
     out = Path(cfg["output_dir"]) / "arb"
     out.mkdir(parents=True, exist_ok=True)
@@ -163,6 +165,20 @@ def write_report(cfg, polys, kalshis, pairs: list[Pair], snaps: dict[int, dict])
         by_cat[p.kalshi.category or "?"][0 if p.grade == "A" else 1] += 1
     lines += ["", "Pairs by Kalshi category (A / B): " +
               ", ".join(f"{c} {v[0]}/{v[1]}" for c, v in sorted(by_cat.items(), key=lambda kv: -sum(kv[1])))]
+    if misses:
+        with open(out / "near_misses.csv", "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["poly_market", "poly_outcome", "closest_kalshi", "similarity", "why_not_matched"])
+            w.writerows(misses)
+        kinds = Counter()
+        for *_, why in misses:
+            for part in why.split("; "):
+                kinds[part.split(" ")[0] if not part.startswith("would") else "would match"] += 1
+        lines += ["", f"Near misses for the {len(misses)} most-traded Polymarket sides (closest Kalshi market, "
+                  "why rejected): " + ", ".join(f"{k} {v}" for k, v in kinds.most_common()), "",
+                  "| Polymarket | closest Kalshi | sim | why not |", "|---|---|---|---|"]
+        for q, o, k, s, why in misses[:40]:
+            lines.append(f"| {(q or '')[:55]}{' [' + o + ']' if o and o != 'Yes' else ''} | {k[:55]} | {s} | {why[:70]} |")
     text = "\n".join(lines) + "\n"
     (out / "report.md").write_text(text)
     return text

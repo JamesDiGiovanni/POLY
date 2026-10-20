@@ -201,6 +201,30 @@ def consistent(p: Ref, k: Ref, max_close_days: float) -> list[str]:
     return why
 
 
+def near_misses(polys: list[Ref], kalshis: list[Ref], cfg, top: int = 400) -> list[tuple]:
+    """For the most-traded Polymarket sides: the most similar Kalshi market regardless of the rules,
+    and why `match` would reject it. Diagnoses a matcher that is too strict (or a real lack of overlap)."""
+    idf = idf_weights(polys + kalshis)
+    index: dict[str, list[int]] = defaultdict(list)
+    for i, k in enumerate(kalshis):
+        for t in k.tokens:
+            index[t].append(i)
+    out = []
+    for p in sorted(polys, key=lambda r: -r.extra.get("volume24h", 0))[:top]:
+        hits = Counter(i for t in p.tokens for i in index.get(t, []) if len(index[t]) < 5000)
+        best = max(((similarity(p, kalshis[i], idf), kalshis[i]) for i, _ in hits.most_common(300)),
+                   key=lambda x: x[0], default=None)
+        if best is None:
+            out.append((p.extra.get("question"), p.extra.get("outcome"), "", 0.0, "no Kalshi market shares a word"))
+            continue
+        s, k = best
+        why = consistent(p, k, float(cfg["arb"]["max_close_days"]))
+        if s < float(cfg["arb"]["min_score"]):
+            why.append(f"similarity {s:.2f} < {cfg['arb']['min_score']}")
+        out.append((p.extra.get("question"), p.extra.get("outcome"), k.text, round(s, 2), "; ".join(why) or "would match"))
+    return out
+
+
 def match(polys: list[Ref], kalshis: list[Ref], cfg, series_sources=None) -> list[Pair]:
     a = cfg["arb"]
     idf = idf_weights(polys + kalshis)
