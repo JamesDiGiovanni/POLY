@@ -1,0 +1,85 @@
+## Probe
+
+```
+
+== rewards/markets/current: OK
+500 rows; envelope: {"next_cursor": "NTAw", "limit": 500, "count": 500}
+keys: ['condition_id', 'native_daily_rate', 'rewards_config', 'rewards_max_spread', 'rewards_min_size', 'total_daily_rate']
+sample: {"condition_id": "0x00001b8c9ece76cdf2fb6f1046a33716bb87e59825a2947d7c17441c2b9617ba", "rewards_config": [{"asset_address": "0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB", "start_date": "2026-10-20", "end_date": "2500-12-31", "rate_per_day": 1, "total_rewards": 0, "id": 0}], "rewards_max_spread": 4.5, "rewards_min_size": 20, "native_daily_rate": 1, "total_daily_rate": 1}
+parsed: {'condition_id': '0x00001b8c9ece76cdf2fb6f1046a33716bb87e59825a2947d7c17441c2b9617ba', 'question': '', 'daily_rate': 1.0, 'min_size': 20.0, 'max_spread': 0.045, 'sponsored': False, 'yes_token': None, 'yes_price': None}
+
+== clob markets/{condition_id}: OK
+keys: ['accepting_order_timestamp', 'accepting_orders', 'active', 'archived', 'closed', 'condition_id', 'description', 'enable_order_book', 'end_date_iso', 'fpmm', 'game_start_time', 'icon', 'image', 'is_50_50_outcome', 'maker_base_fee', 'market_slug', 'minimum_order_size', 'minimum_tick_size', 'neg_risk', 'neg_risk_market_id', 'neg_risk_request_id', 'notifications_enabled', 'question', 'question_id', 'rewards', 'seconds_delay', 'tags', 'taker_base_fee', 'tokens', 'version']
+rewards: {"rates": [{"asset_address": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", "rewards_daily_rate": 1}], "min_size": 20, "max_spread": 4.5}
+tokens: [{"token_id": "73087271599891057365977948116872945163728373475644041569914684021898816558584", "outcome": "Yes", "price": 0.255, "winner": false}, {"token_id": "70429975533697224963703713375876878931450794292206003872561152007231981677123", "outcome": "No", "price": 0.745, "winner": false}]
+parsed: {'condition_id': '0x00001b8c9ece76cdf2fb6f1046a33716bb87e59825a2947d7c17441c2b9617ba', 'question': 'Will Slovan Bratislava reach the 2027 UEFA Champions League final?', 'daily_rate': 1.0, 'min_size': 20.0, 'max_spread': 0.045, 'sponsored': False, 'yes_token': '73087271599891057365977948116872945163728373475644041569914684021898816558584', 'yes_price': 0.255}
+
+== all pages: OK
+14266 markets, $150,071/day; with token: 0; max_spread range 0.0-0.085; min_size range 0.0-1000.0
+US x Iran ceasefire continues through October 22?       pool   2012 mirrored=True yes bid/ask 0.944/0.948 no-flipped 0.944/0.948 score yes-only 29051 with-no 58102
+2026 Balance of Power: D Senate, D House                pool   1336 mirrored=True yes bid/ask 0.63/0.64 no-flipped 0.63/0.64 score yes-only 613206 with-no 1226412
+Will Luiz Inácio Lula da Silva win the 2026 Brazilian p pool   1029 mirrored=True yes bid/ask 0.22/0.23 no-flipped 0.22/0.23 score yes-only 109276 with-no 218552
+Will the Fed increase interest rates by 25 bps after th pool   1004 mirrored=True yes bid/ask 0.13/0.14 no-flipped 0.13/0.14 score yes-only 161814 with-no 323628
+US x Iran ceasefire continues through October 31?       pool   1000 mirrored=True yes bid/ask 0.81/0.82 no-flipped 0.81/0.82 score yes-only 6844 with-no 13688
+US-Iran ceasefire continues through the midterms?       pool   1000 mirrored=True yes bid/ask 0.79/0.8 no-flipped 0.79/0.8 score yes-only 93890 with-no 187780
+US x Iran ceasefire continues through October 24?       pool   1000 mirrored=True yes bid/ask 0.88/0.89 no-flipped 0.88/0.89 score yes-only 29675 with-no 59350
+Will there be no change in Fed interest rates after the pool   1000 mirrored=True yes bid/ask 0.85/0.86 no-flipped 0.85/0.86 score yes-only 82405 with-no 164810
+US x Iran ceasefire continues through October 28?       pool   1000 mirrored=True yes bid/ask 0.84/0.85 no-flipped 0.84/0.85 score yes-only 38609 with-no 77218
+2026 Balance of Power: R Senate, D House                pool    991 mirrored=True yes bid/ask 0.27/0.28 no-flipped 0.27/0.28 score yes-only 709620 with-no 1419239
+Will Flávio Bolsonaro win the 2026 Brazilian presidenti pool    971 mirrored=True yes bid/ask 0.774/0.775 no-flipped 0.774/0.775 score yes-only 129686 with-no 259373
+Will "Grand Theft Auto VI Launch Trailer" get between 6 pool    598 mirrored=False yes bid/ask 0.75/0.777 no-flipped 0.75/0.777 score yes-only 59 with-no 158
+  yes book: [(0.75, 11.14), (0.732, 16.0), (0.727, 614.0), (0.724, 8.28)] [(0.777, 300.0), (0.846, 40.0), (0.847, 55.0), (0.863, 45.0)] 
+  no book: [(0.223, 500.0), (0.154, 40.0), (0.153, 55.0), (0.137, 45.0)] [(0.25, 11.14), (0.268, 16.0), (0.273, 614.0), (0.276, 8.28)]
+Will Student List – Students Win win the most seats in  pool    510 mirrored=False yes bid/ask 0.26/0.28 no-flipped 0.26/0.28 score yes-only 10499 with-no 21020
+Will oil be below $80 on November 2 and the Republicans pool    500 mirrored=True yes bid/ask 0.018/0.023 no-flipped 0.018/0.023 score yes-only 49312 with-no 98624
+Will oil be at least $80 on November 2 and the Republic pool    500 mirrored=True yes bid/ask 0.311/0.315 no-flipped 0.311/0.315 score yes-only 15280 with-no 30561
+Will oil be at least $80 on November 2 and the Democrat pool    500 mirrored=True yes bid/ask 0.612/0.615 no-flipped 0.612/0.615 score yes-only 10422 with-no 20844
+Will oil be at least $85 on November 2 and the Democrat pool    500 mirrored=True yes bid/ask 0.584/0.591 no-flipped 0.584/0.591 score yes-only 22517 with-no 45033
+Will the Republican Party control the Senate after the  pool    500 mirrored=True yes bid/ask 0.35/0.36 no-flipped 0.35/0.36 score yes-only 213209 with-no 426417
+Will oil be at least $85 on November 2 and the Republic pool    500 mirrored=True yes bid/ask 0.297/0.299 no-flipped 0.297/0.299 score yes-only 8863 with-no 17726
+Will oil be below $80 on November 2 and the Democrats w pool    500 mirrored=True yes bid/ask 0.032/0.035 no-flipped 0.032/0.035 score yes-only 47465 with-no 94930
+Will oil be below $85 on November 2 and the Democrats w pool    500 mirrored=True yes bid/ask 0.052/0.061 no-flipped 0.052/0.061 score yes-only 26556 with-no 53112
+Will oil be below $85 on November 2 and the Republicans pool    500 mirrored=True yes bid/ask 0.026/0.034 no-flipped 0.026/0.034 score yes-only 61460 with-no 122919
+Will Aleksandar Vučić – United Serbia win the most seat pool    490 mirrored=True yes bid/ask 0.71/0.72 no-flipped 0.71/0.72 score yes-only 20249 with-no 40498
+Will Gadi Eizenkot be the next Prime Minister of Israel pool    429 mirrored=True yes bid/ask 0.489/0.49 no-flipped 0.489/0.49 score yes-only 29644 with-no 59288
+Will "Grand Theft Auto VI Launch Trailer" get between 4 pool    406 mirrored=True yes bid/ask 0.16/0.19 no-flipped 0.16/0.19 score yes-only 208 with-no 415
+Pete Hegseth out as Secretary of Defense by December 31 pool    400 mirrored=True yes bid/ask 0.24/0.25 no-flipped 0.24/0.25 score yes-only 16015 with-no 32030
+Will Yashar win the most seats in the 2026 Israeli legi pool    375 mirrored=True yes bid/ask 0.71/0.72 no-flipped 0.71/0.72 score yes-only 41278 with-no 82555
+Will Likud win the most seats in the 2026 Israeli legis pool    375 mirrored=False yes bid/ask 0.27/0.28 no-flipped 0.27/0.28 score yes-only 41939 with-no 83878
+Will Anthropic announce bankruptcy by December 31, 2029 pool    330 mirrored=True yes bid/ask 0.23/0.25 no-flipped 0.23/0.25 score yes-only 3093 with-no 6186
+Will Gen.G win Worlds 2026?                             pool    323 mirrored=True yes bid/ask 0.31/0.32 no-flipped 0.31/0.32 score yes-only 115892 with-no 231784
+Will Marine Le Pen win the 2027 French presidential ele pool    302 mirrored=True yes bid/ask 0.462/0.463 no-flipped 0.462/0.463 score yes-only 214433 with-no 428866
+Strait of Hormuz traffic returns to normal by December  pool    300 mirrored=True yes bid/ask 0.12/0.13 no-flipped 0.12/0.13 score yes-only 174910 with-no 349820
+US x Yemen ceasefire continues through October 31?      pool    300 mirrored=True yes bid/ask 0.94/0.95 no-flipped 0.94/0.95 score yes-only 23674 with-no 47348
+Will Indiana enact a data center moratorium by December pool    300 mirrored=True yes bid/ask 0.13/0.14 no-flipped 0.13/0.14 score yes-only 95518 with-no 191035
+Kim Jong Un out as Supreme Leader of North Korea by Dec pool    300 mirrored=True yes bid/ask 0.052/0.055 no-flipped 0.052/0.055 score yes-only 20703 with-no 41405
+Will Indiana enact a data center moratorium by June 30, pool    300 mirrored=True yes bid/ask 0.09/0.1 no-flipped 0.09/0.1 score yes-only 39796 with-no 79592
+Will Ilhan Omar be deported by December 31, 2026?       pool    300 mirrored=True yes bid/ask 0.022/0.024 no-flipped 0.022/0.024 score yes-only 68946 with-no 137893
+Will Anthropic IPO by December 15, 2026?                pool    300 mirrored=True yes bid/ask 0.75/0.76 no-flipped 0.75/0.76 score yes-only 6960 with-no 13919
+Will the Republican Party control the House after the 2 pool    286 mirrored=True yes bid/ask 0.08/0.09 no-flipped 0.08/0.09 score yes-only 1222097 with-no 2444195
+Will Iliana Iotova win the 2026 Bulgarian presidential  pool    273 mirrored=True yes bid/ask 0.4/0.41 no-flipped 0.4/0.41 score yes-only 8257 with-no 16515
+Will Lula win the most votes in the second round of the pool    255 mirrored=True yes bid/ask 0.29/0.3 no-flipped 0.29/0.3 score yes-only 13353 with-no 26706
+Will the Republicans win the Texas Senate race in 2026? pool    254 mirrored=True yes bid/ask 0.35/0.36 no-flipped 0.35/0.36 score yes-only 131446 with-no 262891
+Will the Democrats win the Texas Senate race in 2026?   pool    246 mirrored=True yes bid/ask 0.64/0.65 no-flipped 0.64/0.65 score yes-only 146023 with-no 292045
+Will Flavio Bolsonaro win the most votes in the second  pool    245 mirrored=True yes bid/ask 0.7/0.72 no-flipped 0.7/0.72 score yes-only 9762 with-no 19524
+Will Benjamin Netanyahu be the next Prime Minister of I pool    216 mirrored=True yes bid/ask 0.26/0.27 no-flipped 0.26/0.27 score yes-only 41769 with-no 83538
+Will the Democratic Party control the House after the 2 pool    214 mirrored=True yes bid/ask 0.91/0.92 no-flipped 0.91/0.92 score yes-only 1357402 with-no 2714803
+Will Anthropic's market cap be between $1.75T and $2.0T pool    208 mirrored=True yes bid/ask 0.29/0.3 no-flipped 0.29/0.3 score yes-only 998 with-no 1996
+Lyon curfew effectively lifted by October 31?           pool    200 mirrored=True yes bid/ask 0.59/0.61 no-flipped 0.59/0.61 score yes-only 341 with-no 682
+Paris curfew effectively lifted by October 31?          pool    200 mirrored=True yes bid/ask 0.45/0.48 no-flipped 0.45/0.48 score yes-only 146 with-no 292
+France declares state of emergency by December 31, 2026 pool    200 mirrored=True yes bid/ask 0.1/0.13 no-flipped 0.1/0.13 score yes-only 279 with-no 558
+US-Iran Hormuz Agreement by November 30?                pool    200 mirrored=True yes bid/ask 0.24/0.26 no-flipped 0.24/0.26 score yes-only 3670 with-no 7341
+Paris curfew effectively lifted by October 21?          pool    200 mirrored=True yes bid/ask 0.022/0.059 no-flipped 0.022/0.059 score yes-only 185 with-no 370
+US x Iran ceasefire continues through December 31?      pool    200 mirrored=True yes bid/ask 0.35/0.36 no-flipped 0.35/0.36 score yes-only 5727 with-no 11453
+Marseille public gathering ban effectively lifted by Oc pool    200 mirrored=True yes bid/ask 0.42/0.89 no-flipped 0.42/0.89 score yes-only 0 with-no 0
+Will Saudi airspace be closed by October 31?            pool    200 mirrored=True yes bid/ask 0.04/0.05 no-flipped 0.04/0.05 score yes-only 19623 with-no 39246
+US-Iran Hormuz Agreement by December 31?                pool    200 mirrored=True yes bid/ask 0.33/0.34 no-flipped 0.33/0.34 score yes-only 3442 with-no 6884
+Another GTA VI trailer released by October 31?          pool    200 mirrored=True yes bid/ask 0.06/0.07 no-flipped 0.06/0.07 score yes-only 783 with-no 1565
+Will OpenAI announce another Millennium Prize solution  pool    200 mirrored=True yes bid/ask 0.5/0.51 no-flipped 0.5/0.51 score yes-only 15224 with-no 30447
+Marseille public gathering ban effectively lifted by Oc pool    200 mirrored=True yes bid/ask 0.945/0.959 no-flipped 0.945/0.959 score yes-only 478 with-no 957
+Russia x Ukraine ceasefire by December 31, 2026?        pool    200 mirrored=True yes bid/ask 0.11/0.12 no-flipped 0.11/0.12 score yes-only 39007 with-no 78014
+
+mirrored 57, different 3
+
+rewards probe: all OK
+```
