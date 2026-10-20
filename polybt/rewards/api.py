@@ -20,7 +20,8 @@ def parse_config(m: dict) -> dict:
     """One market's reward terms -> {condition_id, daily_rate, min_size, max_spread (price units), tokens...}."""
     r = m.get("rewards") if isinstance(m.get("rewards"), dict) else {}
     rates = (m.get("rewards_config") or r.get("rates") or m.get("rates") or [])
-    daily = sum(_f(x, "rate_per_day", "rewards_daily_rate", "daily_rate") for x in rates if isinstance(x, dict))
+    daily = _f(m, "total_daily_rate", default=None)
+    daily = daily if daily is not None else sum(_f(x, "rate_per_day", "rewards_daily_rate", "daily_rate") for x in rates if isinstance(x, dict))
     max_spread_c = _f(m, "rewards_max_spread", "max_spread") or _f(r, "max_spread")
     tokens = [t for t in m.get("tokens") or [] if isinstance(t, dict)]
     yes = next((t for t in tokens if str(t.get("outcome", "")).lower() == "yes"), tokens[0] if tokens else {})
@@ -29,7 +30,7 @@ def parse_config(m: dict) -> dict:
             "daily_rate": daily,
             "min_size": _f(m, "rewards_min_size", "min_size") or _f(r, "min_size"),
             "max_spread": max_spread_c / 100.0,   # the API gives cents
-            "sponsored": bool(m.get("sponsored")),
+            "sponsored": _f(m, "total_daily_rate") > _f(m, "native_daily_rate", default=_f(m, "total_daily_rate")),
             "yes_token": yes.get("token_id"),
             "yes_price": _f(yes, "price", default=None)}
 

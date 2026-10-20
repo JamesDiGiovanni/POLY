@@ -56,7 +56,8 @@ def run(cfg) -> str:
     h = cfg["http"]
     client = HttpClient(cfg["cache_dir"], h["requests_per_second"], h["timeout_s"], h["max_retries"], h["backoff_s"])
     rapi, papi = RewardsAPI(client), PolymarketAPI(client, cfg)
-    markets = [m for m in rapi.current() if m["condition_id"] and m["daily_rate"] > 0]
+    # A pool smaller than the bar can never pay the bar, whatever our share.
+    markets = [m for m in rapi.current() if m["condition_id"] and m["daily_rate"] >= float(r["min_daily_usd"])]
     log.info("%d markets pay rewards, $%.0f/day in total", len(markets), sum(m["daily_rate"] for m in markets))
     _fill_tokens(rapi, markets)
     markets = [m for m in markets if m["yes_token"] and m["max_spread"] > 0]
@@ -115,7 +116,7 @@ def write_report(cfg, markets, snaps, holding=()) -> str:
     top = rows[: int(r["top_n"])]
     top_daily = sum(x["daily_haircut"] for x in top)
     lines = [f"## Liquidity rewards phase 1: {'PASSED' if gate else 'FAILED'}", "",
-             f"{len(markets)} markets pay rewards, **${pool:,.0f}/day** in total. Snapshots per market: {r['snapshots']} "
+             f"{len(markets)} markets pay at least ${bar:.0f}/day in rewards, **${pool:,.0f}/day** in total. Snapshots per market: {r['snapshots']} "
              f"(every {int(r['snapshot_interval_s']) // 60} min).", "",
              f"Hypothetical: ${cap:,.0f} per market, quoted on both sides at {r['quote_frac']} x the max spread from "
              f"the midpoint. Our share of each pool against the orders already resting there, with that competition "
