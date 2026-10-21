@@ -304,7 +304,7 @@ def run(cfg, session: str, minutes: float | None = None) -> str:
         with ThreadPoolExecutor(8) as pool:
             list(pool.map(one, states))
         k += 1
-        if k % 10 == 0:
+        if k % max(1, int(600 / float(p["interval_s"]))) == 0:
             write_session(out, states, p, time.time())
             log.info("cycle %d: rewards $%.2f, fills %d", k, sum(s.rewards for s in states), sum(len(s.fills) for s in states))
         time.sleep(max(0.0, float(p["interval_s"]) - (time.time() - start)))
@@ -312,7 +312,7 @@ def run(cfg, session: str, minutes: float | None = None) -> str:
 
 
 def write_session(out: Path, states: list[MarketState], p: dict, now: float) -> str:
-    rows = [summarise(s, p["markout_min"], now) for s in states]
+    rows = [{**summarise(s, p["markout_min"], now), "interval_s": p["interval_s"]} for s in states]
     if rows:
         with open(out / "summary.csv", "w", newline="") as f:
             w = csv.DictWriter(f, list(rows[0]))
@@ -332,27 +332,25 @@ def report(root: Path, p: dict) -> str:
     rows = []
     for f in sorted(root.glob("*/summary.csv")):
         for r in csv.DictReader(open(f)):
-            rows.append({**{k: (float(v) if k not in ("condition_id", "question", "tier", "resolved") else v)
+            rows.append({"interval_s": 60.0, **{k: (float(v) if k not in ("condition_id", "question", "tier", "resolved") else v)
                             for k, v in r.items()}, "session": f.parent.name})
     cap = float(p["capital_usd"])
     hz = p["markout_min"]
     lines = [f"## Paper market making for liquidity rewards: {len({r['session'] for r in rows})} sessions", "",
              f"${cap:,.0f} quoted per market on both sides at {p['quote_frac']} x the max spread from the midpoint, "
-             "re-quoted every minute. Fills come from real taker prints (through our price, or at it once the queue "
+             "re-quoted every `requote` seconds. Fills come from real taker prints (through our price, or at it once the queue "
              "ahead is gone). Markout = fill price against the midpoint later; negative = picked off.", "",
              "Stale-quote loss: whenever the midpoint jumps past one of our quotes between re-quotes, the whole "
              "quote is assumed picked off at that gap, even with no print (an empty book only trades once someone "
              "quotes). Net if picked off subtracts it. Lasting jumps counts only jumps still past the quote 5 minutes "
              "later (news, not a thin book's quotes coming and going): the most realistic of the three.", "",
-             "| tier | market-hours | rewards | trading P&L | net | net $/day per $1k | stale-quote loss | "
+             "| tier | requote | market-hours | rewards | trading P&L | net | net $/day per $1k | stale-quote loss | "
              "net if picked off $/day per $1k | lasting jumps loss | net, lasting jumps $/day per $1k | fills | " +
              " | ".join(f"markout {h}m" for h in hz) + " |",
-             "|---|---|---|---|---|---|---|---|---|---|---|" + "---|" * len(hz)]
-    tiers = {}
-    for name in ("empty", "medium", "crowded"):
-        g = [r for r in rows if r["tier"] == name]
-        if not g:
-            continue
+             "|---|---|---|---|---|---|---|---|---|---|---|---|" + "---|" * len(hz)]
+    for name, iv in sorted({(r["tier"], r["interval_s"]) for r in rows},
+                           key=lambda k: (("empty", "medium", "crowded").index(k[0]), -k[1])):
+        g = [r for r in rows if r["tier"] == name and r["interval_s"] == iv]
         hrs = sum(r["hours"] for r in g)
         rw, tp = sum(r["rewards"] for r in g), sum(r["trading_pnl"] for r in g)
         sl = sum(r.get("stale_loss", 0) for r in g)
@@ -360,19 +358,18 @@ def report(root: Path, p: dict) -> str:
         persist_day = (rw + tp - sp) / hrs * 24 if hrs else 0.0
         per_day = (rw + tp) / hrs * 24 if hrs else 0.0
         worst = (rw + tp - sl) / hrs * 24 if hrs else 0.0
-        tiers[name] = per_day
-        lines.append(f"| {name} | {hrs:,.0f} | ${rw:,.2f} | ${tp:,.2f} | ${rw + tp:,.2f} | ${per_day:,.2f} | "
+        lines.append(f"| {name} | {iv:.0f}s | {hrs:,.0f} | ${rw:,.2f} | ${tp:,.2f} | ${rw + tp:,.2f} | ${per_day:,.2f} | "
                      f"${sl:,.2f} | ${worst:,.2f} | ${sp:,.2f} | ${persist_day:,.2f} | "
                      f"{sum(r['fills'] for r in g):.0f} | " + " | ".join(f"${sum(r[f'markout_{h}m'] for r in g):,.2f}" for h in hz) + " |")
     ok, wrong = sum(r.get("prints_side_ok", 0) for r in rows), sum(r.get("prints_side_wrong", 0) for r in rows)
     lines += ["", f"Check on the print data: {ok:.0f} taker prints sat on the expected side of the midpoint "
               f"(buys above, sells below), {wrong:.0f} did not."]
     lines += ["", "Per market (latest first):", "",
-              "| session | tier | market | pool | hours | rewards | trading P&L | net | stale-quote loss | fills | inventory | markout 30m |",
+              "| session | tier | market | pool | hours | rewards | trading P&L | net | lasting jumps loss | fills | inventory | markout 30m |",
               "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in sorted(rows, key=lambda r: (r["session"], r["tier"], -r["net"]), reverse=False)[-80:]:
         lines.append(f"| {r['session']} | {r['tier']} | {r['question'][:50]} | {r['pool']:.0f} | {r['hours']:.1f} | "
-                     f"${r['rewards']:.2f} | ${r['trading_pnl']:.2f} | ${r['net']:.2f} | ${r.get('stale_loss', 0):.2f} | {r['fills']:.0f} | "
+                     f"${r['rewards']:.2f} | ${r['trading_pnl']:.2f} | ${r['net']:.2f} | ${r.get('stale_loss_persistent', r.get('stale_loss', 0)):.2f} | {r['fills']:.0f} | "
                      f"{r['inventory']:.0f} | ${r.get('markout_30m', 0):.2f} |")
     text = "\n".join(lines) + "\n"
     (root / "report.md").write_text(text)
