@@ -1,16 +1,16 @@
-## Paper market making for liquidity rewards: 2 sessions
+## Paper market making for liquidity rewards: 3 sessions
 
 $1,000 quoted per market on both sides at 0.5 x the max spread from the midpoint, re-quoted every minute. Fills come from real taker prints (through our price, or at it once the queue ahead is gone). Markout = fill price against the midpoint later; negative = picked off.
 
-Stale-quote loss: whenever the midpoint jumps past one of our quotes between re-quotes, the whole quote is assumed picked off at that gap, even with no print (an empty book only trades once someone quotes). Net if picked off subtracts it; the truth is between the two nets.
+Stale-quote loss: whenever the midpoint jumps past one of our quotes between re-quotes, the whole quote is assumed picked off at that gap, even with no print (an empty book only trades once someone quotes). Net if picked off subtracts it. Lasting jumps counts only jumps still past the quote 5 minutes later (news, not a thin book's quotes coming and going): the most realistic of the three.
 
-| tier | market-hours | rewards | trading P&L | net | net $/day per $1k | stale-quote loss | net if picked off $/day per $1k | fills | markout 5m | markout 30m | markout 120m |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| empty | 36 | $170.06 | $14.83 | $184.89 | $121.91 | $5,224.29 | $-3,322.67 | 5 | $11.53 | $44.96 | $24.27 |
-| medium | 36 | $168.48 | $-25.00 | $143.48 | $95.48 | $3,177.37 | $-2,018.89 | 4 | $-20.89 | $10.29 | $8.60 |
-| crowded | 37 | $27.65 | $0.00 | $27.65 | $18.18 | $15.26 | $8.15 | 0 | $0.00 | $0.00 | $0.00 |
+| tier | market-hours | rewards | trading P&L | net | net $/day per $1k | stale-quote loss | net if picked off $/day per $1k | lasting jumps loss | net, lasting jumps $/day per $1k | fills | markout 5m | markout 30m | markout 120m |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| empty | 71 | $364.97 | $18.42 | $383.39 | $129.07 | $14,090.86 | $-4,614.52 | $9,960.59 | $-3,224.09 | 15 | $13.15 | $44.25 | $16.31 |
+| medium | 71 | $350.01 | $-25.00 | $325.01 | $109.93 | $3,759.16 | $-1,161.53 | $3,426.13 | $-1,048.89 | 4 | $-20.89 | $10.29 | $8.60 |
+| crowded | 71 | $72.73 | $-3.43 | $69.30 | $23.29 | $110.46 | $-13.84 | $78.55 | $-3.11 | 4 | $4.48 | $5.53 | $-3.43 |
 
-Check on the print data: 247 taker prints sat on the expected side of the midpoint (buys above, sells below), 65 did not.
+Check on the print data: 654 taker prints sat on the expected side of the midpoint (buys above, sells below), 254 did not.
 
 Per market (latest first):
 
@@ -58,3 +58,24 @@ Per market (latest first):
 | run-39499059959 | medium | Will Trump say "Hormuz" or "Blockade" during his M | 150 | 5.0 | $11.46 | $4.62 | $16.08 | $538.69 | 2 | 231 | $3.47 |
 | run-39499059959 | medium | Will Trump say "Ass" during his Midterm Rally in N | 150 | 4.5 | $10.96 | $0.00 | $10.96 | $95.74 | 0 | 0 | $0.00 |
 | run-39499059959 | medium | WTI Crude Oil (WTI) Up or Down on October 21? | 200 | 5.0 | $39.65 | $-31.20 | $8.45 | $1713.05 | 1 | -160 | $6.40 |
+| run-39533407188 | crowded | US x Iran ceasefire continues through October 31? | 2000 | 5.0 | $20.66 | $-3.43 | $17.23 | $10.10 | 4 | -1106 | $5.53 |
+| run-39533407188 | crowded | Will Iliana Iotova win the 2026 Bulgarian presiden | 161 | 5.0 | $7.68 | $0.00 | $7.68 | $85.11 | 0 | 0 | $0.00 |
+| run-39533407188 | crowded | Will Anthropic IPO by December 15, 2026? | 300 | 5.0 | $7.38 | $0.00 | $7.38 | $0.00 | 0 | 0 | $0.00 |
+| run-39533407188 | crowded | US x Iran ceasefire continues through November 30? | 200 | 5.0 | $3.49 | $0.00 | $3.49 | $0.00 | 0 | 0 | $0.00 |
+| run-39533407188 | crowded | Will Lorne Doerkson be the next Premier of British | 150 | 5.0 | $2.82 | $0.00 | $2.82 | $0.00 | 0 | 0 | $0.00 |
+| run-39533407188 | crowded | Will there be between 25 and 29 average daily tran | 117 | 5.0 | $1.56 | $0.00 | $1.56 | $0.00 | 0 | 0 | $0.00 |
+| run-39533407188 | crowded | Will oil be at least $85 on November 2 and the Rep | 500 | 5.0 | $1.48 | $0.00 | $1.48 | $0.00 | 0 | 0 | $0.00 |
+| run-39533407188 | empty | Next Fable Model (5.2+) released by October 26, 20 | 200 | 5.0 | $40.82 | $0.00 | $40.82 | $1973.01 | 0 | 0 | $0.00 |
+| run-39533407188 | empty | Next Fable Model (5.2+) released by October 27, 20 | 200 | 5.0 | $33.69 | $0.00 | $33.69 | $227.32 | 0 | 0 | $0.00 |
+| run-39533407188 | empty | Next Fable Model (5.2+) released by October 28, 20 | 200 | 5.0 | $32.50 | $0.00 | $32.50 | $501.90 | 0 | 0 | $0.00 |
+| run-39533407188 | empty | Will MrBeast's next video get between 113 and 115  | 153 | 5.0 | $30.81 | $-0.47 | $30.34 | $1527.81 | 3 | -66 | $0.49 |
+| run-39533407188 | empty | Will MrBeast's next video get between 115 and 117  | 147 | 5.0 | $23.51 | $4.05 | $27.57 | $2224.91 | 7 | 39 | $-1.20 |
+| run-39533407188 | empty | Will UK annual inflation be between 3.4% and 3.6%  | 118 | 5.0 | $20.41 | $0.00 | $20.41 | $2030.12 | 0 | 0 | $0.00 |
+| run-39533407188 | empty | Will NYC Mayor post 20-39 posts from October 16 to | 100 | 5.0 | $13.17 | $0.00 | $13.17 | $381.48 | 0 | 0 | $0.00 |
+| run-39533407188 | medium | Next Fable Model (5.2+) released by October 29, 20 | 200 | 5.0 | $33.32 | $0.00 | $33.32 | $15.96 | 0 | 0 | $0.00 |
+| run-39533407188 | medium | Will "Grand Theft Auto VI Launch Trailer" get betw | 526 | 5.0 | $33.30 | $0.00 | $33.30 | $11.52 | 0 | 0 | $0.00 |
+| run-39533407188 | medium | Next Fable Model (5.2+) released by October 23, 20 | 200 | 5.0 | $31.43 | $0.00 | $31.43 | $42.27 | 0 | 0 | $0.00 |
+| run-39533407188 | medium | Will "Grand Theft Auto VI Launch Trailer" get betw | 478 | 5.0 | $26.43 | $0.00 | $26.43 | $26.04 | 0 | 0 | $0.00 |
+| run-39533407188 | medium | Next Astra Model (6.1+) released by December 15, 2 | 200 | 5.0 | $22.37 | $0.00 | $22.37 | $105.26 | 0 | 0 | $0.00 |
+| run-39533407188 | medium | Marseille public gathering ban effectively lifted  | 202 | 5.0 | $20.14 | $0.00 | $20.14 | $15.96 | 0 | 0 | $0.00 |
+| run-39533407188 | medium | Next Fable Model (5.2+) released by October 24, 20 | 100 | 5.0 | $14.54 | $0.00 | $14.54 | $364.78 | 0 | 0 | $0.00 |
