@@ -1,4 +1,4 @@
-## Paper market making for liquidity rewards: 4 sessions
+## Paper market making for liquidity rewards: 5 sessions
 
 $1,000 quoted per market on both sides at 0.5 x the max spread from the midpoint, re-quoted every `requote` seconds. Fills come from real taker prints (through our price, or at it once the queue ahead is gone). Markout = fill price against the midpoint later; negative = picked off.
 
@@ -7,39 +7,18 @@ Stale-quote loss: whenever the midpoint jumps past one of our quotes between re-
 | tier | requote | market-hours | rewards | trading P&L | net | net $/day per $1k | stale-quote loss | net if picked off $/day per $1k | lasting jumps loss | net, lasting jumps $/day per $1k | fills | markout 5m | markout 30m | markout 120m |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | empty | 60s | 71 | $364.97 | $18.42 | $383.39 | $129.07 | $14,090.86 | $-4,614.52 | $9,960.59 | $-3,224.09 | 15 | $13.15 | $44.25 | $16.31 |
-| empty | 10s | 35 | $172.72 | $31.64 | $204.36 | $140.18 | $22,382.69 | $-15,213.27 | $5,002.02 | $-3,290.96 | 14 | $-4.07 | $11.39 | $22.46 |
+| empty | 10s | 68 | $262.51 | $11.66 | $274.18 | $96.20 | $30,971.52 | $-10,770.66 | $7,098.74 | $-2,394.51 | 24 | $-2.69 | $-13.29 | $5.46 |
 | medium | 60s | 71 | $350.01 | $-25.00 | $325.01 | $109.93 | $3,759.16 | $-1,161.53 | $3,426.13 | $-1,048.89 | 4 | $-20.89 | $10.29 | $8.60 |
-| medium | 10s | 35 | $150.43 | $0.00 | $150.43 | $103.19 | $2,965.23 | $-1,930.83 | $1,245.74 | $-751.34 | 0 | $0.00 | $0.00 | $0.00 |
+| medium | 10s | 70 | $319.36 | $-1.60 | $317.76 | $109.00 | $7,929.23 | $-2,610.84 | $3,436.44 | $-1,069.75 | 1 | $-3.20 | $-1.60 | $-1.60 |
 | crowded | 60s | 71 | $72.73 | $-3.43 | $69.30 | $23.29 | $110.46 | $-13.84 | $78.55 | $-3.11 | 4 | $4.48 | $5.53 | $-3.43 |
-| crowded | 10s | 35 | $23.28 | $0.00 | $23.28 | $15.97 | $0.00 | $15.97 | $0.00 | $15.97 | 0 | $0.00 | $0.00 | $0.00 |
+| crowded | 10s | 70 | $48.13 | $0.00 | $48.13 | $16.51 | $0.00 | $16.51 | $0.00 | $16.51 | 0 | $0.00 | $0.00 | $0.00 |
 
-Check on the print data: 872 taker prints sat on the expected side of the midpoint (buys above, sells below), 346 did not.
+Check on the print data: 1332 taker prints sat on the expected side of the midpoint (buys above, sells below), 575 did not.
 
 Per market (latest first):
 
 | session | tier | market | pool | hours | rewards | trading P&L | net | lasting jumps loss | fills | inventory | markout 30m |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| run-39495687078 | crowded | US x Iran ceasefire continues through October 28? | 1000 | 0.2 | $0.20 | $0.00 | $0.20 | $0.00 | 0 | 0 | $0.00 |
-| run-39495687078 | crowded | Will Anthropic IPO by December 15, 2026? | 300 | 0.2 | $0.20 | $0.00 | $0.20 | $0.00 | 0 | 0 | $0.00 |
-| run-39495687078 | crowded | US-Iran Hormuz Agreement by December 31? | 200 | 0.2 | $0.15 | $0.00 | $0.15 | $0.00 | 0 | 0 | $0.00 |
-| run-39495687078 | empty | WTI Crude Oil (WTI) Up or Down on October 20? | 200 | 0.2 | $1.94 | $0.00 | $1.94 | $0.00 | 0 | 0 | $0.00 |
-| run-39495687078 | empty | Marseille public gathering ban effectively lifted  | 200 | 0.2 | $1.94 | $0.00 | $1.94 | $0.00 | 0 | 0 | $0.00 |
-| run-39495687078 | empty | Marseille public gathering ban effectively lifted  | 200 | 0.2 | $1.70 | $0.00 | $1.70 | $0.00 | 0 | 0 | $0.00 |
-| run-39495687078 | empty | Will Anthropic have the best AI model on LiveBench | 152 | 0.2 | $1.48 | $0.00 | $1.48 | $0.00 | 0 | 0 | $0.00 |
-| run-39495687078 | empty | Will OpenAI have the third highest OpenRouter mark | 111 | 0.2 | $1.08 | $0.00 | $1.08 | $0.00 | 0 | 0 | $0.00 |
-| run-39495687078 | empty | S&P 500 (SPX) Opens Up or Down on October 21? | 100 | 0.2 | $0.97 | $0.00 | $0.97 | $0.00 | 0 | 0 | $0.00 |
-| run-39495687078 | empty | S&P 500 (SPX) Up or Down on October 21? | 100 | 0.2 | $0.97 | $0.00 | $0.97 | $0.00 | 0 | 0 | $0.00 |
-| run-39495687078 | medium | Paris curfew effectively lifted by October 24? | 200 | 0.2 | $1.60 | $0.00 | $1.60 | $0.00 | 0 | 0 | $0.00 |
-| run-39495687078 | medium | Lyon curfew effectively lifted by October 24? | 200 | 0.2 | $1.34 | $0.00 | $1.34 | $0.00 | 0 | 0 | $0.00 |
-| run-39495687078 | medium | Will MrBeast's next video get less than 150 millio | 188 | 0.2 | $1.28 | $0.00 | $1.28 | $0.00 | 0 | 0 | $0.00 |
-| run-39495687078 | medium | Paris curfew effectively lifted by October 31? | 200 | 0.2 | $1.23 | $0.00 | $1.23 | $0.00 | 0 | 0 | $0.00 |
-| run-39495687078 | medium | Will Trump say "Ass" during his Midterm Rally in N | 150 | 0.2 | $1.03 | $0.00 | $1.03 | $0.00 | 0 | 0 | $0.00 |
-| run-39495687078 | medium | Will Trump say "Hell" 15+ times during his Midterm | 150 | 0.2 | $0.87 | $0.00 | $0.87 | $0.00 | 0 | 0 | $0.00 |
-| run-39495687078 | medium | Will Trump say "Fentanyl" or "Deport" or "Deported | 100 | 0.2 | $0.82 | $0.00 | $0.82 | $0.00 | 0 | 0 | $0.00 |
-| run-39499059959 | crowded | US x Iran ceasefire continues through October 31? | 1000 | 5.0 | $8.36 | $0.00 | $8.36 | $10.10 | 0 | 0 | $0.00 |
-| run-39499059959 | crowded | US x Iran ceasefire continues through October 28? | 1000 | 5.0 | $4.04 | $0.00 | $4.04 | $0.00 | 0 | 0 | $0.00 |
-| run-39499059959 | crowded | US x Iran ceasefire continues through October 24? | 1000 | 5.0 | $3.52 | $0.00 | $3.52 | $0.00 | 0 | 0 | $0.00 |
-| run-39499059959 | crowded | Will Anthropic announce bankruptcy by December 31, | 330 | 5.0 | $2.58 | $0.00 | $2.58 | $5.15 | 0 | 0 | $0.00 |
 | run-39499059959 | crowded | US x Iran ceasefire continues through December 31? | 200 | 5.0 | $2.50 | $0.00 | $2.50 | $0.00 | 0 | 0 | $0.00 |
 | run-39499059959 | crowded | US-Iran ceasefire continues through the midterms? | 1000 | 5.0 | $2.14 | $0.00 | $2.14 | $0.00 | 0 | 0 | $0.00 |
 | run-39499059959 | crowded | Alexandre de Moraes out as Brazil Supreme Court Ju | 103 | 5.0 | $2.00 | $0.00 | $2.00 | $0.00 | 0 | 0 | $0.00 |
@@ -99,3 +78,24 @@ Per market (latest first):
 | run-39563704774 | medium | Will Core PCE YoY be 3.1% in September? | 116 | 5.0 | $19.14 | $0.00 | $19.14 | $0.00 | 0 | 0 | $0.00 |
 | run-39563704774 | medium | Next Astra Model (6.1+) released by December 15, 2 | 200 | 5.0 | $18.02 | $0.00 | $18.02 | $10.64 | 0 | 0 | $0.00 |
 | run-39563704774 | medium | Will Iliana Iotova win the 2026 Bulgarian presiden | 268 | 5.0 | $10.57 | $0.00 | $10.57 | $0.00 | 0 | 0 | $0.00 |
+| run-39611059138 | crowded | Will Anthropic IPO by December 15, 2026? | 300 | 5.0 | $7.49 | $0.00 | $7.49 | $0.00 | 0 | 0 | $0.00 |
+| run-39611059138 | crowded | Will Anthropic IPO by November 30, 2026? | 100 | 5.0 | $4.01 | $0.00 | $4.01 | $0.00 | 0 | 0 | $0.00 |
+| run-39611059138 | crowded | Will Delcy Rodríguez be the leader of Venezuela en | 131 | 5.0 | $3.32 | $0.00 | $3.32 | $0.00 | 0 | 0 | $0.00 |
+| run-39611059138 | crowded | Will Anthropic's valuation hit (HIGH) $2.0T by Dec | 500 | 5.0 | $2.98 | $0.00 | $2.98 | $0.00 | 0 | 0 | $0.00 |
+| run-39611059138 | crowded | Will Flávio Bolsonaro win the second round of the  | 229 | 5.0 | $2.69 | $0.00 | $2.69 | $0.00 | 0 | 0 | $0.00 |
+| run-39611059138 | crowded | Will Aleksandar Vučić – United Serbia win the most | 613 | 5.0 | $2.46 | $0.00 | $2.46 | $0.00 | 0 | 0 | $0.00 |
+| run-39611059138 | crowded | Will Ilija Srdanović be the next prime minister of | 134 | 5.0 | $1.90 | $0.00 | $1.90 | $0.00 | 0 | 0 | $0.00 |
+| run-39611059138 | empty | Will Donald Trump post 200+ Truth Social posts fro | 105 | 5.0 | $18.70 | $0.00 | $18.70 | $366.35 | 0 | 0 | $0.00 |
+| run-39611059138 | empty | Will "Ali G: Who Iz I?" Opening Weekend Box Office | 86 | 5.0 | $15.56 | $2.43 | $17.99 | $96.55 | 6 | 89 | $-2.28 |
+| run-39611059138 | empty | Will NYC Mayor post 20-39 posts from October 16 to | 100 | 5.0 | $17.45 | $0.00 | $17.45 | $783.78 | 0 | 0 | $0.00 |
+| run-39611059138 | empty | Will Google have the second highest OpenRouter mar | 77 | 5.0 | $15.85 | $0.00 | $15.85 | $406.33 | 0 | 0 | $0.00 |
+| run-39611059138 | empty | Will OpenAI have the best Image Edit AI at the end | 124 | 5.0 | $13.81 | $0.00 | $13.81 | $21.28 | 0 | 0 | $0.00 |
+| run-39611059138 | empty | Will MrBeast's next video get between 113 and 115  | 150 | 4.2 | $4.67 | $0.00 | $4.67 | $204.77 | 0 | 0 | $0.00 |
+| run-39611059138 | empty | Will MrBeast's next video get between 115 and 117  | 150 | 4.2 | $3.76 | $-22.41 | $-18.65 | $217.68 | 4 | -187 | $-22.41 |
+| run-39611059138 | medium | Will "Grand Theft Auto VI Launch Trailer" get betw | 716 | 5.0 | $49.19 | $0.00 | $49.19 | $0.00 | 0 | 0 | $0.00 |
+| run-39611059138 | medium | Next Fable Model (5.2+) released by October 26, 20 | 202 | 5.0 | $36.89 | $0.00 | $36.89 | $221.56 | 0 | 0 | $0.00 |
+| run-39611059138 | medium | Next Fable Model (5.2+) released by October 29, 20 | 200 | 5.0 | $25.72 | $0.00 | $25.72 | $0.00 | 0 | 0 | $0.00 |
+| run-39611059138 | medium | Will the next Fable model (5.2+) be released on Oc | 120 | 5.0 | $20.10 | $0.00 | $20.10 | $343.86 | 0 | 0 | $0.00 |
+| run-39611059138 | medium | Will Z.ai be the third-best Math AI lab at the end | 123 | 5.0 | $18.24 | $0.00 | $18.24 | $16.56 | 0 | 0 | $0.00 |
+| run-39611059138 | medium | Will the lowest temperature in Tokyo be 18°C on Oc | 60 | 5.0 | $12.30 | $-1.60 | $10.70 | $1608.72 | 1 | -40 | $-1.60 |
+| run-39611059138 | medium | US imports Russian diesel by December 31? | 100 | 5.0 | $6.48 | $0.00 | $6.48 | $0.00 | 0 | 0 | $0.00 |
