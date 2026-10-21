@@ -3,6 +3,9 @@
 name: Paper market making
 
 on:
+  # Back-to-back sessions while paper results are being gathered (remove to stop).
+  schedule:
+    - cron: "20 */6 * * *"
   workflow_dispatch:
     inputs:
       minutes:
@@ -41,7 +44,7 @@ jobs:
             "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" /tmp/mm-paper \
             || { mkdir -p /tmp/mm-paper && cd /tmp/mm-paper && git init -q -b mm-paper; }
       - name: Paper session
-        run: python -m polybt rw-paper --session "run-${{ github.run_id }}" --minutes "${{ inputs.minutes }}" --interval "${{ inputs.interval }}" 2>&1 | tee run.log
+        run: python -m polybt rw-paper --session "run-${{ github.run_id }}" --minutes "${{ inputs.minutes || '300' }}" --interval "${{ inputs.interval || '10' }}" 2>&1 | tee run.log
       - name: Publish to mm-paper branch
         if: always()
         run: |

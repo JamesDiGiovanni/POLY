@@ -233,10 +233,21 @@ rewards:
   paper:
     minutes: 300               # a session; GitHub Actions jobs stop at 6 h
     interval_s: 60
-    per_tier: 7
     min_pool: 20               # $/day; smaller pools are not worth a slot
     max_inventory_mult: 2      # stop quoting the side that would take inventory past 2 x the quote size
     markout_min: [5, 30, 120]
+    tiers_used: [medium, crowded]   # sessions 1-4: empty books lost on every session
+    per_tier: 10
+    # Market types whose information arrives in public jumps a bot sees first; each lost more than its
+    # rewards in sessions 1-4 (regex on the question, case-insensitive).
+    exclude_patterns:
+      - "temperature|°[CF]|\\brain|\\bsnow|hurricane"
+      - "best .*(model|ai)|ai model|openrouter|livebench|lmarena|leaderboard|(second|third|top)[- ]best|ai lab|image edit"
+      - "views|video get|\\bposts?\\b|tweets?|truth social"
+      - "released on|be released on"
+      - "box office|opening weekend"
+      - "up or down"
+      - "\\bsay\\b|mention"
     tiers:
       thin_below: 50           # resting score: under this the book is effectively empty near the mid
       crowded_from: 2000

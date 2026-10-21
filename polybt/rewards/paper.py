@@ -16,6 +16,7 @@ import datetime as dt
 import json
 import logging
 import math
+import re
 import statistics
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -118,6 +119,24 @@ def our_score(quotes: dict, mid: float, max_spread: float, min_size: float) -> f
     return q_min(side_score(lv("bid"), mid, max_spread, min_size), side_score(lv("ask"), mid, max_spread, min_size), mid)
 
 
+def target_quotes(mid: float, inv: float, m: dict, p: dict) -> dict:
+    """The quotes to rest: {"bid"|"ask": (YES price, shares)}. Shared by paper and live, so both quote alike.
+    A side that would push inventory past max_inventory_mult x the quote size is dropped."""
+    bid, ask = quote_prices(mid, m["max_spread"], p["quote_frac"], m.get("tick") or 0.01)
+    size = p["capital_usd"] / max(0.05, 1 - (ask - bid))
+    cap = p["max_inventory_mult"] * size
+    want = {}
+    if inv < cap and bid > 0:
+        want["bid"] = (bid, size)
+    if inv > -cap and ask < 1:
+        want["ask"] = (ask, size)
+    return want
+
+
+def excluded(question: str, patterns) -> bool:
+    return any(re.search(pt, question or "", re.I) for pt in patterns or [])
+
+
 def resting_at(levels, price: float) -> float:
     return sum(q for p, q in levels if abs(p - price) <= EPS)
 
@@ -167,16 +186,9 @@ def step(st: MarketState, book: dict | None, prints: list[dict], now: float, p: 
             st.stale_loss += gap * q.size
             st.jumps.append((now, q.side, q.price, q.size))
     st.mids.append((now, mid))
-    bid, ask = quote_prices(mid, m["max_spread"], p["quote_frac"], m.get("tick") or 0.01)
-    size = p["capital_usd"] / max(0.05, 1 - (ask - bid))
-    cap = p["max_inventory_mult"] * size
-    want = {}
-    if st.inv < cap and bid > 0:
-        want["bid"] = bid
-    if st.inv > -cap and ask < 1:
-        want["ask"] = ask
+    want = target_quotes(mid, st.inv, m, p)
     quotes = {}
-    for side, price in want.items():
+    for side, (price, size) in want.items():
         old = st.quotes.get(side)
         if old and abs(old.price - price) <= EPS and old.size >= m["min_size"]:
             quotes[side] = old             # unchanged price: keep the place in the queue
@@ -240,8 +252,10 @@ def select_markets(rapi: RewardsAPI, papi: PolymarketAPI, p: dict) -> list[tuple
     _fill_tokens(rapi, ms)
     today = dt.datetime.now(dt.timezone.utc).date().isoformat()
     # A market past its end date is waiting on resolution: no market maker would quote it.
+    # Markets whose news lands in public jumps (temperatures, leaderboards, view and post counts) picked off
+    # every paper session: config lists them.
     ms = [m for m in ms if m["yes_token"] and m.get("no_token") and m["max_spread"] > 0
-          and not (m.get("end") and str(m["end"])[:10] < today)]
+          and not (m.get("end") and str(m["end"])[:10] < today) and not excluded(m["question"], p.get("exclude_patterns"))]
 
     def one(m):
         try:
@@ -254,7 +268,7 @@ def select_markets(rapi: RewardsAPI, papi: PolymarketAPI, p: dict) -> list[tuple
     t = p["tiers"]
     tier = lambda theirs: "empty" if theirs < t["thin_below"] else "crowded" if theirs >= t["crowded_from"] else "medium"
     picked = []
-    for name in ("empty", "medium", "crowded"):
+    for name in p.get("tiers_used") or ("empty", "medium", "crowded"):
         group = sorted([(m, s) for m, s in scored if tier(s["theirs"]) == name], key=lambda x: -x[1]["daily_haircut"])
         picked += [(m, name) for m, _ in group[: int(p["per_tier"])]]
         log.info("tier %s: %d candidates, picked %d", name, len(group), min(len(group), int(p["per_tier"])))
@@ -312,7 +326,8 @@ def run(cfg, session: str, minutes: float | None = None) -> str:
 
 
 def write_session(out: Path, states: list[MarketState], p: dict, now: float) -> str:
-    rows = [{**summarise(s, p["markout_min"], now), "interval_s": p["interval_s"]} for s in states]
+    rows = [{**summarise(s, p["markout_min"], now), "interval_s": p["interval_s"],
+             "selection": "filtered" if p.get("exclude_patterns") else "all"} for s in states]
     if rows:
         with open(out / "summary.csv", "w", newline="") as f:
             w = csv.DictWriter(f, list(rows[0]))
@@ -332,7 +347,8 @@ def report(root: Path, p: dict) -> str:
     rows = []
     for f in sorted(root.glob("*/summary.csv")):
         for r in csv.DictReader(open(f)):
-            rows.append({"interval_s": 60.0, **{k: (float(v) if k not in ("condition_id", "question", "tier", "resolved") else v)
+            rows.append({"interval_s": 60.0, "selection": "all",
+                         **{k: (float(v) if k not in ("condition_id", "question", "tier", "resolved", "selection") else v)
                             for k, v in r.items()}, "session": f.parent.name})
     cap = float(p["capital_usd"])
     hz = p["markout_min"]
@@ -348,9 +364,9 @@ def report(root: Path, p: dict) -> str:
              "net if picked off $/day per $1k | lasting jumps loss | net, lasting jumps $/day per $1k | fills | " +
              " | ".join(f"markout {h}m" for h in hz) + " |",
              "|---|---|---|---|---|---|---|---|---|---|---|---|" + "---|" * len(hz)]
-    for name, iv in sorted({(r["tier"], r["interval_s"]) for r in rows},
-                           key=lambda k: (("empty", "medium", "crowded").index(k[0]), -k[1])):
-        g = [r for r in rows if r["tier"] == name and r["interval_s"] == iv]
+    for name, iv, sel in sorted({(r["tier"], r["interval_s"], r["selection"]) for r in rows},
+                                key=lambda k: (("empty", "medium", "crowded").index(k[0]), -k[1], k[2])):
+        g = [r for r in rows if r["tier"] == name and r["interval_s"] == iv and r["selection"] == sel]
         hrs = sum(r["hours"] for r in g)
         rw, tp = sum(r["rewards"] for r in g), sum(r["trading_pnl"] for r in g)
         sl = sum(r.get("stale_loss", 0) for r in g)
@@ -358,7 +374,7 @@ def report(root: Path, p: dict) -> str:
         persist_day = (rw + tp - sp) / hrs * 24 if hrs else 0.0
         per_day = (rw + tp) / hrs * 24 if hrs else 0.0
         worst = (rw + tp - sl) / hrs * 24 if hrs else 0.0
-        lines.append(f"| {name} | {iv:.0f}s | {hrs:,.0f} | ${rw:,.2f} | ${tp:,.2f} | ${rw + tp:,.2f} | ${per_day:,.2f} | "
+        lines.append(f"| {name} | {iv:.0f}s{' filtered' if sel == 'filtered' else ''} | {hrs:,.0f} | ${rw:,.2f} | ${tp:,.2f} | ${rw + tp:,.2f} | ${per_day:,.2f} | "
                      f"${sl:,.2f} | ${worst:,.2f} | ${sp:,.2f} | ${persist_day:,.2f} | "
                      f"{sum(r['fills'] for r in g):.0f} | " + " | ".join(f"${sum(r[f'markout_{h}m'] for r in g):,.2f}" for h in hz) + " |")
     ok, wrong = sum(r.get("prints_side_ok", 0) for r in rows), sum(r.get("prints_side_wrong", 0) for r in rows)
