@@ -326,7 +326,7 @@ def run(cfg, session: str, minutes: float | None = None) -> str:
 
 
 def write_session(out: Path, states: list[MarketState], p: dict, now: float) -> str:
-    rows = [{**summarise(s, p["markout_min"], now), "interval_s": p["interval_s"],
+    rows = [{**summarise(s, p["markout_min"], now), "interval_s": p["interval_s"], "quote_frac": p["quote_frac"],
              "selection": "filtered" if p.get("exclude_patterns") else "all"} for s in states]
     if rows:
         with open(out / "summary.csv", "w", newline="") as f:
@@ -347,14 +347,14 @@ def report(root: Path, p: dict) -> str:
     rows = []
     for f in sorted(root.glob("*/summary.csv")):
         for r in csv.DictReader(open(f)):
-            rows.append({"interval_s": 60.0, "selection": "all",
+            rows.append({"interval_s": 60.0, "selection": "all", "quote_frac": 0.5,
                          **{k: (float(v) if k not in ("condition_id", "question", "tier", "resolved", "selection") else v)
                             for k, v in r.items()}, "session": f.parent.name})
     cap = float(p["capital_usd"])
     hz = p["markout_min"]
     lines = [f"## Paper market making for liquidity rewards: {len({r['session'] for r in rows})} sessions", "",
              f"${cap:,.0f} quoted per market on both sides at {p['quote_frac']} x the max spread from the midpoint, "
-             "re-quoted every `requote` seconds. Fills come from real taker prints (through our price, or at it once the queue "
+             "re-quoted every `requote` seconds (\"at 0.3x\": quoted at 0.3 x the max spread instead). Fills come from real taker prints (through our price, or at it once the queue "
              "ahead is gone). Markout = fill price against the midpoint later; negative = picked off.", "",
              "Stale-quote loss: whenever the midpoint jumps past one of our quotes between re-quotes, the whole "
              "quote is assumed picked off at that gap, even with no print (an empty book only trades once someone "
@@ -364,9 +364,9 @@ def report(root: Path, p: dict) -> str:
              "net if picked off $/day per $1k | lasting jumps loss | net, lasting jumps $/day per $1k | fills | " +
              " | ".join(f"markout {h}m" for h in hz) + " |",
              "|---|---|---|---|---|---|---|---|---|---|---|---|" + "---|" * len(hz)]
-    for name, iv, sel in sorted({(r["tier"], r["interval_s"], r["selection"]) for r in rows},
-                                key=lambda k: (("empty", "medium", "crowded").index(k[0]), -k[1], k[2])):
-        g = [r for r in rows if r["tier"] == name and r["interval_s"] == iv and r["selection"] == sel]
+    for name, iv, sel, qf in sorted({(r["tier"], r["interval_s"], r["selection"], r["quote_frac"]) for r in rows},
+                                    key=lambda k: (("empty", "medium", "crowded").index(k[0]), -k[1], k[2], k[3])):
+        g = [r for r in rows if (r["tier"], r["interval_s"], r["selection"], r["quote_frac"]) == (name, iv, sel, qf)]
         hrs = sum(r["hours"] for r in g)
         rw, tp = sum(r["rewards"] for r in g), sum(r["trading_pnl"] for r in g)
         sl = sum(r.get("stale_loss", 0) for r in g)
@@ -374,7 +374,7 @@ def report(root: Path, p: dict) -> str:
         persist_day = (rw + tp - sp) / hrs * 24 if hrs else 0.0
         per_day = (rw + tp) / hrs * 24 if hrs else 0.0
         worst = (rw + tp - sl) / hrs * 24 if hrs else 0.0
-        lines.append(f"| {name} | {iv:.0f}s{' filtered' if sel == 'filtered' else ''} | {hrs:,.0f} | ${rw:,.2f} | ${tp:,.2f} | ${rw + tp:,.2f} | ${per_day:,.2f} | "
+        lines.append(f"| {name} | {iv:.0f}s{' filtered' if sel == 'filtered' else ''}{f' at {qf:g}x' if qf != 0.5 else ''} | {hrs:,.0f} | ${rw:,.2f} | ${tp:,.2f} | ${rw + tp:,.2f} | ${per_day:,.2f} | "
                      f"${sl:,.2f} | ${worst:,.2f} | ${sp:,.2f} | ${persist_day:,.2f} | "
                      f"{sum(r['fills'] for r in g):.0f} | " + " | ".join(f"${sum(r[f'markout_{h}m'] for r in g):,.2f}" for h in hz) + " |")
     ok, wrong = sum(r.get("prints_side_ok", 0) for r in rows), sum(r.get("prints_side_wrong", 0) for r in rows)

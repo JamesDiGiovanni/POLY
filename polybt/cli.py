@@ -160,6 +160,7 @@ def main(argv=None) -> int:
     s.add_argument("--session", default=None)
     s.add_argument("--minutes", type=float, default=None)
     s.add_argument("--interval", type=float, default=None, help="seconds between re-quotes")
+    s.add_argument("--quote-frac", type=float, default=None, help="distance from the mid, x max spread")
     sub.add_parser("summary", help="markdown summary of the latest results (verdict, funnel, wallets)")
     s = sub.add_parser("fees", help="fee sources per market, and which formula matches real fills")
     s.add_argument("--since", default="2026-03-30", help="only trades after this date (fee schedule V2)")
@@ -243,6 +244,8 @@ def main(argv=None) -> int:
         from .rewards import paper
         if args.interval:
             cfg["rewards"]["paper"]["interval_s"] = args.interval
+        if args.quote_frac:
+            cfg["rewards"]["paper"]["quote_frac"] = args.quote_frac
         print(paper.run(cfg, args.session or dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d-%H%M"), args.minutes))
     elif args.cmd == "summary":
         print(report.markdown_summary(con, cfg))

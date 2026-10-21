@@ -14,6 +14,9 @@ on:
       interval:
         description: "seconds between re-quotes"
         default: "10"
+      quote_frac:
+        description: "quote distance from the midpoint, as a fraction of the max spread"
+        default: "0.5"
 
 permissions:
   contents: write
@@ -44,7 +47,7 @@ jobs:
             "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" /tmp/mm-paper \
             || { mkdir -p /tmp/mm-paper && cd /tmp/mm-paper && git init -q -b mm-paper; }
       - name: Paper session
-        run: python -m polybt rw-paper --session "run-${{ github.run_id }}" --minutes "${{ inputs.minutes || '300' }}" --interval "${{ inputs.interval || '10' }}" 2>&1 | tee run.log
+        run: python -m polybt rw-paper --session "run-${{ github.run_id }}" --minutes "${{ inputs.minutes || '300' }}" --interval "${{ inputs.interval || '10' }}" --quote-frac "${{ inputs.quote_frac || '0.5' }}" 2>&1 | tee run.log
       - name: Publish to mm-paper branch
         if: always()
         run: |
