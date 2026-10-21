@@ -294,6 +294,11 @@ def run(cfg, session: str, minutes: float | None = None) -> str:
     out = Path(cfg["output_dir"]) / "mm" / session
     out.mkdir(parents=True, exist_ok=True)
     states = [MarketState(m, tier) for m, tier in select_markets(rapi, papi, p)]
+    # The quoting loop waits for every market each cycle: one request stuck in 30 s timeouts and retries
+    # would freeze every quote. Fail fast instead; a market that misses a cycle catches up on the next.
+    fast = HttpClient(cfg["cache_dir"], h["requests_per_second"], float(p["request_timeout_s"]),
+                      int(p["request_retries"]), 0.5)
+    rapi, papi = RewardsAPI(fast), PolymarketAPI(fast, cfg)
     (out / "markets.json").write_text(json.dumps([{**s.m, "tier": s.tier} for s in states], indent=1))
     end = time.time() + 60 * float(minutes if minutes is not None else p["minutes"])
     k = 0

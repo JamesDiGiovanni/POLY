@@ -233,6 +233,8 @@ rewards:
   paper:
     minutes: 300               # a session; GitHub Actions jobs stop at 6 h
     interval_s: 60
+    request_timeout_s: 5       # quoting loop only; a slow request skips that market for one cycle
+    request_retries: 1
     min_pool: 20               # $/day; smaller pools are not worth a slot
     max_inventory_mult: 2      # stop quoting the side that would take inventory past 2 x the quote size
     markout_min: [5, 30, 120]
