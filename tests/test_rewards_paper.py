@@ -56,6 +56,19 @@ def test_session_fills_rewards_and_markouts():
     assert s["fills"] == 1 and s["rewards"] > 0
     # the jump to 0.60 went through the 0.52 ask still resting (size - 200): counted as picked off
     assert s["stale_loss"] == pytest.approx(0.08 * (size - 200))
+    assert s["stale_loss_persistent"] == pytest.approx(0.08 * (size - 200))   # the mid stayed at 0.60
+
+
+def test_a_jump_that_reverts_is_not_a_lasting_pick_off():
+    st = MarketState(dict(M), "empty")
+    step(st, book(0.40, 0.60), [], 0.0, P)                 # quotes 0.48 / 0.52
+    step(st, book(0.58, 0.62), [], 60.0, P)                # mid 0.60: through the ask
+    for k in range(2, 10):
+        step(st, book(0.40, 0.60), [], 60.0 * k, P)        # back to 0.50
+    s = summarise(st, [5], 600.0)
+    # the jump up through our ask reverted (not counted); the re-quote at 0.58 bid then sat above the
+    # reverted mid for good (counted)
+    assert len(st.jumps) == 2 and s["stale_loss_persistent"] == pytest.approx(s["stale_loss"] / 2)
 
 
 def test_inventory_cap_stops_one_side():

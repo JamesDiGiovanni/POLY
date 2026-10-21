@@ -66,6 +66,7 @@ class MarketState:
     final: float | None = None   # resolution value of YES, once known
     quoted_s: float = 0.0
     stale_loss: float = 0.0   # mid jumped past a quote before we re-quoted: what a fast trader takes
+    jumps: list = field(default_factory=list)   # (ts, side, price, size) of each such quote
     side_check: list = field(default_factory=lambda: [0, 0])   # prints on the expected side of the mid / not
 
 
@@ -164,6 +165,7 @@ def step(st: MarketState, book: dict | None, prints: list[dict], now: float, p: 
         gap = (mid - q.price) if q.side == "ask" else (q.price - mid)
         if gap > EPS:
             st.stale_loss += gap * q.size
+            st.jumps.append((now, q.side, q.price, q.size))
     st.mids.append((now, mid))
     bid, ask = quote_prices(mid, m["max_spread"], p["quote_frac"], m.get("tick") or 0.01)
     size = p["capital_usd"] / max(0.05, 1 - (ask - bid))
@@ -208,6 +210,15 @@ def summarise(st: MarketState, horizons_min, end_ts: float) -> dict:
            "resolved": st.final is not None,
            "prints_side_ok": st.side_check[0], "prints_side_wrong": st.side_check[1],
            "median_theirs": statistics.median([r["theirs"] for r in st.minutes if r["theirs"] is not None] or [0])}
+    # A jump that has reverted 5 minutes later was a quote coming and going in a thin book, not news.
+    persist = 0.0
+    for ts, side, price, size in st.jumps:
+        mids = [m for t, m in st.mids if ts <= t <= ts + 300]
+        gaps = [(m - price) if side == "ask" else (price - m) for m in mids]
+        if gaps and min(gaps) > 0:
+            persist += min(gaps) * size
+    out["stale_loss_persistent"] = persist
+    out["net_if_picked_off_persistent"] = st.rewards + pnl - persist
     for h in horizons_min:
         tot = 0.0
         for f in st.fills:
@@ -331,11 +342,12 @@ def report(root: Path, p: dict) -> str:
              "ahead is gone). Markout = fill price against the midpoint later; negative = picked off.", "",
              "Stale-quote loss: whenever the midpoint jumps past one of our quotes between re-quotes, the whole "
              "quote is assumed picked off at that gap, even with no print (an empty book only trades once someone "
-             "quotes). Net if picked off subtracts it; the truth is between the two nets.", "",
+             "quotes). Net if picked off subtracts it. Lasting jumps counts only jumps still past the quote 5 minutes "
+             "later (news, not a thin book's quotes coming and going): the most realistic of the three.", "",
              "| tier | market-hours | rewards | trading P&L | net | net $/day per $1k | stale-quote loss | "
-             "net if picked off $/day per $1k | fills | " +
+             "net if picked off $/day per $1k | lasting jumps loss | net, lasting jumps $/day per $1k | fills | " +
              " | ".join(f"markout {h}m" for h in hz) + " |",
-             "|---|---|---|---|---|---|---|---|---|" + "---|" * len(hz)]
+             "|---|---|---|---|---|---|---|---|---|---|---|" + "---|" * len(hz)]
     tiers = {}
     for name in ("empty", "medium", "crowded"):
         g = [r for r in rows if r["tier"] == name]
@@ -344,11 +356,13 @@ def report(root: Path, p: dict) -> str:
         hrs = sum(r["hours"] for r in g)
         rw, tp = sum(r["rewards"] for r in g), sum(r["trading_pnl"] for r in g)
         sl = sum(r.get("stale_loss", 0) for r in g)
+        sp = sum(r.get("stale_loss_persistent", 0) for r in g)
+        persist_day = (rw + tp - sp) / hrs * 24 if hrs else 0.0
         per_day = (rw + tp) / hrs * 24 if hrs else 0.0
         worst = (rw + tp - sl) / hrs * 24 if hrs else 0.0
         tiers[name] = per_day
         lines.append(f"| {name} | {hrs:,.0f} | ${rw:,.2f} | ${tp:,.2f} | ${rw + tp:,.2f} | ${per_day:,.2f} | "
-                     f"${sl:,.2f} | ${worst:,.2f} | "
+                     f"${sl:,.2f} | ${worst:,.2f} | ${sp:,.2f} | ${persist_day:,.2f} | "
                      f"{sum(r['fills'] for r in g):.0f} | " + " | ".join(f"${sum(r[f'markout_{h}m'] for r in g):,.2f}" for h in hz) + " |")
     ok, wrong = sum(r.get("prints_side_ok", 0) for r in rows), sum(r.get("prints_side_wrong", 0) for r in rows)
     lines += ["", f"Check on the print data: {ok:.0f} taker prints sat on the expected side of the midpoint "
