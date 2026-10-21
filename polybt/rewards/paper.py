@@ -356,7 +356,7 @@ def report(root: Path, p: dict) -> str:
         hrs = sum(r["hours"] for r in g)
         rw, tp = sum(r["rewards"] for r in g), sum(r["trading_pnl"] for r in g)
         sl = sum(r.get("stale_loss", 0) for r in g)
-        sp = sum(r.get("stale_loss_persistent", 0) for r in g)
+        sp = sum(r.get("stale_loss_persistent", r.get("stale_loss", 0)) for r in g)   # older sessions: all jumps
         persist_day = (rw + tp - sp) / hrs * 24 if hrs else 0.0
         per_day = (rw + tp) / hrs * 24 if hrs else 0.0
         worst = (rw + tp - sl) / hrs * 24 if hrs else 0.0
