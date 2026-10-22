@@ -241,7 +241,7 @@ rewards:
     # The one crowded-market loss so far (Bulgarian election, 3 days before the vote) was a market about to
     # resolve. Out-of-sample check from session 8 on: excluding those would have turned -$11 into +$18/day per $1k.
     min_days_to_end: 7
-    tiers_used: [medium, crowded]   # sessions 1-4: empty books lost on every session
+    tiers_used: [crowded]      # medium lost on every session; empty books on every one before that   # sessions 1-4: empty books lost on every session
     per_tier: 10
     # Market types whose information arrives in public jumps a bot sees first; each lost more than its
     # rewards in sessions 1-4 (regex on the question, case-insensitive).

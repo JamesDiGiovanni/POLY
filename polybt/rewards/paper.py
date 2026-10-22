@@ -272,6 +272,8 @@ def select_markets(rapi: RewardsAPI, papi: PolymarketAPI, p: dict) -> list[tuple
     picked = []
     for name in p.get("tiers_used") or ("empty", "medium", "crowded"):
         group = sorted([(m, s) for m, s in scored if tier(s["theirs"]) == name], key=lambda x: -x[1]["daily_haircut"])
+        # Parallel sessions each take every n-th market (shard i of n), so they never quote the same one.
+        group = group[int(p.get("shard", 0))::int(p.get("shards", 1))]
         picked += [(m, name) for m, _ in group[: int(p["per_tier"])]]
         log.info("tier %s: %d candidates, picked %d", name, len(group), min(len(group), int(p["per_tier"])))
     return picked
