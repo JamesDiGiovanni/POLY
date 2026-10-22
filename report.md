@@ -1,4 +1,4 @@
-## Paper market making for liquidity rewards: 7 sessions
+## Paper market making for liquidity rewards: 8 sessions
 
 $1,000 quoted per market on both sides at 0.5 x the max spread from the midpoint, re-quoted every `requote` seconds ("at 0.3x": quoted at 0.3 x the max spread instead). Fills come from real taker prints (through our price, or at it once the queue ahead is gone). Markout = fill price against the midpoint later; negative = picked off.
 
@@ -11,38 +11,18 @@ Stale-quote loss: whenever the midpoint jumps past one of our quotes between re-
 | medium | 60s | 71 | $350.01 | $-25.00 | $325.01 | $109.93 | $3,759.16 | $-1,161.53 | $3,426.13 | $-1,048.89 | 4 | $-20.89 | $10.29 | $8.60 |
 | medium | 10s | 70 | $319.36 | $-1.60 | $317.76 | $109.00 | $7,929.23 | $-2,610.84 | $3,436.44 | $-1,069.75 | 1 | $-3.20 | $-1.60 | $-1.60 |
 | medium | 10s filtered at 0.3x | 50 | $325.70 | $-5.74 | $319.96 | $153.67 | $3,348.85 | $-1,454.67 | $902.55 | $-279.80 | 7 | $2.07 | $0.61 | $-2.40 |
-| medium | 10s filtered | 50 | $616.58 | $-4.18 | $612.40 | $293.98 | $8,498.81 | $-3,785.79 | $2,360.57 | $-839.19 | 12 | $12.73 | $9.44 | $3.22 |
+| medium | 10s filtered | 100 | $754.28 | $-4.18 | $750.10 | $180.08 | $9,950.77 | $-2,208.86 | $2,805.20 | $-493.38 | 12 | $12.73 | $9.44 | $3.22 |
 | crowded | 60s | 71 | $72.73 | $-3.43 | $69.30 | $23.29 | $110.46 | $-13.84 | $78.55 | $-3.11 | 4 | $4.48 | $5.53 | $-3.43 |
 | crowded | 10s | 70 | $48.13 | $0.00 | $48.13 | $16.51 | $0.00 | $16.51 | $0.00 | $16.51 | 0 | $0.00 | $0.00 | $0.00 |
 | crowded | 10s filtered at 0.3x | 50 | $93.19 | $-27.19 | $66.00 | $31.70 | $538.24 | $-226.80 | $167.29 | $-48.64 | 11 | $13.80 | $10.30 | $-5.80 |
-| crowded | 10s filtered | 50 | $31.64 | $0.00 | $31.64 | $15.19 | $5.26 | $12.66 | $5.26 | $12.66 | 0 | $0.00 | $0.00 | $0.00 |
+| crowded | 10s filtered | 100 | $98.88 | $-9.99 | $88.90 | $21.34 | $333.09 | $-58.63 | $216.85 | $-30.72 | 9 | $9.75 | $-8.67 | $-9.99 |
 
-Check on the print data: 2497 taker prints sat on the expected side of the midpoint (buys above, sells below), 1246 did not.
+Check on the print data: 2768 taker prints sat on the expected side of the midpoint (buys above, sells below), 1342 did not.
 
 Per market (latest first):
 
 | session | tier | market | pool | hours | rewards | trading P&L | net | lasting jumps loss | fills | inventory | markout 30m |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| run-39563704774 | crowded | Will Anthropic's market cap be between $1.75T and  | 185 | 5.0 | $3.45 | $0.00 | $3.45 | $0.00 | 0 | 0 | $0.00 |
-| run-39563704774 | crowded | Will Anthropic have the best AI model at the end o | 107 | 5.0 | $3.29 | $0.00 | $3.29 | $0.00 | 0 | 0 | $0.00 |
-| run-39563704774 | crowded | Will Aleksandar Vučić – United Serbia win the most | 613 | 5.0 | $3.06 | $0.00 | $3.06 | $0.00 | 0 | 0 | $0.00 |
-| run-39563704774 | crowded | US-Iran Hormuz Agreement by December 31? | 200 | 5.0 | $2.04 | $0.00 | $2.04 | $0.00 | 0 | 0 | $0.00 |
-| run-39563704774 | crowded | Will Lorne Doerkson be the next Premier of British | 94 | 5.0 | $1.77 | $0.00 | $1.77 | $0.00 | 0 | 0 | $0.00 |
-| run-39563704774 | empty | Will MrBeast's next video get between 113 and 115  | 165 | 5.0 | $34.05 | $31.64 | $65.70 | $3243.01 | 13 | -204 | $11.39 |
-| run-39563704774 | empty | Next Fable Model (5.2+) released by October 28, 20 | 200 | 5.0 | $32.84 | $0.00 | $32.84 | $79.68 | 0 | 0 | $0.00 |
-| run-39563704774 | empty | Next Fable Model (5.2+) released by October 26, 20 | 200 | 5.0 | $30.75 | $0.00 | $30.75 | $26.48 | 0 | 0 | $0.00 |
-| run-39563704774 | empty | Next Fable Model (5.2+) released by October 29, 20 | 200 | 5.0 | $21.54 | $0.00 | $21.54 | $0.00 | 0 | 0 | $0.00 |
-| run-39563704774 | empty | Will the next Fable model (5.2+) be released on Oc | 136 | 5.0 | $20.97 | $0.00 | $20.97 | $158.55 | 0 | 0 | $0.00 |
-| run-39563704774 | empty | Will OpenAI have the second highest OpenRouter mar | 115 | 5.0 | $17.05 | $0.00 | $17.05 | $343.84 | 0 | 0 | $0.00 |
-| run-39563704774 | empty | Will gemini-4-argon-high be the best AI model on O | 100 | 5.0 | $15.52 | $0.00 | $15.52 | $1150.45 | 1 | -20 | $0.00 |
-| run-39563704774 | medium | Will OpenAI have the best Image Edit AI at the end | 159 | 5.0 | $27.91 | $0.00 | $27.91 | $704.87 | 0 | 0 | $0.00 |
-| run-39563704774 | medium | Will Anthropic have the best AI model on LiveBench | 147 | 5.0 | $27.47 | $0.00 | $27.47 | $530.24 | 0 | 0 | $0.00 |
-| run-39563704774 | medium | Next Fable Model (5.2+) released by October 27, 20 | 200 | 5.0 | $26.99 | $0.00 | $26.99 | $0.00 | 0 | 0 | $0.00 |
-| run-39563704774 | medium | No change in Bank of Mexico’s interest rates after | 137 | 5.0 | $20.32 | $0.00 | $20.32 | $0.00 | 0 | 0 | $0.00 |
-| run-39563704774 | medium | Will Core PCE YoY be 3.1% in September? | 116 | 5.0 | $19.14 | $0.00 | $19.14 | $0.00 | 0 | 0 | $0.00 |
-| run-39563704774 | medium | Next Astra Model (6.1+) released by December 15, 2 | 200 | 5.0 | $18.02 | $0.00 | $18.02 | $10.64 | 0 | 0 | $0.00 |
-| run-39563704774 | medium | Will Iliana Iotova win the 2026 Bulgarian presiden | 268 | 5.0 | $10.57 | $0.00 | $10.57 | $0.00 | 0 | 0 | $0.00 |
-| run-39611059138 | crowded | Will Anthropic IPO by December 15, 2026? | 300 | 5.0 | $7.49 | $0.00 | $7.49 | $0.00 | 0 | 0 | $0.00 |
 | run-39611059138 | crowded | Will Anthropic IPO by November 30, 2026? | 100 | 5.0 | $4.01 | $0.00 | $4.01 | $0.00 | 0 | 0 | $0.00 |
 | run-39611059138 | crowded | Will Delcy Rodríguez be the leader of Venezuela en | 131 | 5.0 | $3.32 | $0.00 | $3.32 | $0.00 | 0 | 0 | $0.00 |
 | run-39611059138 | crowded | Will Anthropic's valuation hit (HIGH) $2.0T by Dec | 500 | 5.0 | $2.98 | $0.00 | $2.98 | $0.00 | 0 | 0 | $0.00 |
@@ -103,3 +83,23 @@ Per market (latest first):
 | run-39680581468 | medium | Will Alphabet be the third-largest company in the  | 110 | 5.0 | $21.31 | $0.03 | $21.34 | $349.72 | 1 | 3 | $0.02 |
 | run-39680581468 | medium | Will Russia capture Svitle by December 31? | 100 | 5.0 | $14.53 | $0.00 | $14.53 | $0.00 | 0 | 0 | $0.00 |
 | run-39680581468 | medium | Russia x Ukraine ceasefire by March 31, 2027? | 200 | 5.0 | $10.62 | $0.00 | $10.62 | $0.00 | 0 | 0 | $0.00 |
+| run-39724735561 | crowded | US x Iran ceasefire continues through November 30? | 200 | 5.0 | $8.16 | $0.00 | $8.16 | $0.00 | 0 | 0 | $0.00 |
+| run-39724735561 | crowded | Will Iliana Iotova win the 2026 Bulgarian presiden | 321 | 5.0 | $21.18 | $-13.16 | $8.02 | $206.38 | 1 | 263 | $-11.84 |
+| run-39724735561 | crowded | US x Iran ceasefire continues through October 31? | 2000 | 5.0 | $4.82 | $3.17 | $7.99 | $0.00 | 8 | 634 | $3.17 |
+| run-39724735561 | crowded | Will Anthropic IPO by December 15, 2026? | 300 | 5.0 | $7.60 | $0.00 | $7.60 | $0.00 | 0 | 0 | $0.00 |
+| run-39724735561 | crowded | Russia x Ukraine ceasefire by December 31, 2027? | 200 | 5.0 | $5.79 | $0.00 | $5.79 | $0.00 | 0 | 0 | $0.00 |
+| run-39724735561 | crowded | France declares state of emergency by October 31,  | 202 | 5.0 | $4.81 | $0.00 | $4.81 | $5.21 | 0 | 0 | $0.00 |
+| run-39724735561 | crowded | Russia x Ukraine ceasefire by March 31, 2027? | 200 | 5.0 | $4.62 | $0.00 | $4.62 | $0.00 | 0 | 0 | $0.00 |
+| run-39724735561 | crowded | US x Iran ceasefire continues through October 28? | 1000 | 5.0 | $3.94 | $0.00 | $3.94 | $0.00 | 0 | 0 | $0.00 |
+| run-39724735561 | crowded | Will Aleksandar Vučić be the next Prime Minister o | 745 | 5.0 | $3.53 | $0.00 | $3.53 | $0.00 | 0 | 0 | $0.00 |
+| run-39724735561 | crowded | US-Iran Hormuz Agreement by December 31? | 200 | 5.0 | $2.81 | $0.00 | $2.81 | $0.00 | 0 | 0 | $0.00 |
+| run-39724735561 | medium | Will Bryan Johnson dunk before 2027? | 200 | 5.0 | $26.81 | $0.00 | $26.81 | $232.98 | 0 | 0 | $0.00 |
+| run-39724735561 | medium | Will Brazil’s Annual Inflation in 2026 be between  | 126 | 5.0 | $16.72 | $0.00 | $16.72 | $0.00 | 0 | 0 | $0.00 |
+| run-39724735561 | medium | Will Russia enter Druzkhivka by June 30, 2027? | 100 | 5.0 | $15.72 | $0.00 | $15.72 | $21.28 | 0 | 0 | $0.00 |
+| run-39724735561 | medium | Will Russia enter Sloviansk by December 31, 2027? | 100 | 5.0 | $15.19 | $0.00 | $15.19 | $0.00 | 0 | 0 | $0.00 |
+| run-39724735561 | medium | Will Connor Wood be eliminated in week 7 of Dancin | 100 | 5.0 | $12.28 | $0.00 | $12.28 | $179.84 | 0 | 0 | $0.00 |
+| run-39724735561 | medium | Will Russia enter Sloviansk by June 30, 2027? | 100 | 5.0 | $11.36 | $0.00 | $11.36 | $0.00 | 0 | 0 | $0.00 |
+| run-39724735561 | medium | Will Russia capture Kucheriv Yar by December 31? | 100 | 5.0 | $11.33 | $0.00 | $11.33 | $0.00 | 0 | 0 | $0.00 |
+| run-39724735561 | medium | Will Russia enter Druzkhivka by December 31, 2027? | 100 | 5.0 | $10.39 | $0.00 | $10.39 | $10.53 | 0 | 0 | $0.00 |
+| run-39724735561 | medium | Will Russia enter Zaporizhia by December 31, 2027? | 100 | 5.0 | $9.35 | $0.00 | $9.35 | $0.00 | 0 | 0 | $0.00 |
+| run-39724735561 | medium | Tesla and SpaceX merger officially announced by Ja | 100 | 5.0 | $8.57 | $0.00 | $8.57 | $0.00 | 0 | 0 | $0.00 |
