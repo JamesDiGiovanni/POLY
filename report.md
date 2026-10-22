@@ -1,4 +1,4 @@
-## Paper market making for liquidity rewards: 5 sessions
+## Paper market making for liquidity rewards: 6 sessions
 
 $1,000 quoted per market on both sides at 0.5 x the max spread from the midpoint, re-quoted every `requote` seconds. Fills come from real taker prints (through our price, or at it once the queue ahead is gone). Markout = fill price against the midpoint later; negative = picked off.
 
@@ -10,35 +10,17 @@ Stale-quote loss: whenever the midpoint jumps past one of our quotes between re-
 | empty | 10s | 68 | $262.51 | $11.66 | $274.18 | $96.20 | $30,971.52 | $-10,770.66 | $7,098.74 | $-2,394.51 | 24 | $-2.69 | $-13.29 | $5.46 |
 | medium | 60s | 71 | $350.01 | $-25.00 | $325.01 | $109.93 | $3,759.16 | $-1,161.53 | $3,426.13 | $-1,048.89 | 4 | $-20.89 | $10.29 | $8.60 |
 | medium | 10s | 70 | $319.36 | $-1.60 | $317.76 | $109.00 | $7,929.23 | $-2,610.84 | $3,436.44 | $-1,069.75 | 1 | $-3.20 | $-1.60 | $-1.60 |
+| medium | 10s filtered | 50 | $616.58 | $-4.18 | $612.40 | $293.98 | $8,498.81 | $-3,785.79 | $2,360.57 | $-839.19 | 12 | $12.73 | $9.44 | $3.22 |
 | crowded | 60s | 71 | $72.73 | $-3.43 | $69.30 | $23.29 | $110.46 | $-13.84 | $78.55 | $-3.11 | 4 | $4.48 | $5.53 | $-3.43 |
 | crowded | 10s | 70 | $48.13 | $0.00 | $48.13 | $16.51 | $0.00 | $16.51 | $0.00 | $16.51 | 0 | $0.00 | $0.00 | $0.00 |
+| crowded | 10s filtered | 50 | $31.64 | $0.00 | $31.64 | $15.19 | $5.26 | $12.66 | $5.26 | $12.66 | 0 | $0.00 | $0.00 | $0.00 |
 
-Check on the print data: 1332 taker prints sat on the expected side of the midpoint (buys above, sells below), 575 did not.
+Check on the print data: 1993 taker prints sat on the expected side of the midpoint (buys above, sells below), 1066 did not.
 
 Per market (latest first):
 
 | session | tier | market | pool | hours | rewards | trading P&L | net | lasting jumps loss | fills | inventory | markout 30m |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| run-39499059959 | crowded | US x Iran ceasefire continues through December 31? | 200 | 5.0 | $2.50 | $0.00 | $2.50 | $0.00 | 0 | 0 | $0.00 |
-| run-39499059959 | crowded | US-Iran ceasefire continues through the midterms? | 1000 | 5.0 | $2.14 | $0.00 | $2.14 | $0.00 | 0 | 0 | $0.00 |
-| run-39499059959 | crowded | Alexandre de Moraes out as Brazil Supreme Court Ju | 103 | 5.0 | $2.00 | $0.00 | $2.00 | $0.00 | 0 | 0 | $0.00 |
-| run-39499059959 | empty | Marseille public gathering ban effectively lifted  | 202 | 5.0 | $40.01 | $28.61 | $68.62 | $344.44 | 3 | 137 | $41.02 |
-| run-39499059959 | empty | Paris curfew effectively lifted by October 31? | 200 | 5.0 | $33.83 | $0.00 | $33.83 | $0.00 | 0 | 0 | $0.00 |
-| run-39499059959 | empty | Will Anthropic have the best AI model on LiveBench | 152 | 5.0 | $24.79 | $0.00 | $24.79 | $3923.12 | 0 | 0 | $0.00 |
-| run-39499059959 | empty | Marseille public gathering ban effectively lifted  | 200 | 5.0 | $28.17 | $-6.33 | $21.84 | $21.90 | 1 | -87 | $0.22 |
-| run-39499059959 | empty | Will Trump say "Transgender" 7+ times during his M | 150 | 5.0 | $13.77 | $0.00 | $13.77 | $271.05 | 0 | 0 | $0.00 |
-| run-39499059959 | empty | Will Trump say "Hell" 15+ times during his Midterm | 150 | 5.0 | $13.84 | $-7.44 | $6.40 | $528.95 | 1 | 93 | $3.72 |
-| run-39499059959 | empty | WTI Crude Oil (WTI) Up or Down on October 20? | 200 | 4.9 | $5.56 | $0.00 | $5.56 | $134.83 | 0 | 0 | $0.00 |
-| run-39499059959 | medium | SPY (SPY) Up or Down on October 21? | 200 | 5.0 | $32.30 | $0.00 | $32.30 | $590.69 | 0 | 0 | $0.00 |
-| run-39499059959 | medium | Lyon curfew effectively lifted by October 24? | 200 | 5.0 | $24.51 | $0.00 | $24.51 | $47.87 | 0 | 0 | $0.00 |
-| run-39499059959 | medium | Paris curfew effectively lifted by October 24? | 200 | 5.0 | $24.42 | $0.00 | $24.42 | $37.23 | 0 | 0 | $0.00 |
-| run-39499059959 | medium | Will Trump say "Biden" or "Kamala" or "Obama" 15+  | 150 | 5.0 | $17.02 | $1.58 | $18.59 | $154.09 | 1 | -7 | $0.42 |
-| run-39499059959 | medium | Will Trump say "Hormuz" or "Blockade" during his M | 150 | 5.0 | $11.46 | $4.62 | $16.08 | $538.69 | 2 | 231 | $3.47 |
-| run-39499059959 | medium | Will Trump say "Ass" during his Midterm Rally in N | 150 | 4.5 | $10.96 | $0.00 | $10.96 | $95.74 | 0 | 0 | $0.00 |
-| run-39499059959 | medium | WTI Crude Oil (WTI) Up or Down on October 21? | 200 | 5.0 | $39.65 | $-31.20 | $8.45 | $1713.05 | 1 | -160 | $6.40 |
-| run-39533407188 | crowded | US x Iran ceasefire continues through October 31? | 2000 | 5.0 | $20.66 | $-3.43 | $17.23 | $10.10 | 4 | -1106 | $5.53 |
-| run-39533407188 | crowded | Will Iliana Iotova win the 2026 Bulgarian presiden | 161 | 5.0 | $7.68 | $0.00 | $7.68 | $53.19 | 0 | 0 | $0.00 |
-| run-39533407188 | crowded | Will Anthropic IPO by December 15, 2026? | 300 | 5.0 | $7.38 | $0.00 | $7.38 | $0.00 | 0 | 0 | $0.00 |
 | run-39533407188 | crowded | US x Iran ceasefire continues through November 30? | 200 | 5.0 | $3.49 | $0.00 | $3.49 | $0.00 | 0 | 0 | $0.00 |
 | run-39533407188 | crowded | Will Lorne Doerkson be the next Premier of British | 150 | 5.0 | $2.82 | $0.00 | $2.82 | $0.00 | 0 | 0 | $0.00 |
 | run-39533407188 | crowded | Will there be between 25 and 29 average daily tran | 117 | 5.0 | $1.56 | $0.00 | $1.56 | $0.00 | 0 | 0 | $0.00 |
@@ -99,3 +81,23 @@ Per market (latest first):
 | run-39611059138 | medium | Will Z.ai be the third-best Math AI lab at the end | 123 | 5.0 | $18.24 | $0.00 | $18.24 | $16.56 | 0 | 0 | $0.00 |
 | run-39611059138 | medium | Will the lowest temperature in Tokyo be 18°C on Oc | 60 | 5.0 | $12.30 | $-1.60 | $10.70 | $1608.72 | 1 | -40 | $-1.60 |
 | run-39611059138 | medium | US imports Russian diesel by December 31? | 100 | 5.0 | $6.48 | $0.00 | $6.48 | $0.00 | 0 | 0 | $0.00 |
+| run-39658784244 | crowded | US imports Russian diesel by November 30? | 100 | 5.0 | $5.09 | $0.00 | $5.09 | $5.26 | 0 | 0 | $0.00 |
+| run-39658784244 | crowded | Will no next Israeli Minister of Justice be appoin | 86 | 5.0 | $4.73 | $0.00 | $4.73 | $0.00 | 0 | 0 | $0.00 |
+| run-39658784244 | crowded | Will Anna Kelly be the next White House Press Secr | 109 | 5.0 | $3.76 | $0.00 | $3.76 | $0.00 | 0 | 0 | $0.00 |
+| run-39658784244 | crowded | Will Flávio Bolsonaro win the second round of the  | 237 | 5.0 | $3.52 | $0.00 | $3.52 | $0.00 | 0 | 0 | $0.00 |
+| run-39658784244 | crowded | France declares state of emergency by December 31, | 200 | 5.0 | $3.01 | $0.00 | $3.01 | $0.00 | 0 | 0 | $0.00 |
+| run-39658784244 | crowded | Will Anthropic's valuation hit (HIGH) $2.0T by Dec | 500 | 5.0 | $2.87 | $0.00 | $2.87 | $0.00 | 0 | 0 | $0.00 |
+| run-39658784244 | crowded | Skin cancer vaccine FDA approved by December 31, 2 | 100 | 5.0 | $2.38 | $0.00 | $2.38 | $0.00 | 0 | 0 | $0.00 |
+| run-39658784244 | crowded | Iran-Oman Hormuz Agreement by December 31? | 100 | 5.0 | $2.35 | $0.00 | $2.35 | $0.00 | 0 | 0 | $0.00 |
+| run-39658784244 | crowded | Iran-Oman Hormuz Agreement by November 30? | 100 | 5.0 | $2.06 | $0.00 | $2.06 | $0.00 | 0 | 0 | $0.00 |
+| run-39658784244 | crowded | Will Delcy Rodríguez be the leader of Venezuela en | 125 | 5.0 | $1.87 | $0.00 | $1.87 | $0.00 | 0 | 0 | $0.00 |
+| run-39658784244 | medium | US x Iran ceasefire continues through October 31? | 2000 | 5.0 | $252.92 | $-13.86 | $239.06 | $359.44 | 4 | 132 | $-9.31 |
+| run-39658784244 | medium | US x Iran ceasefire continues through October 28? | 1000 | 5.0 | $143.72 | $3.02 | $146.74 | $537.71 | 6 | -302 | $12.10 |
+| run-39658784244 | medium | Will Jynxzi beat the Elden Ring DLC by October 23? | 200 | 5.0 | $40.56 | $0.00 | $40.56 | $42.11 | 0 | 0 | $0.00 |
+| run-39658784244 | medium | Will Jynxzi beat the Elden Ring DLC by October 25? | 200 | 5.0 | $35.33 | $0.00 | $35.33 | $10.64 | 0 | 0 | $0.00 |
+| run-39658784244 | medium | US-Iran ceasefire continues through the midterms? | 300 | 5.0 | $27.88 | $6.66 | $34.54 | $109.05 | 2 | -333 | $6.66 |
+| run-39658784244 | medium | Will Vivek Ramaswamy pull the Amy Acton mother ad? | 200 | 5.0 | $30.13 | $0.00 | $30.13 | $1206.77 | 0 | 0 | $0.00 |
+| run-39658784244 | medium | US Gov confirms PHP2Shell exploited by October 31, | 200 | 5.0 | $26.78 | $0.00 | $26.78 | $63.27 | 0 | 0 | $0.00 |
+| run-39658784244 | medium | Another critical PHP security flaw in 2026? | 200 | 5.0 | $24.00 | $0.00 | $24.00 | $31.58 | 0 | 0 | $0.00 |
+| run-39658784244 | medium | Tornado in California by October 25? | 200 | 5.0 | $23.86 | $0.00 | $23.86 | $0.00 | 0 | 0 | $0.00 |
+| run-39658784244 | medium | US Gov confirms PHP2Shell exploited by December 31 | 200 | 5.0 | $11.40 | $0.00 | $11.40 | $0.00 | 0 | 0 | $0.00 |
