@@ -1,4 +1,4 @@
-## Paper market making for liquidity rewards: 9 sessions
+## Paper market making for liquidity rewards: 12 sessions
 
 $1,000 quoted per market on both sides at 0.5 x the max spread from the midpoint, re-quoted every `requote` seconds ("at 0.3x": quoted at 0.3 x the max spread instead). Fills come from real taker prints (through our price, or at it once the queue ahead is gone). Markout = fill price against the midpoint later; negative = picked off.
 
@@ -17,44 +17,14 @@ Stale-quote loss: whenever the midpoint jumps past one of our quotes between re-
 | crowded | 10s | 70 | $48.13 | $0.00 | $48.13 | $16.51 | $0.00 | $16.51 | $0.00 | $16.51 | 0 | $0.00 | $0.00 | $0.00 |
 | crowded | 10s filtered at 0.3x | 50 | $93.19 | $-27.19 | $66.00 | $31.70 | $538.24 | $-226.80 | $167.29 | $-48.64 | 11 | $13.80 | $10.30 | $-5.80 |
 | crowded | 10s filtered | 100 | $98.88 | $-9.99 | $88.90 | $21.34 | $333.09 | $-58.63 | $216.85 | $-30.72 | 9 | $9.75 | $-8.67 | $-9.99 |
-| crowded | 10s filtered+7d | 50 | $162.42 | $-0.69 | $161.72 | $77.67 | $204.90 | $-20.74 | $66.88 | $45.55 | 6 | $4.41 | $-4.35 | $-2.62 |
+| crowded | 10s filtered+7d | 200 | $269.72 | $41.28 | $311.00 | $37.34 | $490.88 | $-21.60 | $197.62 | $13.61 | 20 | $30.17 | $30.20 | $34.93 |
 
-Check on the print data: 3258 taker prints sat on the expected side of the midpoint (buys above, sells below), 1456 did not.
+Check on the print data: 3669 taker prints sat on the expected side of the midpoint (buys above, sells below), 1566 did not.
 
 Per market (latest first):
 
 | session | tier | market | pool | hours | rewards | trading P&L | net | lasting jumps loss | fills | inventory | markout 30m |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| run-39658784244 | crowded | US imports Russian diesel by November 30? | 100 | 5.0 | $5.09 | $0.00 | $5.09 | $5.26 | 0 | 0 | $0.00 |
-| run-39658784244 | crowded | Will no next Israeli Minister of Justice be appoin | 86 | 5.0 | $4.73 | $0.00 | $4.73 | $0.00 | 0 | 0 | $0.00 |
-| run-39658784244 | crowded | Will Anna Kelly be the next White House Press Secr | 109 | 5.0 | $3.76 | $0.00 | $3.76 | $0.00 | 0 | 0 | $0.00 |
-| run-39658784244 | crowded | Will Flávio Bolsonaro win the second round of the  | 237 | 5.0 | $3.52 | $0.00 | $3.52 | $0.00 | 0 | 0 | $0.00 |
-| run-39658784244 | crowded | France declares state of emergency by December 31, | 200 | 5.0 | $3.01 | $0.00 | $3.01 | $0.00 | 0 | 0 | $0.00 |
-| run-39658784244 | crowded | Will Anthropic's valuation hit (HIGH) $2.0T by Dec | 500 | 5.0 | $2.87 | $0.00 | $2.87 | $0.00 | 0 | 0 | $0.00 |
-| run-39658784244 | crowded | Skin cancer vaccine FDA approved by December 31, 2 | 100 | 5.0 | $2.38 | $0.00 | $2.38 | $0.00 | 0 | 0 | $0.00 |
-| run-39658784244 | crowded | Iran-Oman Hormuz Agreement by December 31? | 100 | 5.0 | $2.35 | $0.00 | $2.35 | $0.00 | 0 | 0 | $0.00 |
-| run-39658784244 | crowded | Iran-Oman Hormuz Agreement by November 30? | 100 | 5.0 | $2.06 | $0.00 | $2.06 | $0.00 | 0 | 0 | $0.00 |
-| run-39658784244 | crowded | Will Delcy Rodríguez be the leader of Venezuela en | 125 | 5.0 | $1.87 | $0.00 | $1.87 | $0.00 | 0 | 0 | $0.00 |
-| run-39658784244 | medium | US x Iran ceasefire continues through October 31? | 2000 | 5.0 | $252.92 | $-13.86 | $239.06 | $359.44 | 4 | 132 | $-9.31 |
-| run-39658784244 | medium | US x Iran ceasefire continues through October 28? | 1000 | 5.0 | $143.72 | $3.02 | $146.74 | $537.71 | 6 | -302 | $12.10 |
-| run-39658784244 | medium | Will Jynxzi beat the Elden Ring DLC by October 23? | 200 | 5.0 | $40.56 | $0.00 | $40.56 | $42.11 | 0 | 0 | $0.00 |
-| run-39658784244 | medium | Will Jynxzi beat the Elden Ring DLC by October 25? | 200 | 5.0 | $35.33 | $0.00 | $35.33 | $10.64 | 0 | 0 | $0.00 |
-| run-39658784244 | medium | US-Iran ceasefire continues through the midterms? | 300 | 5.0 | $27.88 | $6.66 | $34.54 | $109.05 | 2 | -333 | $6.66 |
-| run-39658784244 | medium | Will Vivek Ramaswamy pull the Amy Acton mother ad? | 200 | 5.0 | $30.13 | $0.00 | $30.13 | $1206.77 | 0 | 0 | $0.00 |
-| run-39658784244 | medium | US Gov confirms PHP2Shell exploited by October 31, | 200 | 5.0 | $26.78 | $0.00 | $26.78 | $63.27 | 0 | 0 | $0.00 |
-| run-39658784244 | medium | Another critical PHP security flaw in 2026? | 200 | 5.0 | $24.00 | $0.00 | $24.00 | $31.58 | 0 | 0 | $0.00 |
-| run-39658784244 | medium | Tornado in California by October 25? | 200 | 5.0 | $23.86 | $0.00 | $23.86 | $0.00 | 0 | 0 | $0.00 |
-| run-39658784244 | medium | US Gov confirms PHP2Shell exploited by December 31 | 200 | 5.0 | $11.40 | $0.00 | $11.40 | $0.00 | 0 | 0 | $0.00 |
-| run-39680581468 | crowded | Another critical PHP security flaw in 2026? | 200 | 5.0 | $17.29 | $0.00 | $17.29 | $0.00 | 0 | 0 | $0.00 |
-| run-39680581468 | crowded | US x Iran ceasefire continues through November 30? | 200 | 5.0 | $10.38 | $1.27 | $11.65 | $5.05 | 1 | -127 | $1.91 |
-| run-39680581468 | crowded | Will Anna Kelly be the next White House Press Secr | 109 | 5.0 | $10.34 | $0.00 | $10.34 | $131.73 | 0 | 0 | $0.00 |
-| run-39680581468 | crowded | Will Aleksandar Vučić be the next Prime Minister o | 750 | 5.0 | $8.22 | $0.00 | $8.22 | $0.00 | 0 | 0 | $0.00 |
-| run-39680581468 | crowded | Will Flávio Bolsonaro win the second round of the  | 293 | 5.0 | $6.78 | $0.00 | $6.78 | $0.00 | 0 | 0 | $0.00 |
-| run-39680581468 | crowded | US-Iran Hormuz Agreement by December 31? | 200 | 5.0 | $5.31 | $0.00 | $5.31 | $0.00 | 0 | 0 | $0.00 |
-| run-39680581468 | crowded | Will Flávio Bolsonaro win the second round of the  | 209 | 5.0 | $5.22 | $0.00 | $5.22 | $0.00 | 0 | 0 | $0.00 |
-| run-39680581468 | crowded | US announces end of Iranian blockade by October 31 | 200 | 5.0 | $4.01 | $0.00 | $4.01 | $25.41 | 0 | 0 | $0.00 |
-| run-39680581468 | crowded | Will oil be at least $85 on November 2 and the Dem | 500 | 5.0 | $3.81 | $0.00 | $3.81 | $0.00 | 0 | 0 | $0.00 |
-| run-39680581468 | crowded | US x Iran ceasefire continues through October 24? | 1000 | 5.0 | $21.83 | $-28.46 | $-6.62 | $5.10 | 10 | -1546 | $8.39 |
 | run-39680581468 | medium | US x Iran ceasefire continues through October 31? | 2000 | 5.0 | $85.67 | $-0.68 | $84.99 | $85.23 | 1 | 136 | $0.68 |
 | run-39680581468 | medium | US x Iran ceasefire continues through October 28? | 1000 | 5.0 | $56.04 | $-0.22 | $55.82 | $20.25 | 2 | -44 | $0.08 |
 | run-39680581468 | medium | France accuses foreign country of provoking unrest | 200 | 5.0 | $32.01 | $0.00 | $32.01 | $127.97 | 0 | 0 | $0.00 |
@@ -105,3 +75,33 @@ Per market (latest first):
 | run-39774419890 | medium | Will Katie Zacharia be officially given a new role | 50 | 5.0 | $6.15 | $0.00 | $6.15 | $0.00 | 0 | 0 | $0.00 |
 | run-39774419890 | medium | Ilhan Omar denaturalization case filed by December | 50 | 5.0 | $5.70 | $0.00 | $5.70 | $0.00 | 0 | 0 | $0.00 |
 | run-39774419890 | medium | Another critical PHP security flaw in 2026? | 50 | 5.0 | $5.30 | $0.00 | $5.30 | $430.68 | 0 | 0 | $0.00 |
+| run-39820203569-s0 | crowded | NATO x Russia military clash by October 31, 2026? | 650 | 5.0 | $44.06 | $41.97 | $86.03 | $61.59 | 14 | 144 | $34.54 |
+| run-39820203569-s0 | crowded | France declares state of emergency by December 31, | 200 | 5.0 | $5.22 | $0.00 | $5.22 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s0 | crowded | Will OpenAI announce another Millennium Prize solu | 200 | 5.0 | $2.11 | $0.00 | $2.11 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s0 | crowded | JD Vance 2028 presidential odds leader on November | 50 | 5.0 | $1.69 | $0.00 | $1.69 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s0 | crowded | Will the Democratic Party win the AL-02 House seat | 49 | 5.0 | $1.24 | $0.00 | $1.24 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s0 | crowded | US-Iran Hormuz Agreement by December 31? | 200 | 5.0 | $1.23 | $0.00 | $1.23 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s0 | crowded | Will oil be at least $85 on November 2 and the Rep | 500 | 5.0 | $1.12 | $0.00 | $1.12 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s0 | crowded | Will oil be at least $80 on November 2 and the Dem | 500 | 5.0 | $1.11 | $0.00 | $1.11 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s0 | crowded | Will the Democratic Party win the IA-02 House seat | 51 | 5.0 | $0.82 | $0.00 | $0.82 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s0 | crowded | Will the Democratic Party win the NV-02 House seat | 50 | 5.0 | $0.67 | $0.00 | $0.67 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s1 | crowded | Will Anthropic IPO by December 15, 2026? | 300 | 5.0 | $8.70 | $0.00 | $8.70 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s1 | crowded | Pedro Sánchez out as PM of Spain by January 15, 20 | 50 | 5.0 | $2.90 | $0.00 | $2.90 | $69.15 | 0 | 0 | $0.00 |
+| run-39820203569-s1 | crowded | Will the Republican Party win the MI-04 House seat | 50 | 5.0 | $1.81 | $0.00 | $1.81 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s1 | crowded | Next US-Iran senior diplomatic meeting by November | 50 | 5.0 | $1.67 | $0.00 | $1.67 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s1 | crowded | Next White House Press Secretary announced by Dece | 50 | 5.0 | $1.65 | $0.00 | $1.65 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s1 | crowded | Israel x Iran ceasefire continues through October  | 100 | 5.0 | $1.35 | $0.00 | $1.35 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s1 | crowded | Will the Democratic Party win the FL-13 House seat | 50 | 5.0 | $1.31 | $0.00 | $1.31 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s1 | crowded | Will the Democratic Party win the AL-02 House seat | 49 | 5.0 | $1.24 | $0.00 | $1.24 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s1 | crowded | US-Iran Hormuz Agreement by December 31? | 200 | 5.0 | $1.23 | $0.00 | $1.23 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s1 | crowded | Will oil be at least $80 on November 2 and the Rep | 500 | 5.0 | $0.99 | $0.00 | $0.99 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s2 | crowded | US x Iran ceasefire continues through October 28? | 1000 | 5.0 | $11.07 | $0.00 | $11.07 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s2 | crowded | Russia x Ukraine ceasefire by December 31, 2027? | 200 | 5.0 | $3.59 | $0.00 | $3.59 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s2 | crowded | Next White House Press Secretary announced by Nove | 50 | 5.0 | $1.72 | $0.00 | $1.72 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s2 | crowded | Will no next Israeli Minister of National Security | 80 | 5.0 | $1.71 | $0.00 | $1.71 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s2 | crowded | JD Vance 2028 presidential odds leader on November | 50 | 5.0 | $1.70 | $0.00 | $1.70 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s2 | crowded | Will the Democratic Party win the NC-01 House seat | 50 | 5.0 | $1.28 | $0.00 | $1.28 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s2 | crowded | Will oil be at least $85 on November 2 and the Dem | 500 | 5.0 | $1.19 | $0.00 | $1.19 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s2 | crowded | Will the Democratic Party win the NC-11 House seat | 53 | 5.0 | $1.14 | $0.00 | $1.14 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s2 | crowded | Will oil be at least $85 on November 2 and the Rep | 500 | 5.0 | $1.11 | $0.00 | $1.11 | $0.00 | 0 | 0 | $0.00 |
+| run-39820203569-s2 | crowded | Will the Democratic Party win the NV-02 House seat | 50 | 5.0 | $0.67 | $0.00 | $0.67 | $0.00 | 0 | 0 | $0.00 |
