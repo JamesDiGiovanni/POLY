@@ -250,12 +250,14 @@ def select_markets(rapi: RewardsAPI, papi: PolymarketAPI, p: dict) -> list[tuple
     for m in ms:
         m["yes_token"] = None              # need both tokens and the tick: fetch the full market
     _fill_tokens(rapi, ms)
-    today = dt.datetime.now(dt.timezone.utc).date().isoformat()
+    today = dt.datetime.now(dt.timezone.utc).date()
+    # Markets about to resolve carry the event itself (vote counts, deadlines): skip the last days.
+    soonest = (today + dt.timedelta(days=int(p.get("min_days_to_end") or 0))).isoformat()
     # A market past its end date is waiting on resolution: no market maker would quote it.
     # Markets whose news lands in public jumps (temperatures, leaderboards, view and post counts) picked off
     # every paper session: config lists them.
     ms = [m for m in ms if m["yes_token"] and m.get("no_token") and m["max_spread"] > 0
-          and not (m.get("end") and str(m["end"])[:10] < today) and not excluded(m["question"], p.get("exclude_patterns"))]
+          and not (m.get("end") and str(m["end"])[:10] < soonest) and not excluded(m["question"], p.get("exclude_patterns"))]
 
     def one(m):
         try:
@@ -332,7 +334,8 @@ def run(cfg, session: str, minutes: float | None = None) -> str:
 
 def write_session(out: Path, states: list[MarketState], p: dict, now: float) -> str:
     rows = [{**summarise(s, p["markout_min"], now), "interval_s": p["interval_s"], "quote_frac": p["quote_frac"],
-             "selection": "filtered" if p.get("exclude_patterns") else "all"} for s in states]
+             "selection": ("filtered" if p.get("exclude_patterns") else "all")
+             + (f"+{p['min_days_to_end']}d" if p.get("min_days_to_end") else "")} for s in states]
     if rows:
         with open(out / "summary.csv", "w", newline="") as f:
             w = csv.DictWriter(f, list(rows[0]))
@@ -379,7 +382,7 @@ def report(root: Path, p: dict) -> str:
         persist_day = (rw + tp - sp) / hrs * 24 if hrs else 0.0
         per_day = (rw + tp) / hrs * 24 if hrs else 0.0
         worst = (rw + tp - sl) / hrs * 24 if hrs else 0.0
-        lines.append(f"| {name} | {iv:.0f}s{' filtered' if sel == 'filtered' else ''}{f' at {qf:g}x' if qf != 0.5 else ''} | {hrs:,.0f} | ${rw:,.2f} | ${tp:,.2f} | ${rw + tp:,.2f} | ${per_day:,.2f} | "
+        lines.append(f"| {name} | {iv:.0f}s{' ' + sel if sel != 'all' else ''}{f' at {qf:g}x' if qf != 0.5 else ''} | {hrs:,.0f} | ${rw:,.2f} | ${tp:,.2f} | ${rw + tp:,.2f} | ${per_day:,.2f} | "
                      f"${sl:,.2f} | ${worst:,.2f} | ${sp:,.2f} | ${persist_day:,.2f} | "
                      f"{sum(r['fills'] for r in g):.0f} | " + " | ".join(f"${sum(r[f'markout_{h}m'] for r in g):,.2f}" for h in hz) + " |")
     ok, wrong = sum(r.get("prints_side_ok", 0) for r in rows), sum(r.get("prints_side_wrong", 0) for r in rows)

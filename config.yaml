@@ -238,6 +238,9 @@ rewards:
     min_pool: 20               # $/day; smaller pools are not worth a slot
     max_inventory_mult: 2      # stop quoting the side that would take inventory past 2 x the quote size
     markout_min: [5, 30, 120]
+    # The one crowded-market loss so far (Bulgarian election, 3 days before the vote) was a market about to
+    # resolve. Out-of-sample check from session 8 on: excluding those would have turned -$11 into +$18/day per $1k.
+    min_days_to_end: 7
     tiers_used: [medium, crowded]   # sessions 1-4: empty books lost on every session
     per_tier: 10
     # Market types whose information arrives in public jumps a bot sees first; each lost more than its
