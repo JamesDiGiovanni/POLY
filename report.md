@@ -1,4 +1,4 @@
-## Paper market making for liquidity rewards: 12 sessions
+## Paper market making for liquidity rewards: 15 sessions
 
 $1,000 quoted per market on both sides at 0.5 x the max spread from the midpoint, re-quoted every `requote` seconds ("at 0.3x": quoted at 0.3 x the max spread instead). Fills come from real taker prints (through our price, or at it once the queue ahead is gone). Markout = fill price against the midpoint later; negative = picked off.
 
@@ -17,44 +17,14 @@ Stale-quote loss: whenever the midpoint jumps past one of our quotes between re-
 | crowded | 10s | 70 | $48.13 | $0.00 | $48.13 | $16.51 | $0.00 | $16.51 | $0.00 | $16.51 | 0 | $0.00 | $0.00 | $0.00 |
 | crowded | 10s filtered at 0.3x | 50 | $93.19 | $-27.19 | $66.00 | $31.70 | $538.24 | $-226.80 | $167.29 | $-48.64 | 11 | $13.80 | $10.30 | $-5.80 |
 | crowded | 10s filtered | 100 | $98.88 | $-9.99 | $88.90 | $21.34 | $333.09 | $-58.63 | $216.85 | $-30.72 | 9 | $9.75 | $-8.67 | $-9.99 |
-| crowded | 10s filtered+7d | 200 | $269.72 | $41.28 | $311.00 | $37.34 | $490.88 | $-21.60 | $197.62 | $13.61 | 20 | $30.17 | $30.20 | $34.93 |
+| crowded | 10s filtered+7d | 350 | $354.04 | $41.28 | $395.31 | $27.12 | $532.12 | $-9.39 | $213.08 | $12.50 | 20 | $30.17 | $30.20 | $34.93 |
 
-Check on the print data: 3669 taker prints sat on the expected side of the midpoint (buys above, sells below), 1566 did not.
+Check on the print data: 3942 taker prints sat on the expected side of the midpoint (buys above, sells below), 1623 did not.
 
 Per market (latest first):
 
 | session | tier | market | pool | hours | rewards | trading P&L | net | lasting jumps loss | fills | inventory | markout 30m |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| run-39680581468 | medium | US x Iran ceasefire continues through October 31? | 2000 | 5.0 | $85.67 | $-0.68 | $84.99 | $85.23 | 1 | 136 | $0.68 |
-| run-39680581468 | medium | US x Iran ceasefire continues through October 28? | 1000 | 5.0 | $56.04 | $-0.22 | $55.82 | $20.25 | 2 | -44 | $0.08 |
-| run-39680581468 | medium | France accuses foreign country of provoking unrest | 200 | 5.0 | $32.01 | $0.00 | $32.01 | $127.97 | 0 | 0 | $0.00 |
-| run-39680581468 | medium | Paris curfew effectively lifted by November 7? | 200 | 5.0 | $27.44 | $0.00 | $27.44 | $262.73 | 0 | 0 | $0.00 |
-| run-39680581468 | medium | US x Iran ceasefire continues through October 22? | 1010 | 5.0 | $31.98 | $-4.87 | $27.11 | $0.00 | 3 | -165 | $-0.17 |
-| run-39680581468 | medium | Will GPT Astra 6.1+ debut at a score of at least 1 | 200 | 5.0 | $23.31 | $0.00 | $23.31 | $0.00 | 0 | 0 | $0.00 |
-| run-39680581468 | medium | Will Vivek Ramaswamy pull the Amy Acton mother ad? | 200 | 5.0 | $22.78 | $0.00 | $22.78 | $56.65 | 0 | 0 | $0.00 |
-| run-39680581468 | medium | Will Alphabet be the third-largest company in the  | 110 | 5.0 | $21.31 | $0.03 | $21.34 | $349.72 | 1 | 3 | $0.02 |
-| run-39680581468 | medium | Will Russia capture Svitle by December 31? | 100 | 5.0 | $14.53 | $0.00 | $14.53 | $0.00 | 0 | 0 | $0.00 |
-| run-39680581468 | medium | Russia x Ukraine ceasefire by March 31, 2027? | 200 | 5.0 | $10.62 | $0.00 | $10.62 | $0.00 | 0 | 0 | $0.00 |
-| run-39724735561 | crowded | US x Iran ceasefire continues through November 30? | 200 | 5.0 | $8.16 | $0.00 | $8.16 | $0.00 | 0 | 0 | $0.00 |
-| run-39724735561 | crowded | Will Iliana Iotova win the 2026 Bulgarian presiden | 321 | 5.0 | $21.18 | $-13.16 | $8.02 | $206.38 | 1 | 263 | $-11.84 |
-| run-39724735561 | crowded | US x Iran ceasefire continues through October 31? | 2000 | 5.0 | $4.82 | $3.17 | $7.99 | $0.00 | 8 | 634 | $3.17 |
-| run-39724735561 | crowded | Will Anthropic IPO by December 15, 2026? | 300 | 5.0 | $7.60 | $0.00 | $7.60 | $0.00 | 0 | 0 | $0.00 |
-| run-39724735561 | crowded | Russia x Ukraine ceasefire by December 31, 2027? | 200 | 5.0 | $5.79 | $0.00 | $5.79 | $0.00 | 0 | 0 | $0.00 |
-| run-39724735561 | crowded | France declares state of emergency by October 31,  | 202 | 5.0 | $4.81 | $0.00 | $4.81 | $5.21 | 0 | 0 | $0.00 |
-| run-39724735561 | crowded | Russia x Ukraine ceasefire by March 31, 2027? | 200 | 5.0 | $4.62 | $0.00 | $4.62 | $0.00 | 0 | 0 | $0.00 |
-| run-39724735561 | crowded | US x Iran ceasefire continues through October 28? | 1000 | 5.0 | $3.94 | $0.00 | $3.94 | $0.00 | 0 | 0 | $0.00 |
-| run-39724735561 | crowded | Will Aleksandar Vučić be the next Prime Minister o | 745 | 5.0 | $3.53 | $0.00 | $3.53 | $0.00 | 0 | 0 | $0.00 |
-| run-39724735561 | crowded | US-Iran Hormuz Agreement by December 31? | 200 | 5.0 | $2.81 | $0.00 | $2.81 | $0.00 | 0 | 0 | $0.00 |
-| run-39724735561 | medium | Will Bryan Johnson dunk before 2027? | 200 | 5.0 | $26.81 | $0.00 | $26.81 | $232.98 | 0 | 0 | $0.00 |
-| run-39724735561 | medium | Will Brazil’s Annual Inflation in 2026 be between  | 126 | 5.0 | $16.72 | $0.00 | $16.72 | $0.00 | 0 | 0 | $0.00 |
-| run-39724735561 | medium | Will Russia enter Druzkhivka by June 30, 2027? | 100 | 5.0 | $15.72 | $0.00 | $15.72 | $21.28 | 0 | 0 | $0.00 |
-| run-39724735561 | medium | Will Russia enter Sloviansk by December 31, 2027? | 100 | 5.0 | $15.19 | $0.00 | $15.19 | $0.00 | 0 | 0 | $0.00 |
-| run-39724735561 | medium | Will Connor Wood be eliminated in week 7 of Dancin | 100 | 5.0 | $12.28 | $0.00 | $12.28 | $179.84 | 0 | 0 | $0.00 |
-| run-39724735561 | medium | Will Russia enter Sloviansk by June 30, 2027? | 100 | 5.0 | $11.36 | $0.00 | $11.36 | $0.00 | 0 | 0 | $0.00 |
-| run-39724735561 | medium | Will Russia capture Kucheriv Yar by December 31? | 100 | 5.0 | $11.33 | $0.00 | $11.33 | $0.00 | 0 | 0 | $0.00 |
-| run-39724735561 | medium | Will Russia enter Druzkhivka by December 31, 2027? | 100 | 5.0 | $10.39 | $0.00 | $10.39 | $10.53 | 0 | 0 | $0.00 |
-| run-39724735561 | medium | Will Russia enter Zaporizhia by December 31, 2027? | 100 | 5.0 | $9.35 | $0.00 | $9.35 | $0.00 | 0 | 0 | $0.00 |
-| run-39724735561 | medium | Tesla and SpaceX merger officially announced by Ja | 100 | 5.0 | $8.57 | $0.00 | $8.57 | $0.00 | 0 | 0 | $0.00 |
 | run-39774419890 | crowded | US x Iran ceasefire continues through October 31? | 2002 | 5.0 | $64.07 | $-0.69 | $63.38 | $25.96 | 6 | -28 | $-4.35 |
 | run-39774419890 | crowded | US x Iran ceasefire continues through October 28? | 1000 | 5.0 | $47.65 | $0.00 | $47.65 | $30.61 | 0 | 0 | $0.00 |
 | run-39774419890 | crowded | US x Iran ceasefire continues through December 31? | 200 | 5.0 | $10.08 | $0.00 | $10.08 | $0.00 | 0 | 0 | $0.00 |
@@ -105,3 +75,33 @@ Per market (latest first):
 | run-39820203569-s2 | crowded | Will the Democratic Party win the NC-11 House seat | 53 | 5.0 | $1.14 | $0.00 | $1.14 | $0.00 | 0 | 0 | $0.00 |
 | run-39820203569-s2 | crowded | Will oil be at least $85 on November 2 and the Rep | 500 | 5.0 | $1.11 | $0.00 | $1.11 | $0.00 | 0 | 0 | $0.00 |
 | run-39820203569-s2 | crowded | Will the Democratic Party win the NV-02 House seat | 50 | 5.0 | $0.67 | $0.00 | $0.67 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s0 | crowded | US x Iran ceasefire continues through October 31? | 2002 | 5.0 | $7.43 | $0.00 | $7.43 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s0 | crowded | US x Iran ceasefire continues through November 30? | 200 | 5.0 | $5.36 | $0.00 | $5.36 | $5.15 | 0 | 0 | $0.00 |
+| run-39858909252-s0 | crowded | Russia x Ukraine ceasefire by December 31, 2027? | 200 | 5.0 | $4.85 | $0.00 | $4.85 | $10.31 | 0 | 0 | $0.00 |
+| run-39858909252-s0 | crowded | Will 1 Fed rate hike happen in 2026? | 200 | 5.0 | $4.30 | $0.00 | $4.30 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s0 | crowded | Another Fed rate hike in 2026? | 150 | 5.0 | $2.74 | $0.00 | $2.74 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s0 | crowded | Iran-Oman Hormuz Agreement by December 31? | 100 | 5.0 | $2.09 | $0.00 | $2.09 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s0 | crowded | Will the Republican Party win the NJ-02 House seat | 51 | 5.0 | $1.47 | $0.00 | $1.47 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s0 | crowded | Will no next Israeli Minister of National Security | 80 | 5.0 | $1.46 | $0.00 | $1.46 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s0 | crowded | Iran-Oman Hormuz Agreement by November 30? | 100 | 5.0 | $1.25 | $0.00 | $1.25 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s0 | crowded | Will the Democratic Party win the NC-11 House seat | 52 | 5.0 | $1.24 | $0.00 | $1.24 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s1 | crowded | Will the next GPT Terra model (5.7+) debut at a sc | 200 | 5.0 | $8.42 | $0.00 | $8.42 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s1 | crowded | US x Iran ceasefire continues through December 31? | 200 | 5.0 | $3.28 | $0.00 | $3.28 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s1 | crowded | Will Saudi airspace be closed by December 31? | 100 | 5.0 | $3.19 | $0.00 | $3.19 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s1 | crowded | Another Fed rate hike in 2026? | 150 | 5.0 | $2.72 | $0.00 | $2.72 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s1 | crowded | Will there be no change in Fed interest rates afte | 108 | 5.0 | $1.86 | $0.00 | $1.86 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s1 | crowded | Will the Republican Party win the AL-02 House seat | 50 | 5.0 | $1.80 | $0.00 | $1.80 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s1 | crowded | Will the Democratic Party win the MT-01 House seat | 50 | 5.0 | $1.75 | $0.00 | $1.75 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s1 | crowded | US announces end of Iranian blockade by December 3 | 100 | 5.0 | $1.58 | $0.00 | $1.58 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s1 | crowded | Will no next Israeli Minister of National Security | 80 | 5.0 | $1.46 | $0.00 | $1.46 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s1 | crowded | Will the Republican Party win the PA-08 House seat | 50 | 5.0 | $1.11 | $0.00 | $1.11 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s2 | crowded | Will Jared Kushner attend a US x Iran diplomatic m | 200 | 5.0 | $9.08 | $0.00 | $9.08 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s2 | crowded | Will Saudi airspace be closed by December 31? | 100 | 5.0 | $3.20 | $0.00 | $3.20 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s2 | crowded | Will Anthropic IPO by December 15, 2026? | 100 | 5.0 | $2.98 | $0.00 | $2.98 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s2 | crowded | Will there be no change in Fed interest rates afte | 108 | 5.0 | $1.86 | $0.00 | $1.86 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s2 | crowded | US x Iran ceasefire continues through October 28? | 1000 | 5.0 | $1.81 | $0.00 | $1.81 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s2 | crowded | Will the Democratic Party win the MT-01 House seat | 50 | 5.0 | $1.74 | $0.00 | $1.74 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s2 | crowded | Will the Republican Party win the PA-08 House seat | 50 | 5.0 | $1.11 | $0.00 | $1.11 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s2 | crowded | US-Iran ceasefire continues through the midterms? | 300 | 5.0 | $1.09 | $0.00 | $1.09 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s2 | crowded | Israel x Iran ceasefire continues through October  | 100 | 5.0 | $1.08 | $0.00 | $1.08 | $0.00 | 0 | 0 | $0.00 |
+| run-39858909252-s2 | crowded | Will there be no change in Fed interest rates afte | 90 | 5.0 | $1.02 | $0.00 | $1.02 | $0.00 | 0 | 0 | $0.00 |
