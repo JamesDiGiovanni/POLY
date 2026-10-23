@@ -162,6 +162,9 @@ def main(argv=None) -> int:
     s.add_argument("--interval", type=float, default=None, help="seconds between re-quotes")
     s.add_argument("--quote-frac", type=float, default=None, help="distance from the mid, x max spread")
     s.add_argument("--shard", default=None, help="i/n: quote every n-th market starting at i (parallel sessions)")
+    s = sub.add_parser("ls-data", help="longshot backtest: resolved markets and their final weeks of prices")
+    s.add_argument("--steps", default="markets,prices")
+    sub.add_parser("ls-eval", help="longshot backtest: does betting against longshots pay? writes output/longshot")
     sub.add_parser("summary", help="markdown summary of the latest results (verdict, funnel, wallets)")
     s = sub.add_parser("fees", help="fee sources per market, and which formula matches real fills")
     s.add_argument("--since", default="2026-03-30", help="only trades after this date (fee schedule V2)")
@@ -251,6 +254,15 @@ def main(argv=None) -> int:
             i, n = (int(x) for x in args.shard.split("/"))
             cfg["rewards"]["paper"].update(shard=i, shards=n)
         print(paper.run(cfg, args.session or dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d-%H%M"), args.minutes))
+    elif args.cmd in ("ls-data", "ls-eval"):
+        from .longshot import backtest as ls_backtest, data as ls_data
+        if args.cmd == "ls-data":
+            api = _api(cfg)
+            if "markets" in args.steps:
+                ls_data.ingest_markets(con, api, cfg)
+            if "prices" in args.steps:
+                ls_data.ingest_prices(con, api, cfg)
+        print(ls_backtest.evaluate(con, cfg))
     elif args.cmd == "summary":
         print(report.markdown_summary(con, cfg))
     elif args.cmd == "fees":

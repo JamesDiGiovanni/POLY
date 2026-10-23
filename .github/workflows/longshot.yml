@@ -1,0 +1,78 @@
+# Longshot backtest: does buying the favourite against cheap longshots pay on Polymarket after costs?
+# Results: run summary, the longshot-output artifact, and the longshot-results branch.
+name: Longshot backtest
+
+on:
+  workflow_dispatch:
+    inputs:
+      steps:
+        description: "full: fetch markets + prices, then evaluate. eval: evaluate cached data only"
+        type: choice
+        options: [full, eval]
+        default: full
+
+permissions:
+  contents: write
+
+concurrency:
+  group: longshot
+  cancel-in-progress: false
+
+jobs:
+  longshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Unit tests
+        run: python -m pytest -q
+      - name: Restore data
+        uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: longshot-data-${{ github.run_id }}
+          restore-keys: longshot-data-
+      - name: Fetch markets and prices
+        if: inputs.steps == 'full'
+        run: python -m polybt ls-data 2>&1 | tee run.log
+      - name: Evaluate
+        if: inputs.steps == 'eval'
+        run: python -m polybt ls-eval 2>&1 | tee run.log
+      - name: Save data
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data
+          key: longshot-data-${{ github.run_id }}
+      - name: Summary
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          mkdir -p output/longshot
+          if [ "$JOB_STATUS" != "success" ]; then
+            { echo "## RUN FAILED"; echo; echo '```'; tail -n 40 run.log 2>/dev/null; echo '```'; } > output/longshot/summary.md
+          else
+            cp output/longshot/report.md output/longshot/summary.md
+          fi
+          cat output/longshot/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish to longshot-results branch
+        if: always()
+        run: |
+          mkdir -p /tmp/results && cp -r output/longshot/. /tmp/results/ 2>/dev/null || true
+          cp run.log /tmp/results/ 2>/dev/null || true
+          cd /tmp/results
+          git init -q -b longshot-results
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Longshot results (${{ inputs.steps }}) from run ${{ github.run_id }}" || exit 0
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" longshot-results
