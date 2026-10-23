@@ -74,3 +74,22 @@ def test_evaluate_end_to_end(tmp_path):
     text = evaluate(con, cfg)
     assert "| 1 | 5¢ | all | 40 | 40 |" in text and "2.5%" in text      # hit rate 1/40
     assert (tmp_path / "longshot" / "bets.csv").exists()
+
+
+def test_prices_fetch_one_day_per_decision_time(tmp_path):
+    from polybt.longshot.data import ingest_prices
+    cfg = load(overrides={"longshot": {"horizons_days": [1, 7, 30]}})
+    con = db.connect(str(tmp_path / "t.duckdb"))
+    con.execute(SCHEMA)
+    # closed 10 days early: the 1- and 7-day decision times are after the close, only 30 is fetched
+    con.execute("INSERT INTO ls_markets VALUES ('c','Q','e',false,'y',0.0,?,?,1e4,'politics')", [END, END - 10 * DAY])
+    calls = []
+
+    class Api:
+        def prices_history(self, token, start, end, fidelity):
+            calls.append((start, end))
+            return [(end - 60, 0.03)]
+
+    assert ingest_prices(con, Api(), cfg) == 1
+    assert calls == [(END - 30 * DAY - 24 * 3600, END - 30 * DAY)]
+    assert con.execute("SELECT count(*) FROM ls_prices").fetchone()[0] == 1

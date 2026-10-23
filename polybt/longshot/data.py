@@ -73,21 +73,28 @@ def ingest_markets(con, api: PolymarketAPI, cfg) -> int:
 
 
 def ingest_prices(con, api: PolymarketAPI, cfg) -> int:
-    """Hourly YES prices from max(horizons)+2 days before the scheduled end to the end."""
+    """Hourly YES prices in the day before each decision time (the CLOB rejects long spans). Decision
+    times after the market already closed are skipped: there is nothing left to bet on."""
     c = cfg["longshot"]
     con.execute(SCHEMA)
-    span = (max(int(h) for h in c["horizons_days"]) + 2) * 86400
-    todo = con.execute("""SELECT yes_token, scheduled_end FROM ls_markets
+    age = int(c["max_price_age_h"]) * 3600
+    todo = con.execute("""SELECT yes_token, scheduled_end, closed_ts FROM ls_markets
                           WHERE scheduled_end IS NOT NULL AND yes_token NOT IN (SELECT token FROM ls_fetched)""").fetchall()
-    log.info("price paths to fetch: %d", len(todo))
+    log.info("price paths to fetch: %d markets", len(todo))
 
     def one(item):
-        token, end = item
-        try:
-            return token, api.prices_history(token, int(end) - span, int(end), int(c["fidelity_min"]))
-        except Exception as e:
-            log.warning("prices %s: %s", token[:12], e)
-            return token, None
+        token, end, closed = item
+        pts = []
+        for h in c["horizons_days"]:
+            ts = int(end) - int(h) * 86400
+            if closed and closed <= ts:
+                continue
+            try:
+                pts += api.prices_history(token, ts - age, ts, int(c["fidelity_min"]))
+            except Exception as e:
+                log.warning("prices %s: %s", token[:12], str(e)[:120])
+                return token, None
+        return token, pts
 
     done = 0
     with ThreadPoolExecutor(int(cfg["price_history"]["workers"])) as pool:
@@ -95,9 +102,9 @@ def ingest_prices(con, api: PolymarketAPI, cfg) -> int:
             if pts is None:
                 continue
             if pts:
-                insert_many(con, "ls_prices", [(token, t, p) for t, p in pts], "INSERT OR REPLACE")
+                insert_many(con, "ls_prices", sorted(set((token, t, p) for t, p in pts)), "INSERT OR REPLACE")
             con.execute("INSERT OR REPLACE INTO ls_fetched VALUES (?, ?)", [token, len(pts)])
             done += 1
-            if done % 1000 == 0:
+            if done % 2000 == 0:
                 log.info("prices: %d / %d", done, len(todo))
     return done
