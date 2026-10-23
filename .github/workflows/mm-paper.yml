@@ -4,9 +4,8 @@
 name: Paper market making
 
 on:
-  # Back-to-back sessions while paper results are being gathered (remove to stop).
-  schedule:
-    - cron: "20 */6 * * *"
+  # The 6-hourly schedule ran Oct 21-23; stopped after 500 crowded market-hours netted ~+$4.50/day per $1k
+  # (below the +$10 bar for a live pilot). Run by hand if needed.
   workflow_dispatch:
     inputs:
       minutes:
