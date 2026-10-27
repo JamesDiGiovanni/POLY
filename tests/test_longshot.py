@@ -103,3 +103,21 @@ def test_buying_the_longshot_pays_on_a_hit():
     m["yes_won"] = 0.0
     (b,) = [x for x in bets_for_market(m, [(END - DAY - 60, 0.05)], c, 0.0) if x.horizon == 1]
     assert not b.hit and not b.won and b.pnl == pytest.approx(-0.07)
+
+
+def test_live_check_measures_the_gap_to_the_real_ask():
+    from polybt.longshot.live_check import check, kind
+    c = load()["longshot"]
+
+    class Api:
+        def prices_history(self, token, start, end, fidelity):
+            return [(end - 600, 0.85)]                      # NO side is the 15c longshot
+
+        def book(self, token):
+            assert token == "n"
+            return {"bids": [(0.13, 100)], "asks": [(0.19, 50), (0.20, 1000)]}
+
+    r = check(Api(), {"question": "Arsenal vs. Chelsea", "yes": "y", "no": "n", "volume": 1e4, "end": ""}, c, 10_000)
+    assert r["kind"] == "game winner" and r["last"] == pytest.approx(0.15) and r["gap"] == pytest.approx(0.04)
+    assert r["usd_within_2c"] == 0 and r["usd_within_5c"] == pytest.approx(0.19 * 50 + 0.20 * 1000)
+    assert kind("Will Inter vs. Milan end in a draw?") == "draw"

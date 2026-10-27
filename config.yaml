@@ -273,3 +273,4 @@ longshot:
   test_days: 120
   min_events: 50
   min_annual: 0.10
+  live_days: 7                 # ls-live: open markets ending within this many days

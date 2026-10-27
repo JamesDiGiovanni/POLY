@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       steps:
-        description: "full: fetch markets + prices, then evaluate. eval: evaluate cached data. check: buy-the-longshot under three cost assumptions"
+        description: "full: fetch markets + prices, then evaluate. eval: evaluate cached data. check: buy-the-longshot under three cost assumptions. live: live order books of open 10-20c longshots"
         type: choice
-        options: [full, eval, check]
+        options: [full, eval, check, live]
         default: full
 
 permissions:
@@ -60,6 +60,12 @@ jobs:
           run strict 0.02 2
           { for n in base spread2c strict; do echo "# Scenario: $n"; echo; cat "output/longshot/report-$n.md"; echo; done; } \
             > output/longshot/report.md
+      - name: Live order books of open longshots
+        if: inputs.steps == 'live'
+        run: |
+          set -o pipefail
+          python -m polybt ls-live 2>&1 | tee run.log
+          cp output/longshot/live_check.md output/longshot/report.md
       - name: Save data
         if: always()
         uses: actions/cache/save@v4

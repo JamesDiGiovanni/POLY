@@ -168,6 +168,7 @@ def main(argv=None) -> int:
     s.add_argument("--side", choices=["favourite", "longshot"], default=None)
     s.add_argument("--spread", type=float, default=None)
     s.add_argument("--max-age-h", type=float, default=None, help="newest print must be this recent")
+    sub.add_parser("ls-live", help="longshot: live order books of open 10-20c longshots vs the backtest's prices")
     sub.add_parser("summary", help="markdown summary of the latest results (verdict, funnel, wallets)")
     s = sub.add_parser("fees", help="fee sources per market, and which formula matches real fills")
     s.add_argument("--since", default="2026-03-30", help="only trades after this date (fee schedule V2)")
@@ -257,6 +258,9 @@ def main(argv=None) -> int:
             i, n = (int(x) for x in args.shard.split("/"))
             cfg["rewards"]["paper"].update(shard=i, shards=n)
         print(paper.run(cfg, args.session or dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d-%H%M"), args.minutes))
+    elif args.cmd == "ls-live":
+        from .longshot import live_check
+        print(live_check.run(_api(cfg), cfg))
     elif args.cmd in ("ls-data", "ls-eval"):
         from .longshot import backtest as ls_backtest, data as ls_data
         if args.cmd == "ls-data":
