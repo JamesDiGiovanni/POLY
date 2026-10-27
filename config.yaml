@@ -274,3 +274,14 @@ longshot:
   min_events: 50
   min_annual: 0.10
   live_days: 7                 # ls-live: open markets ending within this many days
+  # Forward paper test (python -m polybt ls-paper): the backtest's rule against live order books.
+  paper:
+    bankroll: 100
+    stake_pct: 0.015           # of equity per bet: losing streaks of 15-20 are normal at a ~20% win rate
+    min_stake: 1.0             # Polymarket's minimum marketable order
+    min_price: 0.10
+    max_price: 0.20
+    min_days: 1                # scheduled end at least this far away...
+    max_days: 7                # ...and at most this far
+    max_slippage: 0.03         # walk the asks no more than 3c above the last price
+    kinds: [game winner, draw, over/under, crypto price]   # where the edge held and the books were deep

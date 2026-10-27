@@ -49,7 +49,7 @@ def open_markets(client, c: dict) -> list[dict]:
                 seen.add(m["conditionId"])
                 low = [str(o).lower() for o in outs]
                 yes_i = low.index("yes") if "yes" in low else 0
-                out.append({"question": m.get("question") or "", "end": m.get("endDate"),
+                out.append({"condition_id": m["conditionId"], "question": m.get("question") or "", "end": m.get("endDate"),
                             "yes": str(toks[yes_i]), "no": str(toks[1 - yes_i]),
                             "volume": float(m.get("volumeNum") or 0)})
             if len(page) < 100 or float(page[-1].get("volumeNum") or 0) < float(c["min_volume"]):

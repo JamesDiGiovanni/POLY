@@ -8,6 +8,7 @@ import argparse
 import datetime as dt
 import logging
 import sys
+from pathlib import Path
 
 from . import db, fees, filter as filter_mod, ingest, live, probe, report, simulate
 from .api import PolymarketAPI
@@ -169,6 +170,8 @@ def main(argv=None) -> int:
     s.add_argument("--spread", type=float, default=None)
     s.add_argument("--max-age-h", type=float, default=None, help="newest print must be this recent")
     sub.add_parser("ls-live", help="longshot: live order books of open 10-20c longshots vs the backtest's prices")
+    s = sub.add_parser("ls-paper", help="longshot forward paper test: settle, scan, buy on paper; ledger in --state")
+    s.add_argument("--state", default="output/longshot-paper")
     sub.add_parser("summary", help="markdown summary of the latest results (verdict, funnel, wallets)")
     s = sub.add_parser("fees", help="fee sources per market, and which formula matches real fills")
     s.add_argument("--since", default="2026-03-30", help="only trades after this date (fee schedule V2)")
@@ -258,6 +261,10 @@ def main(argv=None) -> int:
             i, n = (int(x) for x in args.shard.split("/"))
             cfg["rewards"]["paper"].update(shard=i, shards=n)
         print(paper.run(cfg, args.session or dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d-%H%M"), args.minutes))
+    elif args.cmd == "ls-paper":
+        from .longshot import paper as ls_paper
+        Path(args.state).mkdir(parents=True, exist_ok=True)
+        print(ls_paper.run(_api(cfg), cfg, args.state))
     elif args.cmd == "ls-live":
         from .longshot import live_check
         print(live_check.run(_api(cfg), cfg))
