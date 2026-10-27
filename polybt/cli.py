@@ -164,7 +164,10 @@ def main(argv=None) -> int:
     s.add_argument("--shard", default=None, help="i/n: quote every n-th market starting at i (parallel sessions)")
     s = sub.add_parser("ls-data", help="longshot backtest: resolved markets and their final weeks of prices")
     s.add_argument("--steps", default="markets,prices")
-    sub.add_parser("ls-eval", help="longshot backtest: does betting against longshots pay? writes output/longshot")
+    s = sub.add_parser("ls-eval", help="longshot backtest: does betting against longshots pay? writes output/longshot")
+    s.add_argument("--side", choices=["favourite", "longshot"], default=None)
+    s.add_argument("--spread", type=float, default=None)
+    s.add_argument("--max-age-h", type=float, default=None, help="newest print must be this recent")
     sub.add_parser("summary", help="markdown summary of the latest results (verdict, funnel, wallets)")
     s = sub.add_parser("fees", help="fee sources per market, and which formula matches real fills")
     s.add_argument("--since", default="2026-03-30", help="only trades after this date (fee schedule V2)")
@@ -262,6 +265,10 @@ def main(argv=None) -> int:
                 ls_data.ingest_markets(con, api, cfg)
             if "prices" in args.steps:
                 ls_data.ingest_prices(con, api, cfg)
+        for key, val in (("side", getattr(args, "side", None)), ("spread", getattr(args, "spread", None)),
+                         ("max_price_age_h", getattr(args, "max_age_h", None))):
+            if val is not None:
+                cfg["longshot"][key] = val
         print(ls_backtest.evaluate(con, cfg))
     elif args.cmd == "summary":
         print(report.markdown_summary(con, cfg))

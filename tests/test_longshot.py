@@ -93,3 +93,13 @@ def test_prices_fetch_one_day_per_decision_time(tmp_path):
     assert ingest_prices(con, Api(), cfg) == 1
     assert calls == [(END - 30 * DAY - 24 * 3600, END - 30 * DAY)]
     assert con.execute("SELECT count(*) FROM ls_prices").fetchone()[0] == 1
+
+
+def test_buying_the_longshot_pays_on_a_hit():
+    c = {**C, "side": "longshot", "spread": 0.02}
+    m = {"condition_id": "c", "event_id": "e", "question": "Q", "yes_won": 1.0, "scheduled_end": END, "closed_ts": END}
+    (b,) = [x for x in bets_for_market(m, [(END - DAY - 60, 0.05)], c, 0.0) if x.horizon == 1]
+    assert b.hit and b.won and b.cost == pytest.approx(0.07) and b.pnl == pytest.approx(0.93)
+    m["yes_won"] = 0.0
+    (b,) = [x for x in bets_for_market(m, [(END - DAY - 60, 0.05)], c, 0.0) if x.horizon == 1]
+    assert not b.hit and not b.won and b.pnl == pytest.approx(-0.07)

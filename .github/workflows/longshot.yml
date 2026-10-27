@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       steps:
-        description: "full: fetch markets + prices, then evaluate. eval: evaluate cached data only"
+        description: "full: fetch markets + prices, then evaluate. eval: evaluate cached data. check: buy-the-longshot under three cost assumptions"
         type: choice
-        options: [full, eval]
+        options: [full, eval, check]
         default: full
 
 permissions:
@@ -46,6 +46,20 @@ jobs:
       - name: Evaluate
         if: inputs.steps == 'eval'
         run: python -m polybt ls-eval 2>&1 | tee run.log
+      - name: Buy the longshot, three cost assumptions
+        if: inputs.steps == 'check'
+        run: |
+          set -o pipefail
+          run() {  # name, spread, max print age (h)
+            python -m polybt ls-eval --side longshot --spread "$2" --max-age-h "$3" 2>&1 | tee -a run.log > /dev/null
+            cp output/longshot/report.md "output/longshot/report-$1.md"
+            cp output/longshot/bets.csv "output/longshot/bets-$1.csv"
+          }
+          run base 0.01 24
+          run spread2c 0.02 24
+          run strict 0.02 2
+          { for n in base spread2c strict; do echo "# Scenario: $n"; echo; cat "output/longshot/report-$n.md"; echo; done; } \
+            > output/longshot/report.md
       - name: Save data
         if: always()
         uses: actions/cache/save@v4

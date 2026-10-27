@@ -267,7 +267,8 @@ longshot:
   buckets: [0.01, 0.02, 0.03, 0.05, 0.10, 0.20]   # longshot price ceilings, each bucket above the previous
   fidelity_min: 60
   max_price_age_h: 24          # need a price within a day before the decision time
-  spread: 0.01                 # pay 1c over the last price for the favourite
+  side: favourite              # favourite: bet against the longshot. longshot: buy the cheap side
+  spread: 0.01                 # pay this over the last price for the side bought
   fees: true                   # taker fee by category (v2 formula)
   test_days: 120
   min_events: 50

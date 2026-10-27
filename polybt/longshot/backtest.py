@@ -27,8 +27,9 @@ class Bet:
     ts: int
     end: int
     longshot_price: float   # market's price of the side we bet against
-    cost: float             # what we pay per share of the favourite, spread and fee included
-    won: bool               # the favourite won
+    cost: float             # what we pay per share of the side we buy, spread and fee included
+    won: bool               # the side we bought won
+    hit: bool = False       # the longshot happened (whichever side we bought)
 
     @property
     def pnl(self) -> float:
@@ -59,11 +60,14 @@ def bets_for_market(m: dict, path: list[tuple[int, float]], c: dict, fee_rate: f
         q = min(p, 1 - p)
         if q <= 0 or q > max(float(b) for b in c["buckets"]):
             continue
-        fav_yes = p > 0.5
-        price = min(0.999, (1 - q) + float(c["spread"]))
+        longshot_yes = p < 0.5
+        hit = (m["yes_won"] == 1.0) == longshot_yes
+        buy_longshot = c.get("side", "favourite") == "longshot"
+        price = min(0.999, (q if buy_longshot else 1 - q) + float(c["spread"]))
         cost = price + fee_rate * price * (1 - price)        # v2 taker fee per share, paid on the buy
-        won = (m["yes_won"] == 1.0) == fav_yes
-        out.append(Bet(m["condition_id"], m["event_id"], m["question"], int(h), ts, m["scheduled_end"], q, cost, won))
+        won = hit if buy_longshot else not hit
+        out.append(Bet(m["condition_id"], m["event_id"], m["question"], int(h), ts, m["scheduled_end"], q, cost,
+                       won, hit))
     return out
 
 
@@ -100,7 +104,7 @@ def summarise(bets: list[Bet], cfg) -> dict | None:
     lo, hi = bootstrap_roi_ci(lots, int(r["bootstrap_samples"]), float(r["ci_level"]), int(r["seed"]))
     return {"bets": len(bets), "events": len({b.event_id for b in bets}),
             "implied": sum(b.longshot_price for b in bets) / len(bets),
-            "hit": sum(not b.won for b in bets) / len(bets),
+            "hit": sum(b.hit for b in bets) / len(bets),
             "roi": roi, "ci_lo": lo, "ci_hi": hi,
             "worst_event": min(sum(x.pnl for x in bets if x.event_id == e) for e in {b.event_id for b in bets})}
 
@@ -129,12 +133,15 @@ def evaluate(con, cfg) -> str:
                         gate.append((int(h), b, s))
     pct = lambda v: "–" if v is None else f"{v * 100:+.1f}%"
     passed = bool(gate)
-    lines = [f"## Longshot backtest: {'PASSED' if passed else 'FAILED'}", "",
+    title = "buying longshots" if c.get("side") == "longshot" else "betting against longshots"
+    lines = [f"## Longshot backtest ({title}): {'PASSED' if passed else 'FAILED'}", "",
              f"{n_markets:,} resolved two-outcome markets (volume ≥ ${float(c['min_volume']):,.0f}, ending "
              f"{c['lookback_days']} days back), {n_paths:,} with price history. {len(bets):,} bets. Test period: "
              f"bets placed from {day(split)} on.", "",
              f"Rule: {', '.join(str(h) for h in c['horizons_days'])} days before the scheduled end, if one side trades at "
-             f"or below the bucket's price, buy the other side (+{float(c['spread']) * 100:.0f}¢ spread"
+             f"or below the bucket's price (last print no older than {c['max_price_age_h']} h), buy "
+             f"{'that cheap side' if c.get('side') == 'longshot' else 'the other side'} "
+             f"(+{float(c['spread']) * 100:g}¢ spread"
              f"{', plus the taker fee' if c['fees'] else ''}) and hold to resolution.", "",
              f"Gate: a bucket whose test-period ROI has its {cfg['report']['ci_level']:.0%} interval (resampling whole "
              f"events) above zero, ≥ {c['min_events']} events, and ≥ {float(c['min_annual']):.0%} a year "
@@ -147,7 +154,7 @@ def evaluate(con, cfg) -> str:
         lines.append(f"| {h} | {b * 100:g}¢ | {period} | {s['bets']:,} | {s['events']:,} | {s['implied'] * 100:.1f}% | "
                      f"{s['hit'] * 100:.1f}% | {pct(s['roi'])} | {pct(s['ci_lo'])} to {pct(s['ci_hi'])} | "
                      f"{s['roi'] * 365 / h * 100:+.0f}% | ${s['worst_event']:.2f} |")
-    losses = sorted((x for x in bets if not x.won and x.ts >= split), key=lambda x: x.longshot_price)[:15]
+    losses = sorted((x for x in bets if x.hit and x.ts >= split), key=lambda x: x.longshot_price)[:15]
     if losses:
         lines += ["", "Longshots that hit in the test period (cheapest first):", ""]
         lines += [f"- {x.question[:90]} — {x.longshot_price * 100:.1f}¢, {x.horizon} days out" for x in losses]
@@ -156,7 +163,7 @@ def evaluate(con, cfg) -> str:
     out.mkdir(parents=True, exist_ok=True)
     (out / "report.md").write_text(text)
     with open(out / "bets.csv", "w") as f:
-        f.write("condition_id,event_id,horizon_days,ts,longshot_price,cost,favourite_won,question\n")
+        f.write("condition_id,event_id,horizon_days,ts,longshot_price,cost,bet_won,question\n")
         for x in bets:
             f.write(f"{x.condition_id},{x.event_id},{x.horizon},{x.ts},{x.longshot_price:.4f},{x.cost:.4f},"
                     f"{int(x.won)},\"{x.question.replace(chr(34), '')}\"\n")
