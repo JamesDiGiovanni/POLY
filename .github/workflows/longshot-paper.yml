@@ -4,7 +4,7 @@ name: Longshot paper test
 
 on:
   schedule:
-    - cron: "17 */4 * * *"
+    - cron: "23 1,5,9,13,17,21 * * *"
   workflow_dispatch:
 
 permissions:
