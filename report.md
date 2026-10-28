@@ -12,7 +12,7 @@ Win rate 12.5% against an average price of 16.8% (the backtest: about 20-21% at 
 |---|---|---|---|---|---|---|
 | game winner | 8 | 1 | 12% | 16.8¢ | $-5.18 | -42% |
 
-Last run: scanned 1970 new markets, placed 10, settled 0. Skipped: book too thin 1, kind 1719, price 240
+Last run: scanned 1960 new markets, placed 0, settled 0. Skipped: book too thin 1, kind 1718, price 241
 
 Latest bets:
 
