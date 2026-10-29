@@ -19,7 +19,7 @@ from ..api import GAMMA_API, PolymarketAPI, _as_list, _json_field
 
 log = logging.getLogger(__name__)
 
-KINDS = [("draw", r"draw"), ("over/under", r"o/u|over|under"),
+KINDS = [("draw", r"draw"), ("over/under", r"o/u|\bover\b|\bunder\b"),   # whole words: not "gOVERnor"
          ("game winner", r" vs\.? |win on \d{4}-\d\d-\d\d|\(bo\d\)|map \d"),
          ("crypto price", r"bitcoin|btc|ethereum|solana|xrp|price of"),
          ("tweets/temperature", r"tweet|posts?\b|truth social|temperature|°"),

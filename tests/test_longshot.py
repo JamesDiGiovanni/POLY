@@ -121,3 +121,10 @@ def test_live_check_measures_the_gap_to_the_real_ask():
     assert r["kind"] == "game winner" and r["last"] == pytest.approx(0.15) and r["gap"] == pytest.approx(0.04)
     assert r["usd_within_2c"] == 0 and r["usd_within_5c"] == pytest.approx(0.19 * 50 + 0.20 * 1000)
     assert kind("Will Inter vs. Milan end in a draw?") == "draw"
+
+
+def test_kind_does_not_mistake_governor_for_over_under():
+    from polybt.longshot.live_check import kind
+    assert kind("Will the Democrats win the Nevada governor race in 2026?") == "other"
+    assert kind("Arsenal vs. Chelsea: O/U 2.5") == "over/under"
+    assert kind("Will the total be over 220.5 points?") == "over/under"
