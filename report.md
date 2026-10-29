@@ -2,7 +2,7 @@
 
 Bankroll $100, stakes 1.5% of equity (min $1). Buys the 10-20¢ side of game winner, draw, over/under, crypto price markets ending in 1-7 days, at the real ask (≤ 3¢ over the last price) plus the market's taker fee; holds to resolution.
 
-**Equity $87.71** (cash $0.30, $87.41 in 60 open bets).
+**Equity $87.71** (cash $34.95, $52.76 in 36 open bets).
 
 Settled: 21 bets, 2 won, P&L **$-16.76** on $31.37 staked (ROI -53.4%).
 
@@ -14,21 +14,19 @@ Win rate 9.5% against an average price of 15.1% (the backtest: about 20-21% at 1
 | game winner | 15 | 2 | 13% | 15.7¢ | $-7.91 | -35% |
 | over/under | 3 | 0 | 0% | 12.5¢ | $-4.36 | -100% |
 
-Last run: scanned 2054 new markets, placed 7, settled 2. Skipped: kind 1752, no cash 1, price 294
-
 Latest bets:
 
 | placed | market | kind | price | paid | stake | status | P&L |
 |---|---|---|---|---|---|---|---|
 | Oct 29 14:32 | Will Bitcoin dip to $78,000 October 26-November 1? | crypto price | 19.5¢ | 19.0¢ | $1.32 | open |  |
-| Oct 29 14:32 | Will the Democrats win the Nevada governor race in 2026 | over/under | 19.5¢ | 20.0¢ | $1.32 | open |  |
-| Oct 29 14:32 | Will the Republicans win the Nevada governor race in 20 | over/under | 19.5¢ | 20.0¢ | $1.32 | open |  |
-| Oct 29 14:32 | Will the Republicans win the South Carolina governor ra | over/under | 11.3¢ | 12.2¢ | $1.32 | open |  |
-| Oct 29 14:32 | Will the Democrats win the South Carolina governor race | over/under | 10.8¢ | 11.3¢ | $1.32 | open |  |
+| Oct 29 14:32 | Will the Democrats win the Nevada governor race in 2026 | over/under | 19.5¢ | 20.0¢ | $1.32 | excluded | $+0.00 |
+| Oct 29 14:32 | Will the Republicans win the Nevada governor race in 20 | over/under | 19.5¢ | 20.0¢ | $1.32 | excluded | $+0.00 |
+| Oct 29 14:32 | Will the Republicans win the South Carolina governor ra | over/under | 11.3¢ | 12.2¢ | $1.32 | excluded | $+0.00 |
+| Oct 29 14:32 | Will the Democrats win the South Carolina governor race | over/under | 10.8¢ | 11.3¢ | $1.32 | excluded | $+0.00 |
 | Oct 29 14:32 | Erste Bank Open: Nikoloz Basilashvili vs Carlos Alcaraz | game winner | 10.5¢ | 11.0¢ | $1.32 | open |  |
 | Oct 29 14:32 | Brest: Martin Damm vs Ugo Blanchet | game winner | 13.5¢ | 13.0¢ | $1.32 | open |  |
 | Oct 29 06:28 | Will the price of Bitcoin be above $78,000 on October 3 | crypto price | 14.5¢ | 15.0¢ | $1.36 | open |  |
-| Oct 29 06:28 | Will the Republican Party hold exactly 24 or 25 governo | over/under | 19.5¢ | 21.2¢ | $1.36 | open |  |
+| Oct 29 06:28 | Will the Republican Party hold exactly 24 or 25 governo | over/under | 19.5¢ | 21.2¢ | $1.36 | excluded | $+0.00 |
 | Oct 29 06:28 | Big Bash League, Women: Melbourne Renegades vs Sydney T | over/under | 11.5¢ | 12.0¢ | $1.36 | lost | $-1.36 |
 | Oct 29 06:28 | Pan Pacific Open: Elena Rybakina vs Yulia Putintseva | game winner | 13.5¢ | 15.0¢ | $1.36 | lost | $-1.36 |
 | Oct 29 02:28 | Will the price of Bitcoin be above $78,000 on October 3 | crypto price | 12.2¢ | 12.5¢ | $1.38 | open |  |
@@ -38,10 +36,10 @@ Latest bets:
 | Oct 29 02:28 | Pan Pacific Open: Alycia Parks vs Kimberly Birrell | game winner | 13.5¢ | 13.0¢ | $1.38 | lost | $-1.38 |
 | Oct 28 21:46 | Will Paris Saint-Germain FC win on 2026-10-30? | game winner | 19.5¢ | 20.0¢ | $1.42 | open |  |
 | Oct 28 21:46 | Racing Club Montevideo vs. Cerro Largo FC: Both Teams t | game winner | 15.5¢ | 17.0¢ | $1.42 | open |  |
-| Oct 28 21:46 | Will the Republicans win the Ohio governor race in 2026 | over/under | 18.5¢ | 19.0¢ | $1.42 | open |  |
-| Oct 28 21:46 | Will the Democrats win the Ohio governor race in 2026? | over/under | 18.5¢ | 19.0¢ | $1.42 | open |  |
-| Oct 28 21:46 | Will the Republicans win the Oklahoma governor race in  | over/under | 10.5¢ | 11.0¢ | $1.42 | open |  |
-| Oct 28 21:46 | Will the Democrats win the Oklahoma governor race in 20 | over/under | 10.5¢ | 11.0¢ | $1.42 | open |  |
+| Oct 28 21:46 | Will the Republicans win the Ohio governor race in 2026 | over/under | 18.5¢ | 19.0¢ | $1.42 | excluded | $+0.00 |
+| Oct 28 21:46 | Will the Democrats win the Ohio governor race in 2026? | over/under | 18.5¢ | 19.0¢ | $1.42 | excluded | $+0.00 |
+| Oct 28 21:46 | Will the Republicans win the Oklahoma governor race in  | over/under | 10.5¢ | 11.0¢ | $1.42 | excluded | $+0.00 |
+| Oct 28 21:46 | Will the Democrats win the Oklahoma governor race in 20 | over/under | 10.5¢ | 11.0¢ | $1.42 | excluded | $+0.00 |
 | Oct 28 16:10 | Brest: Matisse Bobichon vs Otto Virtanen | game winner | 13.5¢ | 16.0¢ | $1.47 | lost | $-1.47 |
 | Oct 28 16:10 | Erste Bank Open: Jakub Mensik vs Adrian Mannarino | game winner | 18.5¢ | 19.0¢ | $1.47 | won | $+5.94 |
 | Oct 28 14:40 | Will the price of Bitcoin be above $82,000 on October 2 | crypto price | 16.5¢ | 17.0¢ | $1.49 | open |  |
