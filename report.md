@@ -14,7 +14,7 @@ Win rate 15.2% against an average price of 15.0% (the backtest: about 20-21% at 
 | game winner | 30 | 2 | 7% | 15.3¢ | $-28.32 | -66% |
 | over/under | 3 | 0 | 0% | 12.5¢ | $-4.36 | -100% |
 
-Last run: scanned 1409 new markets, placed 2, settled 1. Skipped: book too thin 1, kind 1320, no cash 1, price 85
+Last run: scanned 1409 new markets, placed 0, settled 0. Skipped: kind 1320, no cash 1, price 88
 
 Latest bets:
 
